@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const albumViewContainer = document.getElementById('album-view');
     const bandViewContainer = document.getElementById('band-view');
     const favoritesList = document.getElementById('favoritesList');
+    const recentsList = document.getElementById('recentsList');
     const playerFavoriteBtn = document.getElementById('playerFavoriteBtn');
     const playerDislikeBtn = document.getElementById('playerDislikeBtn');
     const progressBar = document.querySelector('.progress-bar');
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     let isPlaying = true, progressInterval = null, currentSeconds = 0, totalSeconds = 301;
     let currentTrack = { title: "Smells Like Teen Spirit", artist: "Nirvana", img: "img/NirvanaNevermindalbumcover.jpg", duration: "5:01", album: "Nevermind" };
-    let favorites = [], disliked = [], allTracks = [], allAlbums = [];
+    let favorites = [], disliked = [], recents = [], allTracks = [], allAlbums = [];
 
     // --- INICIALIZAÇÃO E CARREGAMENTO ---
     function fetchData() {
@@ -51,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUserName(localStorage.getItem('vianaUserName') || 'Arthur');
         favorites = JSON.parse(localStorage.getItem('vianaFavorites')) || [];
         disliked = JSON.parse(localStorage.getItem('vianaDisliked')) || [];
+        recents = JSON.parse(localStorage.getItem('vianaRecents')) || [];
         updateActionButtons();
     }
 
@@ -101,6 +103,19 @@ document.addEventListener('DOMContentLoaded', function() {
         updateActionButtons();
     }
 
+    // --- LÓGICA DE RECENTES ---
+    function addToRecents(trackData) {
+        const existingIndex = recents.findIndex(t => t.title === trackData.title && t.artist === trackData.artist);
+        if (existingIndex > -1) {
+            recents.splice(existingIndex, 1);
+        }
+        recents.unshift(trackData);
+        if (recents.length > 50) {
+            recents.pop();
+        }
+        localStorage.setItem('vianaRecents', JSON.stringify(recents));
+    }
+
     // --- PLAYER: CONTROLES E ATUALIZAÇÃO ---
     function togglePlay() {
         isPlaying = !isPlaying;
@@ -119,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!isPlaying) togglePlay();
         else simulatePlayback();
         updateActionButtons();
+        addToRecents(trackData);
     }
     function simulatePlayback() {
         clearInterval(progressInterval);
@@ -161,7 +177,10 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         document.getElementById(targetId).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === targetId));
+        
         if (targetId === 'favoritas') renderFavorites();
+        if (targetId === 'recentes') renderRecents();
+        
         document.querySelector('.main-container').classList.remove('sidebar-open');
     }
     document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => switchContent(item.dataset.target)));
@@ -255,12 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
         switchContent('album-view');
     }
     
-    // --- HELPERS DE HTML ---
+    // --- HELPERS DE HTML E RENDERIZAÇÃO ---
     function createMusicItemHTML(track, number) { return `<div class="music-item" data-title="${track.title}" data-artist="${track.artist}" data-img="${track.img}" data-duration="${track.duration}" data-album="${track.album}"><div class="music-number">${number}</div><div class="music-img-small"><img src="${track.img}" alt="${track.title}"></div><div class="music-info"><div class="music-title">${track.title}</div><div class="music-artist">${track.artist}</div></div><div class="music-duration">${track.duration}</div></div>`; }
     function createAlbumCardHTML(albumData) { return `<div class="music-card" data-is-album="true" data-category="${albumData.category}" data-title="${albumData.title}" data-artist="${albumData.artist}" data-img="${albumData.img}"><div class="music-img"><img src="${albumData.img}" alt="${albumData.title}"></div><div class="music-title">${albumData.title}</div><div class="music-artist">${albumData.artist}</div></div>`; }
     function renderFavorites() { favoritesList.innerHTML = favorites.length ? favorites.map((track, i) => createMusicItemHTML(track, i + 1)).join('') : '<p class="no-favorites-message">Você ainda não favoritou nenhuma música.</p>'; }
+    function renderRecents() { recentsList.innerHTML = recents.length ? recents.map((track, i) => createMusicItemHTML(track, i + 1)).join('') : '<p class="no-recents-message">Você ainda não ouviu nenhuma música.</p>'; }
 
-    // --- LISTENER DE CLIQUE PRINCIPAL (CORRIGIDO E CENTRALIZADO) ---
+    // --- LISTENER DE CLIQUE PRINCIPAL ---
     mainContent.addEventListener('click', e => {
         const backBtn = e.target.closest('.back-btn');
         if (backBtn) {

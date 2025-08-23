@@ -6,12 +6,6 @@
     <title>VianaTube - Amantes De Musica</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-
-    <!-- CÓDIGO DO GOOGLE ADSENSE (POSIÇÃO CORRETA) -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6889311971921323"
-     crossorigin="anonymous"></script>
-    <!-- FIM DO CÓDIGO DO GOOGLE ADSENSE -->
-
 </head>
 <body>
     <div class="main-container">
@@ -25,15 +19,12 @@
             </div>
             <div class="nav-menu">
                 <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Início</span></div>
-                <div class="nav-item" data-target="buscar"><i class="fas fa-search"></i><span>Buscar</span></div>
                 <div class="nav-item" data-target="descobrir"><i class="fas fa-compass"></i><span>Descobrir</span></div>
             </div>
             <div class="library-section">
                 <div class="section-title">SUA BIBLIOTECA</div>
-                <div class="nav-item" data-target="musicas"><i class="fas fa-music"></i><span>Músicas</span></div>
                 <div class="nav-item" data-target="favoritas"><i class="fas fa-heart"></i><span>Favoritas</span></div>
                 <div class="nav-item" data-target="recentes"><i class="fas fa-history"></i><span>Recentes</span></div>
-                <div class="nav-item" data-target="downloads"><i class="fas fa-download"></i><span>Downloads</span></div>
             </div>
             <div class="library-section">
                 <div class="section-title">PLAYLISTS</div>
@@ -179,11 +170,56 @@
             
             <div id="band-view" class="content-section"></div>
 
-            <!-- Outras seções de conteúdo -->
-            <div id="descobrir" class="content-section"><h2 class="section-title-main">Descobrir</h2><p>Página de descoberta em construção.</p></div>
-            <div id="musicas" class="content-section"><h2 class="section-title-main">Músicas</h2><p>Sua coleção de músicas aparecerá aqui.</p></div>
-            <div id="recentes" class="content-section"><h2 class="section-title-main">Recentes</h2><p>Suas músicas ouvidas recentemente aparecerão aqui.</p></div>
-            <div id="downloads" class="content-section"><h2 class="section-title-main">Downloads</h2><p>Suas músicas baixadas aparecerão aqui.</p></div>
+            <div id="descobrir" class="content-section">
+                <h2 class="section-title-main">Playlists em Destaque</h2>
+                <div class="music-grid">
+                    <div class="music-card" data-is-album="true" data-category="Grunge" data-title="Nevermind" data-artist="Nirvana • 1991" data-img="img/NirvanaNevermindalbumcover.jpg">
+                        <div class="music-img"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Manhã Grunge"></div>
+                        <div class="music-title">Manhã Grunge</div>
+                        <div class="music-artist">Playlist</div>
+                    </div>
+                    <div class="music-card" data-is-album="true" data-category="Thrash Metal" data-title="Rust in Peace" data-artist="Megadeth • 1990" data-img="img/Megadeth-RustInPeace.jpg">
+                        <div class="music-img"><img src="img/Megadeth-RustInPeace.jpg" alt="Puro Thrash Metal"></div>
+                        <div class="music-title">Puro Thrash Metal</div>
+                        <div class="music-artist">Playlist</div>
+                    </div>
+                    <div class="music-card" data-is-album="true" data-category="Rap" data-title="Alto Mar" data-artist="Rove Braki • 2025" data-img="img/ALTO MAR_track_cover.jpg">
+                        <div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Rap da Madrugada"></div>
+                        <div class="music-title">Rap da Madrugada</div>
+                        <div class="music-artist">Playlist</div>
+                    </div>
+                    <div class="music-card" data-is-album="true" data-category="Black Metal" data-title="De Mysteriis Dom Sathanas" data-artist="Mayhem • 1994" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                        <div class="music-img"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="Escuridão Black Metal"></div>
+                        <div class="music-title">Escuridão Black Metal</div>
+                        <div class="music-artist">Playlist</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title-main">Você Pode Gostar Também</h2>
+                <div class="music-grid">
+                    <div class="music-card" data-is-album="true" data-category="Thrash Metal" data-title="Countdown to Extinction" data-artist="Megadeth • 1992" data-img="img/Countdown_album_cover.jpg">
+                        <div class="music-img"><img src="img/Countdown_album_cover.jpg" alt="Countdown to Extinction"></div>
+                        <div class="music-title">Countdown to Extinction</div>
+                        <div class="music-artist">Megadeth • 1992</div>
+                    </div>
+                    <div class="music-card" data-is-band="true" data-artist-name="Nirvana" data-category="Grunge" data-img="img/nirvana.band.jpg">
+                        <div class="music-img"><img src="img/nirvana.band.jpg" alt="Nirvana"></div>
+                        <div class="music-title">Nirvana</div>
+                        <div class="music-artist">Grunge</div>
+                    </div>
+                    <div class="music-card" data-is-band="true" data-artist-name="Rove Braki" data-category="Rap" data-img="img/ALTO MAR_track_cover.jpg">
+                        <div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
+                        <div class="music-title">Rove Braki</div>
+                        <div class="music-artist">Rap</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="recentes" class="content-section">
+                <h2 class="section-title-main">Ouvidas Recentemente</h2>
+                <div class="music-list" id="recentsList"></div>
+            </div>
+            
             <div id="criar-playlist" class="content-section"><h2 class="section-title-main">Criar Playlist</h2><p>Funcionalidade para criar playlists em construção.</p></div>
             <div id="minhas-playlists" class="content-section"><h2 class="section-title-main">Minhas Playlists</h2><p>Suas playlists aparecerão aqui.</p></div>
         </div>
