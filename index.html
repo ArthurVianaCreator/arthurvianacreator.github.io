@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <audio id="audioPlayer"></audio>
+    <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+
     <div class="main-container">
         <div class="sidebar">
             <div class="sidebar-header">
@@ -121,35 +124,30 @@
                 
                 <h2 class="section-title-main">Músicas</h2>
                 <div class="music-list" id="all-music-list">
-                    <div class="music-item" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-album="Nevermind" data-img="img/NirvanaNevermindalbumcover.jpg" data-duration="5:01">
+                    <div class="music-item" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-album="Nevermind" data-img="img/NirvanaNevermindalbumcover.jpg" data-src="songs/Smells Like Teen Spirit.mp3">
                         <div class="music-number">1</div>
                         <div class="music-img-small"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nirvana"></div>
                         <div class="music-info"><div class="music-title">Smells Like Teen Spirit</div><div class="music-artist">Nirvana</div></div>
-                        <div class="music-duration">5:01</div>
                     </div>
-                    <div class="music-item" data-title="Symphony of Destruction" data-artist="Megadeth" data-album="Countdown to Extinction" data-img="img/Countdown_album_cover.jpg" data-duration="4:06">
+                    <div class="music-item" data-title="Symphony of Destruction" data-artist="Megadeth" data-album="Countdown to Extinction" data-img="img/Countdown_album_cover.jpg" data-src="songs/Symphony Of Destruction.mp3">
                         <div class="music-number">2</div>
                         <div class="music-img-small"><img src="img/Countdown_album_cover.jpg" alt="Megadeth"></div>
                         <div class="music-info"><div class="music-title">Symphony of Destruction</div><div class="music-artist">Megadeth</div></div>
-                        <div class="music-duration">4:06</div>
                     </div>
-                     <div class="music-item" data-title="Tornado of Souls" data-artist="Megadeth" data-album="Rust in Peace" data-img="img/Megadeth-RustInPeace.jpg" data-duration="5:22">
+                     <div class="music-item" data-title="Tornado of Souls" data-artist="Megadeth" data-album="Rust in Peace" data-img="img/Megadeth-RustInPeace.jpg" data-src="songs/Tornado Of Souls.mp3">
                         <div class="music-number">3</div>
                         <div class="music-img-small"><img src="img/Megadeth-RustInPeace.jpg" alt="Rust in Peace"></div>
                         <div class="music-info"><div class="music-title">Tornado of Souls</div><div class="music-artist">Megadeth</div></div>
-                        <div class="music-duration">5:22</div>
                     </div>
-                    <div class="music-item" data-title="Freezing Moon" data-artist="Mayhem" data-album="De Mysteriis Dom Sathanas" data-img="img/Mayhem_demysteriisdomsathanas.jpg" data-duration="6:23">
+                    <div class="music-item" data-title="Freezing Moon" data-artist="Mayhem" data-album="De Mysteriis Dom Sathanas" data-img="img/Mayhem_demysteriisdomsathanas.jpg" data-src="songs/Freezing Moon.mp3">
                         <div class="music-number">4</div>
                         <div class="music-img-small"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="Mayhem"></div>
                         <div class="music-info"><div class="music-title">Freezing Moon</div><div class="music-artist">Mayhem</div></div>
-                        <div class="music-duration">6:23</div>
                     </div>
-                    <div class="music-item" data-title="Alto Mar" data-artist="Rove Braki" data-album="Alto Mar" data-img="img/ALTO MAR_track_cover.jpg" data-duration="3:45">
+                    <div class="music-item" data-title="Alto Mar" data-artist="Rove Braki" data-album="Alto Mar" data-img="img/ALTO MAR_track_cover.jpg" data-src="songs/ALTO MAR.mp3">
                         <div class="music-number">5</div>
                         <div class="music-img-small"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
                         <div class="music-info"><div class="music-title">Alto Mar</div><div class="music-artist">Rove Braki</div></div>
-                        <div class="music-duration">3:45</div>
                     </div>
                 </div>
             </div>
@@ -248,7 +246,7 @@
             <div class="progress-container">
                 <span class="time-current">0:00</span>
                 <div class="progress-bar"><div class="progress-fill"></div></div>
-                <span class="time-total">5:01</span>
+                <span class="time-total">0:00</span>
             </div>
         </div>
         <div class="controls-right">
@@ -257,6 +255,7 @@
                 <i class="fas fa-volume-up"></i>
                 <div class="volume-bar"><div class="volume-fill"></div></div>
             </div>
+            <button class="control-btn speed-btn" id="speedBtn"><span>1x</span></button>
             <button class="control-btn"><i class="fas fa-expand"></i></button>
         </div>
     </div>

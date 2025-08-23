@@ -23,7 +23,7 @@ body {
     font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--darker-bg);
     color: var(--light-gray-text);
-    overflow: hidden; /* Previne a rolagem do body */
+    overflow: hidden;
     height: 100vh;
     width: 100vw;
 }
@@ -35,6 +35,31 @@ body {
     padding-bottom: 90px;
     box-sizing: border-box;
 }
+
+/* --- ESTILOS DA BARRA DE ROLAGEM (SCROLLBAR) --- */
+.sidebar, .main-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) #222;
+}
+.sidebar::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+    width: 8px;
+}
+.sidebar::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track {
+    background: #222;
+}
+.sidebar::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 20px;
+    border: 2px solid #222;
+}
+.sidebar::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover {
+    background-color: #ff3b45;
+}
+
 
 /* --- SIDEBAR --- */
 .sidebar {
@@ -53,7 +78,6 @@ body {
 }
 .close-btn { display: none; }
 
-/* LOGO ATUALIZADA COM NOVA FONTE */
 .sidebar .logo h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 2.8rem;
@@ -133,12 +157,19 @@ body {
     transition: background-color 0.2s;
 }
 .user-profile:hover { background-color: #282828; }
+
 .user-avatar {
     background: var(--primary-color); color: var(--white-text);
     width: 32px; height: 32px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-weight: 700; margin-right: 8px; font-size: 1rem;
+    /* Estilos para a foto de perfil */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
 }
+
 .user-profile span { margin-right: 8px; font-weight: 500; white-space: nowrap; font-size: 0.9rem; }
 #settingsBtn { font-size: 1.3rem; }
 
@@ -211,8 +242,10 @@ body {
 }
 .music-artist { font-size: 0.85rem; margin-top: 4px; color: var(--gray-text); }
 .music-list { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
+
+/* Atualizado para não ter mais a coluna de duração */
 .music-item {
-    display: grid; grid-template-columns: 30px 50px 1fr auto;
+    display: grid; grid-template-columns: 30px 50px 1fr;
     align-items: center; gap: 16px; padding: 10px;
     border-radius: 6px; cursor: pointer; transition: background-color 0.2s;
 }
@@ -223,62 +256,36 @@ body {
 
 /* --- PÁGINA DO ÁLBUM E BANDA --- */
 .album-view-header, .band-view-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    margin-bottom: 32px;
-    text-align: center;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 24px; margin-bottom: 32px; text-align: center;
 }
 @media (min-width: 600px) {
     .album-view-header, .band-view-header {
-        flex-direction: row;
-        text-align: left;
+        flex-direction: row; text-align: left;
     }
 }
 .album-view-img img, .band-view-img img {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 8px;
-    box-shadow: 0 4px 25px rgba(0,0,0,0.5);
-    flex-shrink: 0;
+    width: 200px; height: 200px; object-fit: cover; border-radius: 8px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.5); flex-shrink: 0;
 }
 .band-view-img img { border-radius: 50%; }
-
 .album-view-info h2, .band-view-info h2 {
-    color: var(--white-text);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 900;
+    color: var(--white-text); font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900;
 }
 .album-view-info p { color: var(--light-gray-text); font-size: 1.1rem; margin-top: 8px; }
 .band-view-info .origin {
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-weight: 700; color: var(--primary-color); margin-top: 4px;
+    text-transform: uppercase; letter-spacing: 1px;
 }
 .band-view-info .description {
-    margin-top: 12px;
-    line-height: 1.7;
-    color: var(--light-gray-text);
-    border-left: 3px solid var(--tertiary-color);
-    padding-left: 15px;
+    margin-top: 12px; line-height: 1.7; color: var(--light-gray-text);
+    border-left: 3px solid var(--tertiary-color); padding-left: 15px;
 }
 .band-rating {
-    margin-top: 16px;
-    background: rgba(0,0,0,0.2);
-    padding: 12px;
-    border-radius: 8px;
-    display: inline-block;
-    border-left: 3px solid var(--primary-color);
+    margin-top: 16px; background: rgba(0,0,0,0.2); padding: 12px;
+    border-radius: 8px; display: inline-block; border-left: 3px solid var(--primary-color);
 }
-.band-rating .score {
-    font-size: 1.2rem;
-    color: var(--white-text);
-    font-weight: 700;
-}
+.band-rating .score { font-size: 1.2rem; color: var(--white-text); font-weight: 700; }
 .band-rating .score i { color: var(--tertiary-color); margin-right: 5px; }
 .band-rating .votes { font-size: 0.8rem; color: var(--gray-text); margin-top: 2px; }
 
@@ -317,13 +324,44 @@ body {
 .control-btn:hover { color: var(--white-text); transform: scale(1.1); }
 .play-btn { background: var(--white-text); color: #000; width: 40px; height: 40px; border-radius: 50%; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
 .play-btn:hover { transform: scale(1.1); filter: brightness(1); }
-.progress-container { display: flex; align-items: center; gap: 8px; width: 100%; font-size: 0.8rem;}
-.progress-bar { flex-grow: 1; height: 4px; background: #535353; border-radius: 2px; cursor: pointer; }
-.progress-fill { height: 100%; width: 0; background: var(--primary-color); border-radius: 2px; }
 .controls-right { display: flex; justify-content: flex-end; align-items: center; gap: 16px; }
 .volume-control { display: flex; align-items: center; gap: 8px; }
 .volume-bar { width: 100px; height: 4px; background: #535353; border-radius: 2px; cursor: pointer; }
 .volume-fill { height: 100%; width: 70%; background: var(--primary-color); border-radius: 2px; }
+
+/* --- BARRA DE PROGRESSO --- */
+.progress-container {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; font-size: 0.8rem; color: var(--gray-text);
+    font-weight: 500;
+}
+.progress-bar {
+    flex-grow: 1; height: 5px; background: #4d4d4d;
+    border-radius: 2.5px; cursor: pointer; position: relative;
+    transition: height 0.2s ease;
+}
+.progress-fill {
+    height: 100%; width: 0; background: var(--primary-color);
+    border-radius: 2.5px; position: relative;
+    transition: background-color 0.2s ease;
+}
+.progress-fill::after {
+    content: ''; position: absolute; right: 0; top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 14px; height: 14px; background: var(--white-text);
+    border-radius: 50%; transition: transform 0.2s ease;
+}
+.progress-bar:hover { height: 8px; }
+.progress-bar:hover .progress-fill::after { transform: translateY(-50%) scale(1); }
+.progress-bar:hover .progress-fill { background-color: #ff3b45; }
+
+
+/* --- BOTÃO DE VELOCIDADE --- */
+.speed-btn {
+    font-size: 0.9rem; font-weight: 700; width: 40px; height: 28px;
+    border: 1px solid var(--light-gray-text); border-radius: 4px; padding: 0;
+}
+.speed-btn:hover { border-color: var(--white-text); }
 
 /* --- MEDIA QUERIES --- */
 @media (max-width: 1024px) {
@@ -331,52 +369,26 @@ body {
     .controls-right { justify-self: flex-end; }
     .controls-center { grid-column: 1 / 3; order: -1; margin-bottom: 10px; }
 }
-
 @media (max-width: 768px) {
-    .main-container { 
-        grid-template-columns: 1fr;
-        padding-bottom: 80px;
-    }
+    .main-container { grid-template-columns: 1fr; padding-bottom: 80px; }
     .main-container.sidebar-open .sidebar { transform: translateX(0); box-shadow: 5px 0 20px rgba(0,0,0,0.5); }
-    .sidebar { 
-        position: fixed; left: 0; top: 0; width: 250px; height: 100%; 
-        z-index: 1000; transform: translateX(-100%); padding-top: 20px; 
-    }
+    .sidebar { position: fixed; left: 0; top: 0; width: 250px; height: 100%; z-index: 1000; transform: translateX(-100%); padding-top: 20px; }
     .close-btn { display: block; font-size: 1.5rem; color: var(--white-text); }
     #menuBtn { display: block; }
-
     .header { flex-wrap: wrap; }
     .header .search-bar { order: 3; width: 100%; max-width: none; margin-top: 10px; }
     .header .user-profile span, .header .user-profile .fa-chevron-down { display: none; }
     .user-avatar { margin-right: 0; }
     .main-content { padding: 16px; }
-
-    .player {
-        grid-template-columns: 1fr auto;
-        padding: 10px 16px;
-        height: 80px;
-        gap: 15px;
-    }
+    .player { grid-template-columns: 1fr auto; padding: 10px 16px; height: 80px; gap: 15px; }
     .player .controls-center { display: none; }
     .player .current-song { grid-column: 1 / 2; }
-    .player .controls-right { 
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        grid-column: 2 / 3;
-    }
-    .controls-right .play-btn {
-        display: flex;
-        width: 45px;
-        height: 45px;
-        background: var(--primary-color);
-        color: var(--white-text);
-    }
+    .player .controls-right { display: flex; align-items: center; justify-content: flex-end; grid-column: 2 / 3; }
+    .controls-right .play-btn { display: flex; width: 45px; height: 45px; background: var(--primary-color); color: var(--white-text); }
     .controls-right .control-btn { display: none; }
-    .controls-right .play-btn { display: flex; }
-
+    .controls-right .play-btn, .controls-right .speed-btn { display: flex; align-items: center; justify-content: center; }
     .music-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
     .section-title-main { font-size: 1.5rem; }
-    .music-item { grid-template-columns: 40px 1fr auto; }
+    .music-item { grid-template-columns: 40px 1fr; }
     .music-number { display: none; }
 }

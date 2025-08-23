@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- ELEMENTOS DO DOM ---
+    const audioPlayer = document.getElementById('audioPlayer');
+    const avatarUploadInput = document.getElementById('avatarUpload');
     const playerTitle = document.querySelector('.current-song .music-title');
     const playerArtist = document.querySelector('.current-song .music-artist');
     const playerImg = document.querySelector('.current-song .music-img img');
@@ -25,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const userProfile = document.getElementById('userProfile');
     const userNameEl = document.getElementById('userName');
     const userAvatarEl = document.getElementById('userAvatar');
+    const speedBtn = document.getElementById('speedBtn');
     
     // --- BANCO DE DADOS E ESTADO ---
     const bandsData = {
@@ -33,11 +36,108 @@ document.addEventListener('DOMContentLoaded', function() {
         'Mayhem': { description: 'Mayhem é uma banda norueguesa de black metal formada em 1984 em Oslo...', origin: 'Oslo, Noruega' },
         'Rove Braki': { description: 'Rove Braki é um artista emergente na cena do rap, conhecido por suas letras introspectivas...', origin: 'Brasil' }
     };
-    let isPlaying = true, progressInterval = null, currentSeconds = 0, totalSeconds = 301;
-    let currentTrack = { title: "Smells Like Teen Spirit", artist: "Nirvana", img: "img/NirvanaNevermindalbumcover.jpg", duration: "5:01", album: "Nevermind" };
+    let currentTrackData = {};
     let favorites = [], disliked = [], recents = [], allTracks = [], allAlbums = [];
+    const speeds = [1, 1.25, 2, 0.5];
+    let currentSpeedIndex = 0;
 
-    // --- INICIALIZAÇÃO E CARREGAMENTO ---
+    // --- LÓGICA DO PLAYER REAL ---
+    function playAudio() {
+        if (!audioPlayer.src) return; // Não tenta tocar se não houver música carregada
+        audioPlayer.play();
+        playBtn.querySelector('i').className = 'fas fa-pause';
+    }
+
+    function pauseAudio() {
+        audioPlayer.pause();
+        playBtn.querySelector('i').className = 'fas fa-play';
+    }
+
+    function togglePlay() {
+        if (audioPlayer.paused) {
+            playAudio();
+        } else {
+            pauseAudio();
+        }
+    }
+
+    function updatePlayer(trackData) {
+        currentTrackData = trackData;
+        playerTitle.textContent = trackData.title;
+        playerArtist.textContent = trackData.artist;
+        playerImg.src = trackData.img;
+        
+        audioPlayer.src = trackData.src;
+        playAudio();
+
+        updateActionButtons();
+        addToRecents(trackData);
+    }
+    
+    const formatTime = s => {
+        if (isNaN(s)) return "0:00";
+        const minutes = Math.floor(s / 60);
+        const seconds = Math.floor(s % 60);
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    };
+    
+    audioPlayer.addEventListener('loadedmetadata', () => {
+        timeTotalEl.textContent = formatTime(audioPlayer.duration);
+    });
+
+    audioPlayer.addEventListener('timeupdate', () => {
+        const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressFill.style.width = `${progressPercent}%`;
+        timeCurrentEl.textContent = formatTime(audioPlayer.currentTime);
+    });
+    
+    // --- LÓGICA DE TROCA DE FOTO DE PERFIL ---
+    userAvatarEl.addEventListener('click', () => {
+        avatarUploadInput.click(); // Abre o seletor de arquivos
+    });
+    
+    avatarUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageUrl = event.target.result;
+                localStorage.setItem('vianaUserAvatar', imageUrl); // Salva a imagem
+                applyAvatar(imageUrl);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function applyAvatar(imageUrl) {
+        userAvatarEl.style.backgroundImage = `url(${imageUrl})`;
+        userAvatarEl.textContent = ''; // Remove a letra
+    }
+    
+
+    function setSongProgress(e) {
+        const width = progressBar.clientWidth;
+        const clickX = e.offsetX;
+        audioPlayer.currentTime = (clickX / width) * audioPlayer.duration;
+    }
+
+    function setVolume(e) {
+        const width = volumeBar.clientWidth;
+        const clickX = e.offsetX;
+        const volume = clickX / width;
+        audioPlayer.volume = volume;
+        volumeFill.style.width = `${volume * 100}%`;
+    }
+    
+    function changeSpeed() {
+        currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+        const newSpeed = speeds[currentSpeedIndex];
+        audioPlayer.playbackRate = newSpeed;
+        speedBtn.querySelector('span').textContent = `${newSpeed}x`;
+    }
+
+
+    // --- INICIALIZAÇÃO E CARREGAMENTO DE DADOS ---
     function fetchData() {
         allTracks = Array.from(document.querySelectorAll('#all-music-list .music-item')).map(item => item.dataset);
         allAlbums = Array.from(document.querySelectorAll('#inicio .music-card[data-is-album="true"]')).map(item => {
@@ -53,6 +153,12 @@ document.addEventListener('DOMContentLoaded', function() {
         favorites = JSON.parse(localStorage.getItem('vianaFavorites')) || [];
         disliked = JSON.parse(localStorage.getItem('vianaDisliked')) || [];
         recents = JSON.parse(localStorage.getItem('vianaRecents')) || [];
+        
+        const savedAvatar = localStorage.getItem('vianaUserAvatar');
+        if (savedAvatar) {
+            applyAvatar(savedAvatar);
+        }
+
         updateActionButtons();
     }
 
@@ -67,11 +173,17 @@ document.addEventListener('DOMContentLoaded', function() {
             themePicker.classList.remove('active');
         });
     });
+    
     function updateUserName(name) {
         userNameEl.textContent = name;
-        userAvatarEl.textContent = name.charAt(0).toUpperCase();
+        const savedAvatar = localStorage.getItem('vianaUserAvatar');
+        if (!savedAvatar) { // Só atualiza a letra se não houver foto
+            userAvatarEl.style.backgroundImage = 'none';
+            userAvatarEl.textContent = name.charAt(0).toUpperCase();
+        }
     }
-    userProfile.addEventListener('click', () => {
+
+    userNameEl.addEventListener('click', () => { // Mudou o listener para o nome
         const newName = prompt("Digite seu novo nome:", userNameEl.textContent);
         if (newName && newName.trim()) {
             updateUserName(newName);
@@ -81,20 +193,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- PREFERÊNCIAS: LIKE/DISLIKE ---
     function updateActionButtons() {
-        const isFavorited = favorites.some(fav => fav.title === currentTrack.title && fav.artist === currentTrack.artist);
-        const isDisliked = disliked.some(dis => dis.title === currentTrack.title && dis.artist === currentTrack.artist);
+        if (!currentTrackData.title) return;
+        const isFavorited = favorites.some(fav => fav.title === currentTrackData.title && fav.artist === currentTrackData.artist);
+        const isDisliked = disliked.some(dis => dis.title === currentTrackData.title && dis.artist === currentTrackData.artist);
         playerFavoriteBtn.innerHTML = `<i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>`;
         playerDislikeBtn.innerHTML = `<i class="${isDisliked ? 'fas' : 'far'} fa-thumbs-down"></i>`;
     }
     playerFavoriteBtn.addEventListener('click', () => handlePreference(favorites, disliked));
     playerDislikeBtn.addEventListener('click', () => handlePreference(disliked, favorites));
     function handlePreference(primaryList, secondaryList) {
-        const trackId = t => t.title === currentTrack.title && t.artist === currentTrack.artist;
+        if (!currentTrackData.title) return;
+        const trackId = t => t.title === currentTrackData.title && t.artist === currentTrackData.artist;
         const index = primaryList.findIndex(trackId);
-        if (index > -1) {
-            primaryList.splice(index, 1);
-        } else {
-            primaryList.push(currentTrack);
+        if (index > -1) { primaryList.splice(index, 1); }
+        else {
+            primaryList.push(currentTrackData);
             const secondaryIndex = secondaryList.findIndex(trackId);
             if (secondaryIndex > -1) secondaryList.splice(secondaryIndex, 1);
         }
@@ -106,81 +219,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LÓGICA DE RECENTES ---
     function addToRecents(trackData) {
         const existingIndex = recents.findIndex(t => t.title === trackData.title && t.artist === trackData.artist);
-        if (existingIndex > -1) {
-            recents.splice(existingIndex, 1);
-        }
+        if (existingIndex > -1) { recents.splice(existingIndex, 1); }
         recents.unshift(trackData);
-        if (recents.length > 50) {
-            recents.pop();
-        }
+        if (recents.length > 50) { recents.pop(); }
         localStorage.setItem('vianaRecents', JSON.stringify(recents));
     }
 
-    // --- PLAYER: CONTROLES E ATUALIZAÇÃO ---
-    function togglePlay() {
-        isPlaying = !isPlaying;
-        playBtn.querySelector('i').className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
-        isPlaying ? simulatePlayback() : clearInterval(progressInterval);
-    }
-    function updatePlayer(trackData) {
-        currentTrack = { ...trackData };
-        playerTitle.textContent = currentTrack.title;
-        playerArtist.textContent = currentTrack.artist;
-        playerImg.src = currentTrack.img;
-        const [min, sec] = (currentTrack.duration || "0:0").split(':').map(Number);
-        totalSeconds = (min * 60) + sec;
-        currentSeconds = 0;
-        updateTimeDisplay();
-        if(!isPlaying) togglePlay();
-        else simulatePlayback();
-        updateActionButtons();
-        addToRecents(trackData);
-    }
-    function simulatePlayback() {
-        clearInterval(progressInterval);
-        if (!isPlaying) return;
-        progressInterval = setInterval(() => {
-            if (currentSeconds < totalSeconds) {
-                currentSeconds++;
-                updateTimeDisplay();
-            } else {
-                clearInterval(progressInterval);
-                isPlaying = false;
-                playBtn.querySelector('i').className = 'fas fa-play';
-            }
-        }, 1000);
-    }
-    function updateTimeDisplay() {
-        const formatTime = s => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-        timeCurrentEl.textContent = formatTime(currentSeconds);
-        timeTotalEl.textContent = formatTime(totalSeconds);
-        progressFill.style.width = totalSeconds > 0 ? `${(currentSeconds / totalSeconds) * 100}%` : '0%';
-    }
-    function setSongProgress(e) {
-        const rect = progressBar.getBoundingClientRect();
-        currentSeconds = Math.floor(totalSeconds * ((e.clientX - rect.left) / rect.width));
-        updateTimeDisplay();
-        simulatePlayback();
-    }
-    function setVolume(e) {
-        const rect = volumeBar.getBoundingClientRect();
-        let percentage = ((e.clientX - rect.left) / rect.width) * 100;
-        percentage = Math.max(0, Math.min(100, percentage));
-        volumeFill.style.width = `${percentage}%`;
-    }
+    // --- LISTENERS DE EVENTOS DO PLAYER ---
     progressBar.addEventListener('click', setSongProgress);
     volumeBar.addEventListener('click', setVolume);
     playBtn.addEventListener('click', togglePlay);
+    speedBtn.addEventListener('click', changeSpeed);
 
     // --- NAVEGAÇÃO E RENDERIZAÇÃO DE CONTEÚDO ---
     function switchContent(targetId) {
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         document.getElementById(targetId).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === targetId));
-        
         if (targetId === 'favoritas') renderFavorites();
         if (targetId === 'recentes') renderRecents();
-        
         document.querySelector('.main-container').classList.remove('sidebar-open');
     }
     document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => switchContent(item.dataset.target)));
@@ -233,49 +290,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const info = bandsData[bandName] || { description: "Nenhuma descrição disponível.", origin: "Origem desconhecida" };
         const rating = calculateBandRating(bandName);
         const bandAlbums = allAlbums.filter(a => a.cleanArtist === bandName);
-        
-        bandViewContainer.innerHTML = `
-            <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
-            <div class="band-view-header">
-                <div class="band-view-img"><img src="${bandData.img}" alt="${bandName}"></div>
-                <div class="band-view-info">
-                    <h2>${bandName}</h2>
-                    <p class="origin">${info.origin}</p>
-                    <p class="description">${info.description}</p>
-                    <div class="band-rating">
-                        <div class="score">${rating.score}</div>
-                        <div class="votes">${rating.votes}</div>
-                    </div>
-                </div>
-            </div>
-            <h2 class="section-title-main">Álbuns</h2>
-            <div class="music-grid">
-                ${bandAlbums.length ? bandAlbums.map(createAlbumCardHTML).join('') : '<p class="search-message">Nenhum álbum encontrado.</p>'}
-            </div>
-        `;
+        bandViewContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="band-view-header"><div class="band-view-img"><img src="${bandData.img}" alt="${bandName}"></div><div class="band-view-info"><h2>${bandName}</h2><p class="origin">${info.origin}</p><p class="description">${info.description}</p><div class="band-rating"><div class="score">${rating.score}</div><div class="votes">${rating.votes}</div></div></div></div><h2 class="section-title-main">Álbuns</h2><div class="music-grid">${bandAlbums.length ? bandAlbums.map(createAlbumCardHTML).join('') : '<p class="search-message">Nenhum álbum encontrado.</p>'}</div>`;
         switchContent('band-view');
     }
 
     function renderAlbumView(albumData) {
         const albumSongs = allTracks.filter(t => t.album === albumData.title);
-        albumViewContainer.innerHTML = `
-            <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
-            <div class="album-view-header">
-                <div class="album-view-img"><img src="${albumData.img}" alt="${albumData.title}"></div>
-                <div class="album-view-info">
-                    <h2>${albumData.title}</h2>
-                    <p>${albumData.artist}</p>
-                </div>
-            </div>
-            <div class="music-list">
-                ${albumSongs.length ? albumSongs.map((song, i) => createMusicItemHTML(song, i + 1)).join('') : '<p class="search-message">Nenhuma música encontrada.</p>'}
-            </div>
-        `;
+        albumViewContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="album-view-header"><div class="album-view-img"><img src="${albumData.img}" alt="${albumData.title}"></div><div class="album-view-info"><h2>${albumData.title}</h2><p>${albumData.artist}</p></div></div><div class="music-list">${albumSongs.length ? albumSongs.map((song, i) => createMusicItemHTML(song, i + 1)).join('') : '<p class="search-message">Nenhuma música encontrada.</p>'}</div>`;
         switchContent('album-view');
     }
     
     // --- HELPERS DE HTML E RENDERIZAÇÃO ---
-    function createMusicItemHTML(track, number) { return `<div class="music-item" data-title="${track.title}" data-artist="${track.artist}" data-img="${track.img}" data-duration="${track.duration}" data-album="${track.album}"><div class="music-number">${number}</div><div class="music-img-small"><img src="${track.img}" alt="${track.title}"></div><div class="music-info"><div class="music-title">${track.title}</div><div class="music-artist">${track.artist}</div></div><div class="music-duration">${track.duration}</div></div>`; }
+    function createMusicItemHTML(track, number) { return `<div class="music-item" data-title="${track.title}" data-artist="${track.artist}" data-img="${track.img}" data-album="${track.album}" data-src="${track.src}"><div class="music-number">${number}</div><div class="music-img-small"><img src="${track.img}" alt="${track.title}"></div><div class="music-info"><div class="music-title">${track.title}</div><div class="music-artist">${track.artist}</div></div></div>`; }
     function createAlbumCardHTML(albumData) { return `<div class="music-card" data-is-album="true" data-category="${albumData.category}" data-title="${albumData.title}" data-artist="${albumData.artist}" data-img="${albumData.img}"><div class="music-img"><img src="${albumData.img}" alt="${albumData.title}"></div><div class="music-title">${albumData.title}</div><div class="music-artist">${albumData.artist}</div></div>`; }
     function renderFavorites() { favoritesList.innerHTML = favorites.length ? favorites.map((track, i) => createMusicItemHTML(track, i + 1)).join('') : '<p class="no-favorites-message">Você ainda não favoritou nenhuma música.</p>'; }
     function renderRecents() { recentsList.innerHTML = recents.length ? recents.map((track, i) => createMusicItemHTML(track, i + 1)).join('') : '<p class="no-recents-message">Você ainda não ouviu nenhuma música.</p>'; }
@@ -283,32 +309,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LISTENER DE CLIQUE PRINCIPAL ---
     mainContent.addEventListener('click', e => {
         const backBtn = e.target.closest('.back-btn');
-        if (backBtn) {
-            switchContent('inicio');
-            return;
-        }
-
+        if (backBtn) { switchContent('inicio'); return; }
         const bandCard = e.target.closest('.music-card[data-is-band="true"]');
-        if (bandCard) {
-            renderBandView(bandCard.dataset);
-            return;
-        }
-        
+        if (bandCard) { renderBandView(bandCard.dataset); return; }
         const albumCard = e.target.closest('.music-card[data-is-album="true"]');
-        if (albumCard) {
-            renderAlbumView(albumCard.dataset);
-            return;
-        }
-        
+        if (albumCard) { renderAlbumView(albumCard.dataset); return; }
         const musicItem = e.target.closest('.music-item');
-        if (musicItem) {
-            updatePlayer(musicItem.dataset);
-            return;
-        }
+        if (musicItem) { updatePlayer(musicItem.dataset); return; }
     });
 
     // --- CHAMADAS INICIAIS ---
     fetchData();
     loadState();
-    simulatePlayback();
 });
