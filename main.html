@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VianaTube - Rock Underground</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <h1>VianaTube</h1>
+                    <p>Rock Underground</p>
+                </div>
+                <button class="control-btn close-btn" id="closeSidebarBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Início</span></div>
+                <div class="nav-item" data-target="buscar"><i class="fas fa-search"></i><span>Buscar</span></div>
+                <div class="nav-item" data-target="descobrir"><i class="fas fa-compass"></i><span>Descobrir</span></div>
+            </div>
+            <div class="library-section">
+                <div class="section-title">SUA BIBLIOTECA</div>
+                <div class="nav-item" data-target="musicas"><i class="fas fa-music"></i><span>Músicas</span></div>
+                <div class="nav-item" data-target="favoritas"><i class="fas fa-heart"></i><span>Favoritas</span></div>
+                <div class="nav-item" data-target="recentes"><i class="fas fa-history"></i><span>Recentes</span></div>
+                <div class="nav-item" data-target="downloads"><i class="fas fa-download"></i><span>Downloads</span></div>
+            </div>
+            <div class="library-section">
+                <div class="section-title">PLAYLISTS</div>
+                <div class="nav-item" data-target="criar-playlist"><i class="fas fa-plus"></i><span>Criar Playlist</span></div>
+                <div class="nav-item" data-target="minhas-playlists"><i class="fas fa-list"></i><span>Minhas Playlists</span></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <button class="control-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar bandas, álbuns, músicas...">
+                </div>
+                <div class="user-profile-area">
+                    <div class="user-profile" id="userProfile">
+                        <div class="user-avatar" id="userAvatar">A</div>
+                        <span id="userName">Arthur</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <button class="control-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
+                    <div class="theme-picker" id="themePicker">
+                        <div class="color-swatch" data-color="#E50914" style="background: #E50914;"></div>
+                        <div class="color-swatch" data-color="#1DB954" style="background: #1DB954;"></div>
+                        <div class="color-swatch" data-color="#FFC107" style="background: #FFC107;"></div>
+                        <div class="color-swatch" data-color="#007BFF" style="background: #007BFF;"></div>
+                        <div class="color-swatch" data-color="#9b59b6" style="background: #9b59b6;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="inicio" class="content-section active">
+                <div class="category-tabs">
+                    <div class="category-tab active" data-category="Todos">Todos</div>
+                    <div class="category-tab" data-category="Grunge">Grunge</div>
+                    <div class="category-tab" data-category="Black Metal">Black Metal</div>
+                    <div class="category-tab" data-category="Thrash Metal">Thrash Metal</div>
+                    <!-- CORRIGIDO: Categoria alterada para Rap -->
+                    <div class="category-tab" data-category="Rap">Rap</div>
+                </div>
+
+                <h2 class="section-title-main">Bandas em Destaque</h2>
+                <div class="music-grid">
+                    <div class="music-card" data-category="Grunge" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-img="img/NirvanaNevermindalbumcover.jpg">
+                        <div class="music-img"><img src="img/nirvana.band.jpg" alt="Nirvana"></div>
+                        <div class="music-title">Nirvana</div>
+                        <div class="music-artist">Grunge</div>
+                    </div>
+                    <div class="music-card" data-category="Thrash Metal" data-title="Symphony of Destruction" data-artist="Megadeth" data-img="img/Countdown_album_cover.jpg">
+                        <div class="music-img"><img src="img/megadeth.jpg" alt="Megadeth"></div>
+                        <div class="music-title">Megadeth</div>
+                        <div class="music-artist">Thrash Metal</div>
+                    </div>
+                    <div class="music-card" data-category="Black Metal" data-title="Freezing Moon" data-artist="Mayhem" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                        <div class="music-img"><img src="img/mayhem.band.jpg" alt="Mayhem"></div>
+                        <div class="music-title">Mayhem</div>
+                        <div class="music-artist">Black Metal</div>
+                    </div>
+                    <!-- CORRIGIDO: Categoria e gênero alterados para Rap -->
+                    <div class="music-card" data-category="Rap" data-title="Alto Mar" data-artist="Rove Braki" data-img="img/ALTO MAR_track_cover.jpg">
+                        <div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
+                        <div class="music-title">Rove Braki</div>
+                        <div class="music-artist">Rap</div>
+                    </div>
+                </div>
+
+                <h2 class="section-title-main">Álbuns Clássicos</h2>
+                <div class="music-grid">
+                     <div class="music-card" data-category="Grunge" data-title="Nevermind" data-artist="Nirvana • 1991" data-img="img/NirvanaNevermindalbumcover.jpg">
+                        <div class="music-img"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nevermind"></div>
+                        <div class="music-title">Nevermind</div>
+                        <div class="music-artist">Nirvana • 1991</div>
+                    </div>
+                     <div class="music-card" data-category="Thrash Metal" data-title="Rust in Peace" data-artist="Megadeth • 1990" data-img="img/Megadeth-RustInPeace.jpg">
+                        <div class="music-img"><img src="img/Megadeth-RustInPeace.jpg" alt="Rust in Peace"></div>
+                        <div class="music-title">Rust in Peace</div>
+                        <div class="music-artist">Megadeth • 1990</div>
+                    </div>
+                     <div class="music-card" data-category="Black Metal" data-title="De Mysteriis Dom Sathanas" data-artist="Mayhem • 1994" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                        <div class="music-img"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="De Mysteriis Dom Sathanas"></div>
+                        <div class="music-title">De Mysteriis Dom Sathanas</div>
+                        <div class="music-artist">Mayhem • 1994</div>
+                    </div>
+                </div>
+                
+                <h2 class="section-title-main">Músicas Populares</h2>
+                <div class="music-list">
+                    <div class="music-item" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-img="img/NirvanaNevermindalbumcover.jpg">
+                        <div class="music-number">1</div>
+                        <div class="music-img-small"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nirvana"></div>
+                        <div class="music-info"><div class="music-title">Smells Like Teen Spirit</div><div class="music-artist">Nirvana</div></div>
+                        <div class="music-duration">5:01</div>
+                    </div>
+                    <div class="music-item" data-title="Symphony of Destruction" data-artist="Megadeth" data-img="img/Countdown_album_cover.jpg">
+                        <div class="music-number">2</div>
+                        <div class="music-img-small"><img src="img/Countdown_album_cover.jpg" alt="Megadeth"></div>
+                        <div class="music-info"><div class="music-title">Symphony of Destruction</div><div class="music-artist">Megadeth</div></div>
+                        <div class="music-duration">4:06</div>
+                    </div>
+                    <div class="music-item" data-title="Freezing Moon" data-artist="Mayhem" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                        <div class="music-number">3</div>
+                        <div class="music-img-small"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="Mayhem"></div>
+                        <div class="music-info"><div class="music-title">Freezing Moon</div><div class="music-artist">Mayhem</div></div>
+                        <div class="music-duration">6:23</div>
+                    </div>
+                    <div class="music-item" data-title="Alto Mar" data-artist="Rove Braki" data-img="img/ALTO MAR_track_cover.jpg">
+                        <div class="music-number">4</div>
+                        <div class="music-img-small"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
+                        <div class="music-info"><div class="music-title">Alto Mar</div><div class="music-artist">Rove Braki</div></div>
+                        <div class="music-duration">3:45</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="favoritas" class="content-section">
+                <h2 class="section-title-main">Favoritas</h2>
+                <div class="music-list" id="favoritesList">
+                    <!-- Músicas favoritas serão injetadas aqui -->
+                </div>
+            </div>
+            
+            <!-- Outras seções de conteúdo -->
+            <div id="buscar" class="content-section"><h2 class="section-title-main">Buscar</h2><p>Página de busca em construção.</p></div>
+            <div id="descobrir" class="content-section"><h2 class="section-title-main">Descobrir</h2><p>Página de descoberta em construção.</p></div>
+            <div id="musicas" class="content-section"><h2 class="section-title-main">Músicas</h2><p>Sua coleção de músicas aparecerá aqui.</p></div>
+            <div id="recentes" class="content-section"><h2 class="section-title-main">Recentes</h2><p>Suas músicas ouvidas recentemente aparecerão aqui.</p></div>
+            <div id="downloads" class="content-section"><h2 class="section-title-main">Downloads</h2><p>Suas músicas baixadas aparecerão aqui.</p></div>
+            <div id="criar-playlist" class="content-section"><h2 class="section-title-main">Criar Playlist</h2><p>Funcionalidade para criar playlists em construção.</p></div>
+            <div id="minhas-playlists" class="content-section"><h2 class="section-title-main">Minhas Playlists</h2><p>Suas playlists aparecerão aqui.</p></div>
+        </div>
+    </div>
+
+    <div class="player">
+        <div class="current-song">
+            <div class="music-img"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Capa da música tocando"></div>
+            <div class="song-info"><div class="music-title">Smells Like Teen Spirit</div><div class="music-artist">Nirvana</div></div>
+            <button class="control-btn" id="playerFavoriteBtn"><i class="far fa-heart"></i></button>
+        </div>
+        <div class="controls-center">
+            <div class="control-buttons">
+                <button class="control-btn"><i class="fas fa-random"></i></button>
+                <button class="control-btn"><i class="fas fa-step-backward"></i></button>
+                <button class="control-btn play-btn"><i class="fas fa-pause"></i></button>
+                <button class="control-btn"><i class="fas fa-step-forward"></i></button>
+                <button class="control-btn"><i class="fas fa-repeat"></i></button>
+            </div>
+            <div class="progress-container">
+                <span class="time-current">0:00</span>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+                <span class="time-total">5:01</span>
+            </div>
+        </div>
+        <div class="controls-right">
+            <button class="control-btn"><i class="fas fa-list"></i></button>
+            <div class="volume-control">
+                <i class="fas fa-volume-up"></i>
+                <div class="volume-bar"><div class="volume-fill"></div></div>
+            </div>
+            <button class="control-btn"><i class="fas fa-expand"></i></button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
