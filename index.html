@@ -71,22 +71,22 @@
 
                 <h2 class="section-title-main">Bandas</h2>
                 <div class="music-grid">
-                    <div class="music-card" data-category="Grunge" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-img="img/NirvanaNevermindalbumcover.jpg">
+                    <div class="music-card" data-is-band="true" data-artist-name="Nirvana" data-category="Grunge" data-img="img/nirvana.band.jpg">
                         <div class="music-img"><img src="img/nirvana.band.jpg" alt="Nirvana"></div>
                         <div class="music-title">Nirvana</div>
                         <div class="music-artist">Grunge</div>
                     </div>
-                    <div class="music-card" data-category="Thrash Metal" data-title="Symphony of Destruction" data-artist="Megadeth" data-img="img/Countdown_album_cover.jpg">
+                    <div class="music-card" data-is-band="true" data-artist-name="Megadeth" data-category="Thrash Metal" data-img="img/megadeth.jpg">
                         <div class="music-img"><img src="img/megadeth.jpg" alt="Megadeth"></div>
                         <div class="music-title">Megadeth</div>
                         <div class="music-artist">Thrash Metal</div>
                     </div>
-                    <div class="music-card" data-category="Black Metal" data-title="Freezing Moon" data-artist="Mayhem" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                    <div class="music-card" data-is-band="true" data-artist-name="Mayhem" data-category="Black Metal" data-img="img/mayhem.band.jpg">
                         <div class="music-img"><img src="img/mayhem.band.jpg" alt="Mayhem"></div>
                         <div class="music-title">Mayhem</div>
                         <div class="music-artist">Black Metal</div>
                     </div>
-                    <div class="music-card" data-category="Rap" data-title="Alto Mar" data-artist="Rove Braki" data-img="img/ALTO MAR_track_cover.jpg">
+                    <div class="music-card" data-is-band="true" data-artist-name="Rove Braki" data-category="Rap" data-img="img/ALTO MAR_track_cover.jpg">
                         <div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
                         <div class="music-title">Rove Braki</div>
                         <div class="music-artist">Rap</div>
@@ -123,7 +123,7 @@
                 </div>
                 
                 <h2 class="section-title-main">Músicas</h2>
-                <div class="music-list">
+                <div class="music-list" id="all-music-list">
                     <div class="music-item" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-album="Nevermind" data-img="img/NirvanaNevermindalbumcover.jpg" data-duration="5:01">
                         <div class="music-number">1</div>
                         <div class="music-img-small"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nirvana"></div>
@@ -169,9 +169,9 @@
                 </div>
             </div>
 
-            <div id="album-view" class="content-section">
-                <!-- Conteúdo do álbum será injetado aqui pelo JavaScript -->
-            </div>
+            <div id="album-view" class="content-section"></div>
+            
+            <div id="band-view" class="content-section"></div>
 
             <!-- Outras seções de conteúdo -->
             <div id="descobrir" class="content-section"><h2 class="section-title-main">Descobrir</h2><p>Página de descoberta em construção.</p></div>
