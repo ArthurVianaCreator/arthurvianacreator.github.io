@@ -41,7 +41,7 @@
                 <button class="control-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Buscar bandas, álbuns, músicas...">
+                    <input type="text" id="searchInput" placeholder="Buscar bandas, álbuns, músicas...">
                 </div>
                 <div class="user-profile-area">
                     <div class="user-profile" id="userProfile">
@@ -66,11 +66,10 @@
                     <div class="category-tab" data-category="Grunge">Grunge</div>
                     <div class="category-tab" data-category="Black Metal">Black Metal</div>
                     <div class="category-tab" data-category="Thrash Metal">Thrash Metal</div>
-                    <!-- CORRIGIDO: Categoria alterada para Rap -->
                     <div class="category-tab" data-category="Rap">Rap</div>
                 </div>
 
-                <h2 class="section-title-main">Bandas em Destaque</h2>
+                <h2 class="section-title-main">Bandas</h2>
                 <div class="music-grid">
                     <div class="music-card" data-category="Grunge" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-img="img/NirvanaNevermindalbumcover.jpg">
                         <div class="music-img"><img src="img/nirvana.band.jpg" alt="Nirvana"></div>
@@ -87,7 +86,6 @@
                         <div class="music-title">Mayhem</div>
                         <div class="music-artist">Black Metal</div>
                     </div>
-                    <!-- CORRIGIDO: Categoria e gênero alterados para Rap -->
                     <div class="music-card" data-category="Rap" data-title="Alto Mar" data-artist="Rove Braki" data-img="img/ALTO MAR_track_cover.jpg">
                         <div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
                         <div class="music-title">Rove Braki</div>
@@ -95,47 +93,63 @@
                     </div>
                 </div>
 
-                <h2 class="section-title-main">Álbuns Clássicos</h2>
+                <h2 class="section-title-main">Álbuns</h2>
                 <div class="music-grid">
-                     <div class="music-card" data-category="Grunge" data-title="Nevermind" data-artist="Nirvana • 1991" data-img="img/NirvanaNevermindalbumcover.jpg">
+                     <div class="music-card" data-is-album="true" data-category="Grunge" data-title="Nevermind" data-artist="Nirvana • 1991" data-img="img/NirvanaNevermindalbumcover.jpg">
                         <div class="music-img"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nevermind"></div>
                         <div class="music-title">Nevermind</div>
                         <div class="music-artist">Nirvana • 1991</div>
                     </div>
-                     <div class="music-card" data-category="Thrash Metal" data-title="Rust in Peace" data-artist="Megadeth • 1990" data-img="img/Megadeth-RustInPeace.jpg">
+                     <div class="music-card" data-is-album="true" data-category="Thrash Metal" data-title="Rust in Peace" data-artist="Megadeth • 1990" data-img="img/Megadeth-RustInPeace.jpg">
                         <div class="music-img"><img src="img/Megadeth-RustInPeace.jpg" alt="Rust in Peace"></div>
                         <div class="music-title">Rust in Peace</div>
                         <div class="music-artist">Megadeth • 1990</div>
                     </div>
-                     <div class="music-card" data-category="Black Metal" data-title="De Mysteriis Dom Sathanas" data-artist="Mayhem • 1994" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                    <div class="music-card" data-is-album="true" data-category="Thrash Metal" data-title="Countdown to Extinction" data-artist="Megadeth • 1992" data-img="img/Countdown_album_cover.jpg">
+                        <div class="music-img"><img src="img/Countdown_album_cover.jpg" alt="Countdown to Extinction"></div>
+                        <div class="music-title">Countdown to Extinction</div>
+                        <div class="music-artist">Megadeth • 1992</div>
+                    </div>
+                     <div class="music-card" data-is-album="true" data-category="Black Metal" data-title="De Mysteriis Dom Sathanas" data-artist="Mayhem • 1994" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
                         <div class="music-img"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="De Mysteriis Dom Sathanas"></div>
                         <div class="music-title">De Mysteriis Dom Sathanas</div>
                         <div class="music-artist">Mayhem • 1994</div>
                     </div>
+                    <div class="music-card" data-is-album="true" data-category="Rap" data-title="Alto Mar" data-artist="Rove Braki • 2025" data-img="img/ALTO MAR_track_cover.jpg">
+                        <div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Alto Mar"></div>
+                        <div class="music-title">Alto Mar</div>
+                        <div class="music-artist">Rove Braki • 2025</div>
+                    </div>
                 </div>
                 
-                <h2 class="section-title-main">Músicas Populares</h2>
+                <h2 class="section-title-main">Músicas</h2>
                 <div class="music-list">
-                    <div class="music-item" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-img="img/NirvanaNevermindalbumcover.jpg">
+                    <div class="music-item" data-title="Smells Like Teen Spirit" data-artist="Nirvana" data-album="Nevermind" data-img="img/NirvanaNevermindalbumcover.jpg" data-duration="5:01">
                         <div class="music-number">1</div>
                         <div class="music-img-small"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nirvana"></div>
                         <div class="music-info"><div class="music-title">Smells Like Teen Spirit</div><div class="music-artist">Nirvana</div></div>
                         <div class="music-duration">5:01</div>
                     </div>
-                    <div class="music-item" data-title="Symphony of Destruction" data-artist="Megadeth" data-img="img/Countdown_album_cover.jpg">
+                    <div class="music-item" data-title="Symphony of Destruction" data-artist="Megadeth" data-album="Countdown to Extinction" data-img="img/Countdown_album_cover.jpg" data-duration="4:06">
                         <div class="music-number">2</div>
                         <div class="music-img-small"><img src="img/Countdown_album_cover.jpg" alt="Megadeth"></div>
                         <div class="music-info"><div class="music-title">Symphony of Destruction</div><div class="music-artist">Megadeth</div></div>
                         <div class="music-duration">4:06</div>
                     </div>
-                    <div class="music-item" data-title="Freezing Moon" data-artist="Mayhem" data-img="img/Mayhem_demysteriisdomsathanas.jpg">
+                     <div class="music-item" data-title="Tornado of Souls" data-artist="Megadeth" data-album="Rust in Peace" data-img="img/Megadeth-RustInPeace.jpg" data-duration="5:22">
                         <div class="music-number">3</div>
+                        <div class="music-img-small"><img src="img/Megadeth-RustInPeace.jpg" alt="Rust in Peace"></div>
+                        <div class="music-info"><div class="music-title">Tornado of Souls</div><div class="music-artist">Megadeth</div></div>
+                        <div class="music-duration">5:22</div>
+                    </div>
+                    <div class="music-item" data-title="Freezing Moon" data-artist="Mayhem" data-album="De Mysteriis Dom Sathanas" data-img="img/Mayhem_demysteriisdomsathanas.jpg" data-duration="6:23">
+                        <div class="music-number">4</div>
                         <div class="music-img-small"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="Mayhem"></div>
                         <div class="music-info"><div class="music-title">Freezing Moon</div><div class="music-artist">Mayhem</div></div>
                         <div class="music-duration">6:23</div>
                     </div>
-                    <div class="music-item" data-title="Alto Mar" data-artist="Rove Braki" data-img="img/ALTO MAR_track_cover.jpg">
-                        <div class="music-number">4</div>
+                    <div class="music-item" data-title="Alto Mar" data-artist="Rove Braki" data-album="Alto Mar" data-img="img/ALTO MAR_track_cover.jpg" data-duration="3:45">
+                        <div class="music-number">5</div>
                         <div class="music-img-small"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div>
                         <div class="music-info"><div class="music-title">Alto Mar</div><div class="music-artist">Rove Braki</div></div>
                         <div class="music-duration">3:45</div>
@@ -145,13 +159,21 @@
             
             <div id="favoritas" class="content-section">
                 <h2 class="section-title-main">Favoritas</h2>
-                <div class="music-list" id="favoritesList">
-                    <!-- Músicas favoritas serão injetadas aqui -->
-                </div>
+                <div class="music-list" id="favoritesList"></div>
             </div>
             
+            <div id="buscar" class="content-section">
+                <h2 class="section-title-main">Resultados da Busca</h2>
+                <div class="music-list" id="searchResultsContainer">
+                    <p class="search-message">Digite algo na barra de busca para começar.</p>
+                </div>
+            </div>
+
+            <div id="album-view" class="content-section">
+                <!-- Conteúdo do álbum será injetado aqui pelo JavaScript -->
+            </div>
+
             <!-- Outras seções de conteúdo -->
-            <div id="buscar" class="content-section"><h2 class="section-title-main">Buscar</h2><p>Página de busca em construção.</p></div>
             <div id="descobrir" class="content-section"><h2 class="section-title-main">Descobrir</h2><p>Página de descoberta em construção.</p></div>
             <div id="musicas" class="content-section"><h2 class="section-title-main">Músicas</h2><p>Sua coleção de músicas aparecerá aqui.</p></div>
             <div id="recentes" class="content-section"><h2 class="section-title-main">Recentes</h2><p>Suas músicas ouvidas recentemente aparecerão aqui.</p></div>
@@ -164,8 +186,14 @@
     <div class="player">
         <div class="current-song">
             <div class="music-img"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Capa da música tocando"></div>
-            <div class="song-info"><div class="music-title">Smells Like Teen Spirit</div><div class="music-artist">Nirvana</div></div>
-            <button class="control-btn" id="playerFavoriteBtn"><i class="far fa-heart"></i></button>
+            <div class="song-info">
+                <div class="music-title">Smells Like Teen Spirit</div>
+                <div class="music-artist">Nirvana</div>
+            </div>
+            <div class="song-actions">
+                <button class="control-btn" id="playerFavoriteBtn"><i class="far fa-heart"></i></button>
+                <button class="control-btn" id="playerDislikeBtn"><i class="far fa-thumbs-down"></i></button>
+            </div>
         </div>
         <div class="controls-center">
             <div class="control-buttons">
