@@ -4,12 +4,30 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
 
+// A chave será lida a partir das variáveis de ambiente no seu servidor Vercel
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
-  // ... (validações de nome, email e senha continuam as mesmas) ...
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   const { name, email, password } = req.body;
-  // ... (código de validação omitido por brevidade) ...
+
+  // Validação robusta no backend
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
+  if (name.trim().length < 4) {
+    return res.status(400).json({ error: 'Name must be at least 4 characters long' });
+  }
+  if (/\s/.test(name)) {
+    return res.status(400).json({ error: 'Name cannot contain spaces' });
+  }
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({ error: 'Password: 4+ chars, 1 letter, 1 number, 1 special char.' });
+  }
 
   const kv = createClient({
     url: process.env.KV_REST_API_URL,
@@ -24,8 +42,12 @@ export default async function handler(req, res) {
     kv.get(`name:${normalizedName}`)
   ]);
   
-  if (existingUser) { return res.status(409).json({ error: 'Email already in use' }); }
-  if (nameTaken) { return res.status(409).json({ error: 'Name already taken' }); }
+  if (existingUser) {
+    return res.status(409).json({ error: 'Email already in use' });
+  }
+  if (nameTaken) {
+    return res.status(409).json({ error: 'Name already taken (case-insensitive)' });
+  }
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = {
@@ -34,30 +56,27 @@ export default async function handler(req, res) {
     password: hashedPassword,
     following: [],
     votes: {},
-    isVerified: false // MUDANÇA: Novo campo para status de verificação
+    isVerified: false // Conta começa como não verificada
   };
   
   await kv.set(`user:${normalizedEmail}`, user);
   await kv.set(`name:${normalizedName}`, 1);
 
-  // MUDANÇA: Gerar token de verificação e enviar e-mail
-  const verificationToken = jwt.sign(
-    { email: normalizedEmail },
-    process.env.JWT_SECRET,
-    { expiresIn: '1d' } // Token válido por 1 dia
-  );
-
-  const verificationUrl = `https://SEU-DOMINIO.com/api/verify-email?token=${verificationToken}`;
+  // Gerar token de verificação e construir a URL de verificação
+  const verificationToken = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-email?token=${verificationToken}`;
 
   try {
+    // CORREÇÃO: Usando seu domínio verificado no endereço 'from'
     await resend.emails.send({
-      from: 'onboarding@resend.dev', // Ou seu domínio verificado
+      from: 'Avrenpedia <nao-responda@avrenpedia.com>',
       to: normalizedEmail,
       subject: 'Verify Your Avrenpedia Account',
-      html: `<p>Welcome to Avrenpedia! Click <a href="${verificationUrl}">here</a> to verify your email.</p>`
+      html: `<h1>Welcome to Avrenpedia!</h1><p>Please click the link below to verify your email address:</p><a href="${verificationUrl}" style="background-color: #E50914; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a><p>This link will expire in 24 hours.</p>`
     });
-    // Não retorna mais um token de login, apenas uma mensagem de sucesso.
+
     res.status(201).json({ message: 'Registration successful! Please check your email to verify your account.' });
+  
   } catch (error) {
     console.error('Email sending error:', error);
     res.status(500).json({ error: 'Could not send verification email.' });
