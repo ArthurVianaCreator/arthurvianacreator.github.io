@@ -39,38 +39,31 @@ export default async function handler(req, res) {
   } else if (req.method === 'PUT') {
     const updatedData = req.body;
     
-    // Lógica completa e corrigida para atualização de nome
     if (updatedData.name) {
       const newName = updatedData.name.trim();
-
-      // Validação do novo nome
       if (newName.length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
       if (/\s/.test(newName)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
       
       const normalizedNewName = newName.toLowerCase();
       const normalizedOldName = user.name.trim().toLowerCase();
 
-      // Só executa a lógica de verificação se o nome realmente mudou (ignorando maiúsculas/minúsculas)
       if (normalizedNewName !== normalizedOldName) {
         const nameTaken = await kv.get(`name:${normalizedNewName}`);
         if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
         
-        // Usa uma transação para garantir que ambas as operações ocorram
         const multi = kv.multi();
-        multi.del(`name:${normalizedOldName}`); // Libera o nome antigo
-        multi.set(`name:${normalizedNewName}`, 1); // Reserva o novo nome
-        user.name = newName; // Atualiza o nome no objeto do usuário
-        multi.set(`user:${user.email}`, user); // Salva o objeto do usuário atualizado
+        multi.del(`name:${normalizedOldName}`);
+        multi.set(`name:${normalizedNewName}`, 1);
+        user.name = newName;
+        multi.set(`user:${user.email}`, user);
         await multi.exec();
         
       } else {
-        // Permite apenas mudança de capitalização sem verificar
         user.name = newName;
         await kv.set(`user:${user.email}`, user);
       }
     }
 
-    // Lógica para atualizar a lista de artistas seguidos
     if (Array.isArray(updatedData.following)) {
       user.following = updatedData.following;
       await kv.set(`user:${user.email}`, user);
