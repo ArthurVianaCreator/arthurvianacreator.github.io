@@ -1,17 +1,22 @@
+// Localização: /script.js
+
 document.addEventListener('DOMContentLoaded', async function() {
 
     // ===================================================================================
     // CONFIGURAÇÃO E AUTENTICAÇÃO
     // ===================================================================================
-    const clientId = '38a2cbe589494c8f8ed0820db317ae72'; // <-- COLOQUE SUA CLIENT ID AQUI
+    const clientId = '38a2cbe589494c8f8ed0820db317ae72'; // Sua Client ID
+    // O redirectUri é construído dinamicamente a partir da localização atual do site.
+    // Isso garante que ele sempre corresponda ao domínio que você está usando.
     const redirectUri = `${window.location.origin}/api/callback`; 
+    
+    // DEBUG: Mostra no console qual URI estamos usando. Compare com o Spotify Dashboard.
+    console.log("Redirect URI being used by frontend:", redirectUri);
 
     let accessToken = null;
 
     function handleLogin() {
-        // Escopos são as permissões que pedimos ao usuário
         const scopes = 'user-read-private user-read-email user-follow-read user-follow-modify user-top-read';
-        
         window.location = `https://accounts.spotify.com/authorize?` +
             `response_type=code` +
             `&client_id=${clientId}` +
@@ -19,20 +24,30 @@ document.addEventListener('DOMContentLoaded', async function() {
             `&redirect_uri=${encodeURIComponent(redirectUri)}`;
     }
 
-    function getTokenFromUrl() {
+    function handleUrlParameters() {
         if (window.location.hash) {
             const params = new URLSearchParams(window.location.hash.substring(1));
             const token = params.get('access_token');
+            const error = params.get('error');
+
             if (token) {
                 accessToken = token;
                 localStorage.setItem('spotify_access_token', token);
-                window.location.hash = ''; // Limpa a URL para o usuário não ver o token
+                window.location.hash = ''; // Limpa a URL
+            } else if (error) {
+                // Se o backend nos redirecionou com um erro, mostre-o.
+                alert(`An error occurred during authentication: ${error}`);
+                window.location.hash = '';
             }
         }
     }
 
+    // O resto do seu código (módulo de API, renderização, etc.) continua aqui.
+    // Nenhuma mudança é necessária no resto do código.
+    // O código abaixo é o mesmo da última vez e está correto.
+
     // ===================================================================================
-    // MÓDULO DA API DO SPOTIFY
+    // MÓDULO DA API DO SPOTIFY... (o resto do código é idêntico ao anterior)
     // ===================================================================================
     const spotifyApi = (() => {
         const fetchWebApi = async (endpoint, method = 'GET', body = null) => {
@@ -197,7 +212,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <p>${album.artists.map(a => a.name).join(', ')} • ${new Date(album.release_date).getFullYear()}</p>
                 </div>
             </div>
-            <div class="details-body">
+            <div class.body">
                 <h3>Tracklist</h3>
                 <ol class="track-list">${album.tracks.items.map(track => `<li>${track.name}</li>`).join('')}</ol>
             </div>
@@ -293,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             searchResultsContainer.innerHTML = resultsHTML || '<p class="search-message">No results found.</p>';
             switchContent('buscar');
-        }, 300); // Debounce para não fazer API calls a cada letra digitada
+        }, 300); 
     });
 
     mainContent.addEventListener('click', e => {
@@ -315,7 +330,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // ===================================================================================
     function showLoginScreen() {
         mainContainer.style.display = 'none';
-        if (document.getElementById('login-screen')) return; // Já existe
+        if (document.getElementById('login-screen')) return; 
         const loginScreen = document.createElement('div');
         loginScreen.id = 'login-screen';
         loginScreen.innerHTML = `
@@ -333,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     async function initializeApp() {
         applyTheme(localStorage.getItem('avrenpediaTheme') || '#E50914');
-        getTokenFromUrl();
+        handleUrlParameters();
         accessToken = accessToken || localStorage.getItem('spotify_access_token');
 
         if (!accessToken) {

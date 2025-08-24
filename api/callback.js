@@ -1,4 +1,4 @@
-// Este arquivo vai em: /api/callback.js
+// Localização: /api/callback.js
 
 export default async function handler(req, res) {
     const { code } = req.query;
@@ -9,8 +9,7 @@ export default async function handler(req, res) {
   
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
-    // A ÚNICA MUDANÇA É ESTA LINHA:
-    // Usamos nossa variável de ambiente SITE_URL em vez da automática da Vercel.
+    // Usamos nossa variável de ambiente SITE_URL para garantir consistência.
     const siteUrl = process.env.SITE_URL; 
   
     const params = new URLSearchParams();
@@ -29,19 +28,20 @@ export default async function handler(req, res) {
       });
   
       const data = await response.json();
+      const frontendUrl = `https://${siteUrl}`;
   
       if (!response.ok) {
         // Se falhar, redireciona de volta com uma mensagem de erro clara
-        const frontendUrl = `https://${siteUrl}`;
-        return res.redirect(`${frontendUrl}#error=${encodeURIComponent(data.error_description || 'Failed to fetch token')}`);
+        throw new Error(data.error_description || 'Failed to fetch token');
       }
   
-      // Redireciona de volta para a página inicial, passando os tokens no hash (#)
-      const frontendUrl = `https://${siteUrl}`;
+      // Se tiver sucesso, redireciona para a página inicial com os tokens
       res.redirect(`${frontendUrl}#access_token=${data.access_token}&refresh_token=${data.refresh_token}`);
   
     } catch (error) {
+      // Se ocorrer um erro, mostra o erro na URL para depuração
+      const frontendUrl = `https://${siteUrl}`;
       console.error('Error in callback:', error);
-      res.status(500).send(`An error occurred: ${error.message}`);
+      res.redirect(`${frontendUrl}#error=${encodeURIComponent(error.message)}`);
     }
   }
