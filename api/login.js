@@ -1,7 +1,7 @@
 // /api/login.js
 
 import { createClient } from '@vercel/kv';
-import bcrypt from 'bcryptjs'; // <-- MUDANÇA AQUI
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
@@ -16,12 +16,13 @@ export default async function handler(req, res) {
     token: process.env.KV_REST_API_TOKEN,
   });
 
-  const userString = await kv.get(`user:${email}`);
-  if (!userString) {
+  // CORREÇÃO AQUI: kv.get() já retorna um objeto, não precisamos de JSON.parse
+  const user = await kv.get(`user:${email}`);
+  if (!user) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  const user = JSON.parse(userString);
+  // A variável user já é um objeto, então podemos usá-la diretamente.
   const passwordMatch = await bcrypt.compare(password, user.password);
 
   if (!passwordMatch) {

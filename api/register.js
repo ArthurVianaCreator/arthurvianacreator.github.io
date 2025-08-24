@@ -1,7 +1,7 @@
 // /api/register.js
 
 import { createClient } from '@vercel/kv';
-import bcrypt from 'bcryptjs'; // <-- MUDANÇA AQUI
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
@@ -19,6 +19,7 @@ export default async function handler(req, res) {
     token: process.env.KV_REST_API_TOKEN,
   });
 
+  // CORREÇÃO AQUI: kv.get() já retorna o objeto diretamente.
   const existingUser = await kv.get(`user:${email}`);
   if (existingUser) {
     return res.status(409).json({ error: 'Email already in use' });
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = { name, email, password: hashedPassword, following: [] };
   
-  await kv.set(`user:${email}`, JSON.stringify(user));
+  await kv.set(`user:${email}`, user); // <-- Podemos salvar o objeto diretamente também
 
   const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
   

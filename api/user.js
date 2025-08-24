@@ -16,8 +16,9 @@ async function authenticate(req) {
 
   try {
     const { email } = jwt.verify(token, process.env.JWT_SECRET);
-    const userString = await kv.get(`user:${email}`);
-    return userString ? JSON.parse(userString) : null;
+    // CORREÇÃO AQUI: kv.get() já retorna o objeto.
+    const user = await kv.get(`user:${email}`);
+    return user;
   } catch (error) {
     return null;
   }
@@ -35,14 +36,14 @@ export default async function handler(req, res) {
   });
 
   if (req.method === 'GET') {
-    const { password, ...userData } = user; // NUNCA retorne a senha
+    const { password, ...userData } = user;
     res.status(200).json(userData);
   } else if (req.method === 'PUT') {
     const updatedData = req.body;
     if (updatedData.name) user.name = updatedData.name;
     if (Array.isArray(updatedData.following)) user.following = updatedData.following;
     
-    await kv.set(`user:${user.email}`, JSON.stringify(user));
+    await kv.set(`user:${user.email}`, user);
     
     const { password, ...userData } = user;
     res.status(200).json(userData);
