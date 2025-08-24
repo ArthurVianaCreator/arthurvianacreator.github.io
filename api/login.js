@@ -12,10 +12,6 @@ export default async function handler(req, res) {
 
   if (!user) { return res.status(401).json({ error: 'Invalid email or password' }); }
 
-  if (!user.isVerified) {
-    return res.status(403).json({ error: 'Please verify your email before logging in.' });
-  }
-
   const passwordMatch = await bcrypt.compare(password, user.password);
   if (!passwordMatch) { return res.status(401).json({ error: 'Invalid email or password' }); }
 

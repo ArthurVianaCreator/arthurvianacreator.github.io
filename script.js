@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         login: (e, p) => api.manager._request('login', 'POST', { email: e, password: p }),
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
         recoverPassword: (e) => api.manager._request('recover-password', 'POST', { email: e }),
-        resetPassword: (token, newPassword) => api.manager._request('reset-password', 'POST', { token, newPassword }),
         fetchUser: () => api.manager._request('user', 'GET'),
         updateUser: (d) => api.manager._request('user', 'PUT', d),
         getBatchVotes: (items) => api.manager._request('get-batch-votes', 'POST', { items }),
@@ -72,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     auth.manager = {
         async init() { if (localStorage.getItem('authToken')) { try { state.currentUser = await api.manager.fetchUser(); } catch (e) { this.logout(); }}},
         async login(email, password) { const data = await api.manager.login(email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
-        async register(name, email, password) { return api.manager.register(name, email, password); },
+        async register(name, email, password) { const data = await api.manager.register(name, email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
         isFollowing: (id) => state.currentUser?.following.some(a => a.id === id)
     };
@@ -82,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), libraryNavItem: document.getElementById('libraryNavItem'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), forgotPasswordModal: document.getElementById('forgotPasswordModal'),
-            resetPasswordModal: document.getElementById('resetPasswordModal'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
             homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid')
         },
@@ -209,7 +207,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('forgotSubmitBtn').addEventListener('click', handleForgotSubmit);
-        document.getElementById('resetPasswordSubmitBtn').addEventListener('click', handleResetPasswordSubmit);
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { const target = item.dataset.target; if (target === 'seguindo') renderFollowingPage(); ui.manager.switchContent(target); }));
         document.querySelectorAll('.color-swatch').forEach(swatch => swatch.addEventListener('click', () => ui.manager.applyTheme(swatch.dataset.color)));
         document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); ui.manager.switchContent('inicio'); location.reload(); });
@@ -240,8 +237,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             await auth.manager.login(modal.querySelector('#loginEmail').value, modal.querySelector('#loginPassword').value);
             ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
         } catch (error) {
-            if (error.message.includes('verify your email')) { ui.manager.showModalError(modal, 'Please verify your email before logging in.'); }
-            else { ui.manager.showModalError(modal, error.message); }
+            ui.manager.showModalError(modal, error.message);
         } finally { btn.disabled = false; btn.textContent = 'Login'; }
     }
 
@@ -254,9 +250,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!passwordRegex.test(password)) { return ui.manager.showModalError(modal, 'Password: 4+ chars, 1 letter, 1 number, 1 special char.'); }
         btn.disabled = true; btn.textContent = 'Creating...';
         try {
-            const response = await auth.manager.register(name, email, password);
-            modal.querySelector('#registerName').value = ''; modal.querySelector('#registerEmail').value = ''; modal.querySelector('#registerPassword').value = '';
-            ui.manager.showModalSuccess(modal, response.message);
+            await auth.manager.register(name, email, password);
+            ui.manager.closeAllModals();
+            ui.manager.updateForAuthState();
+            renderHomePage(); // Atualiza a página para refletir o estado de login
         } catch (error) {
             ui.manager.showModalError(modal, error.message);
         } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
@@ -286,24 +283,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         } finally { btn.disabled = false; btn.textContent = 'Send Recovery Link'; }
     }
 
-    async function handleResetPasswordSubmit(e) {
-        const btn = e.target; const modal = ui.manager.dom.resetPasswordModal; ui.manager.clearModalMessages(modal);
-        const token = modal.dataset.token; const newPassword = modal.querySelector('#newPassword').value;
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
-        if (!passwordRegex.test(newPassword)) { return ui.manager.showModalError(modal, 'Password: 4+ chars, 1 letter, 1 number, 1 special char.'); }
-        btn.disabled = true; btn.textContent = 'Resetting...';
-        try {
-            const response = await api.manager.resetPassword(token, newPassword);
-            ui.manager.showModalSuccess(modal, response.message + " You can now log in.");
-            btn.style.display = 'none';
-            setTimeout(() => { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); btn.style.display = 'inline-block'; }, 4000);
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally {
-            if (btn.style.display !== 'none') { btn.disabled = false; btn.textContent = 'Set New Password'; }
-        }
-    }
-
     async function init() {
         try {
             await api.manager.fetchSpotifyAppToken();
@@ -312,14 +291,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.applyTheme(localStorage.getItem('avrenpediaTheme') || '#E50914');
             setupEventListeners();
             await renderHomePage();
-            const urlParams = new URLSearchParams(window.location.search);
-            const resetToken = urlParams.get('resetToken');
-            if (resetToken) {
-                const modal = ui.manager.dom.resetPasswordModal;
-                modal.dataset.token = resetToken;
-                ui.manager.openModal(modal);
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }
             ui.manager.dom.appLoader.style.display = 'none';
             ui.manager.dom.mainContainer.style.display = 'flex';
         } catch (error) {

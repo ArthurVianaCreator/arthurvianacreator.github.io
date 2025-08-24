@@ -2,7 +2,6 @@
 import { createClient } from '@vercel/kv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-// import { Resend } from 'resend'; // TEMPORARIAMENTE DESATIVADO
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
@@ -25,12 +24,11 @@ export default async function handler(req, res) {
   if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = { name: name.trim(), email: normalizedEmail, password: hashedPassword, following: [], votes: {}, isVerified: false };
+  const user = { name: name.trim(), email: normalizedEmail, password: hashedPassword, following: [], votes: {} };
   
   await kv.set(`user:${normalizedEmail}`, user);
   await kv.set(`name:${normalizedName}`, 1);
 
-  // SIMULAÇÃO: O código do Resend foi removido para depuração.
-  console.log("DEBUG: Email sending is temporarily disabled. Registration successful.");
-  res.status(201).json({ message: 'Registration successful! Please check your email to verify your account. (DEBUG MODE)' });
+  const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  res.status(201).json({ token });
 }
