@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const isFollowing = this.isFollowing(artist.id);
             const updatedFollowing = isFollowing
                 ? state.currentUser.following.filter(a => a.id !== artist.id)
-                : [...state.currentUser.following, artist];
+                : [...state.currentUser.following, {id: artist.id, name: artist.name, images: artist.images}];
             
             const updatedUser = await api.manager.updateUser({ following: updatedFollowing });
             state.currentUser = updatedUser;
@@ -126,8 +126,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     
-    // ... O resto do código (UI, QUIZZ, Eventos, Init) continua abaixo ...
-
     // ===================================================================================
     // UI MANAGER: DOM manipulation and rendering
     // ===================================================================================
@@ -137,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), librarySection: document.getElementById('librarySection'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), forgotPasswordModal: document.getElementById('forgotPasswordModal'),
             quizzContainer: document.getElementById('quizz-container'), quizzIntro: document.getElementById('quizz-intro'), quizzQuestions: document.getElementById('quizz-questions'), discoverResults: document.getElementById('discover-results'), discoverGrid: document.getElementById('discover-grid'),
+            followedArtistsGrid: document.getElementById('followed-artists-grid'),
         },
         updateForAuthState() {
             const user = state.currentUser;
@@ -168,7 +167,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         openModal(modal) { modal.classList.add('active'); },
         closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
         showModalError(modal, message) { modal.querySelector('.modal-error').textContent = message; },
-        showModalSuccess(modal, message) { modal.querySelector('.modal-success').textContent = message; }
+        showModalSuccess(modal, message) { modal.querySelector('.modal-success').textContent = message; },
+        clearModalMessages(modal) {
+            modal.querySelector('.modal-error').textContent = '';
+            const success = modal.querySelector('.modal-success');
+            if (success) success.textContent = '';
+        }
     };
 
     // ===================================================================================
@@ -206,13 +210,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             Object.entries(this.answers).forEach(([key, value]) => { if(key !== 'seed_genres') params.append(key, value); });
             
             const recommendations = await api.manager.getSpotifyRecommendations(params.toString());
-            ui.manager.populateGrid(ui.manager.dom.discoverGrid, recommendations?.tracks.map(t => ({...t.album, type: 'album'})) || []);
+            const uniqueAlbums = [...new Map(recommendations?.tracks.map(t => [t.album.id, {...t.album, type: 'album'}])).values()];
+            ui.manager.populateGrid(ui.manager.dom.discoverGrid, uniqueAlbums || []);
             ui.manager.dom.quizzQuestions.style.display = 'none';
             ui.manager.dom.discoverResults.style.display = 'block';
         }
     };
     
-    // ... Funções de renderização de página
+    // ===================================================================================
+    // PAGE RENDER FUNCTIONS
+    // ===================================================================================
     async function renderHomePage() {
         const newReleases = await api.manager.getSpotifyNewReleases();
         ui.manager.populateGrid(document.getElementById('home-albums-grid'), newReleases?.albums?.items);
@@ -233,7 +240,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (!artist) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Artist not found.</p>`; return; }
         
-        const followBtnHTML = state.currentUser ? `<button class="follow-btn ${auth.manager.isFollowing(artistId) ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${auth.manager.isFollowing(artistId) ? 'fa-check' : 'fa-plus'}"></i><span>${auth.manager.isFollowing(artistId) ? 'Following' : 'Follow'}</span></button>` : '';
+        const isFollowing = auth.manager.isFollowing(artistId);
+        const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
         const membersHTML = wikiInfo?.members?.length > 0 ? `<div class="artist-sidebar"><h3>Members</h3><ul class="member-list">${wikiInfo.members.map(m => `<li>${m}</li>`).join('')}</ul></div>` : '';
         
         ui.manager.dom.detailsView.innerHTML = `
@@ -242,108 +250,164 @@ document.addEventListener('DOMContentLoaded', async function() {
             <div class="artist-layout">
                 <div class="artist-main-content">
                     ${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}
-                    <h3>Discography</h3><div class="music-grid">${albumsData?.items.map(ui.manager.renderMusicCard).join('') || '<p>No albums found.</p>'}</div>
+                    <h3>Discography</h3><div class="music-grid">${albumsData?.items ? ui.manager.populateGrid(document.createElement('div'), albumsData.items).innerHTML : '<p>No albums found.</p>'}</div>
                 </div>
                 ${membersHTML}
             </div>`;
     }
 
-    function setupEventListeners() {
-        // Eventos de clique globais para modais, dropdowns, etc.
-        document.body.addEventListener('click', e => {
-            // Cards de música
-            const card = e.target.closest('.music-card');
-            if (card) {
-                const { type, id, name } = card.dataset;
-                if (type === 'artist') renderArtistView(id, decodeURIComponent(name));
-                // else if (type === 'album') renderAlbumView(id); // Você pode adicionar a view de álbum aqui
-                return;
-            }
+    function renderFollowingPage() {
+        if (!state.currentUser) return;
+        ui.manager.populateGrid(ui.manager.dom.followedArtistsGrid, state.currentUser.following.map(a => ({...a, type: 'artist'})));
+    }
 
-            // Botão de seguir
+    // ===================================================================================
+    // EVENT LISTENERS AND HANDLERS
+    // ===================================================================================
+    function setupEventListeners() {
+        // Main Click Handler (delegation)
+        document.body.addEventListener('click', async e => {
+            const card = e.target.closest('.music-card');
+            if (card) return renderArtistView(card.dataset.id, decodeURIComponent(card.dataset.name));
+
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) {
                 const artistId = followBtn.dataset.artistId;
-                const artistName = document.querySelector('.details-info h2').textContent;
-                const artistImage = document.querySelector('.details-img img').src;
-                auth.manager.toggleFollow({ id: artistId, name: artistName, images: [{url: artistImage}] }).then(isFollowing => {
-                    followBtn.classList.toggle('following', isFollowing);
-                    followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
-                    followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
-                });
+                const artist = await api.manager.getSpotifyArtist(artistId);
+                const isNowFollowing = await auth.manager.toggleFollow(artist);
+                followBtn.classList.toggle('following', isNowFollowing);
+                followBtn.querySelector('i').className = `fas ${isNowFollowing ? 'fa-check' : 'fa-plus'}`;
+                followBtn.querySelector('span').textContent = isNowFollowing ? 'Following' : 'Follow';
                 return;
             }
 
-            // Botão de voltar
-            if (e.target.closest('.back-btn')) {
-                ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
-            }
-
-            // Abrir modais
-            if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
-            if (e.target.closest('#changeNameBtn')) ui.manager.openModal(ui.manager.dom.nameChangeModal);
+            if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
+            if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
+            if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
-            if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
+            if (e.target.closest('#switchToLogin') || e.target.closest('#backToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
             if (e.target.closest('#switchToForgot')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.forgotPasswordModal); }
-            if (e.target.closest('#backToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
-            if (e.target.closest('#closeNameBtn')) ui.manager.closeAllModals();
-
-            // Fechar modais clicando no fundo
-            if (e.target.classList.contains('modal-overlay')) ui.manager.closeAllModals();
-
-            // Abrir/Fechar dropdowns
-            if (e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.toggle('active');
-            else ui.manager.dom.userDropdown.classList.remove('active');
-            
-            // Seletor de tema
-            if (e.target.closest('#settingsBtn')) ui.manager.dom.themePicker.classList.toggle('active');
-            else if (!e.target.closest('.theme-picker')) ui.manager.dom.themePicker.classList.remove('active');
-            
-            // Quizz
-            if(e.target.closest('.start-quizz-btn')) quizz.manager.start();
-            if(e.target.closest('#retakeQuizzBtn')) quizz.manager.start();
+            if (e.target.closest('#closeNameBtn') || e.target.classList.contains('modal-overlay')) return ui.manager.closeAllModals();
+            if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
+            if (e.target.closest('#settingsBtn')) return document.getElementById('themePicker').classList.toggle('active');
+            if(e.target.closest('.start-quizz-btn')) return quizz.manager.start();
+            if(e.target.closest('#retakeQuizzBtn')) return quizz.manager.start();
             const quizzOption = e.target.closest('.quizz-option');
-            if(quizzOption) quizz.manager.handleAnswer(quizzOption.dataset.value);
-
-            // Submissão de Modais
-            if (e.target.closest('#loginSubmitBtn')) handleLoginSubmit();
-            if (e.target.closest('#registerSubmitBtn')) handleRegisterSubmit();
-            if (e.target.closest('#saveNameBtn')) handleNameChangeSubmit();
-            if (e.target.closest('#forgotSubmitBtn')) handleForgotSubmit();
+            if(quizzOption) return quizz.manager.handleAnswer(quizzOption.dataset.value);
+            
+            // Close dropdowns if clicking outside
+            if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
+            if (!e.target.closest('#settingsBtn')) document.getElementById('themePicker').classList.remove('active');
         });
-        
-        // Navegação principal
+
+        // Modal Form Submissions
+        document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
+        document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
+        document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
+        document.getElementById('forgotSubmitBtn').addEventListener('click', handleForgotSubmit);
+
+        // Other Listeners
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => {
             const target = item.dataset.target;
             if (target === 'seguindo') renderFollowingPage();
             ui.manager.switchContent(target);
         }));
-
-        // Outros eventos
         document.querySelectorAll('.color-swatch').forEach(swatch => swatch.addEventListener('click', () => ui.manager.applyTheme(swatch.dataset.color)));
         document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); });
+        document.getElementById('menuBtn').addEventListener('click', () => document.querySelector('.main-container').classList.add('sidebar-open'));
+        document.getElementById('closeSidebarBtn').addEventListener('click', () => document.querySelector('.main-container').classList.remove('sidebar-open'));
+        
+        let searchTimeout;
+        ui.manager.dom.searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            if (!query) return ui.manager.switchContent('inicio');
+            searchTimeout = setTimeout(async () => {
+                const results = await api.manager.searchSpotify(query, 'artist,album');
+                const resultsContainer = document.getElementById('searchResultsContainer');
+                let html = '';
+                if (results?.artists?.items?.length) html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${results.artists.items.map(ui.manager.renderMusicCard).join('')}</div>`;
+                if (results?.albums?.items?.length) html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${results.albums.items.map(ui.manager.renderMusicCard).join('')}</div>`;
+                resultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
+                ui.manager.switchContent('buscar');
+            }, 300);
+        });
     }
-    
-    // ... Funções de handler para submissão de formulários
-    async function handleLoginSubmit() {
+
+    async function handleLoginSubmit(e) {
+        const btn = e.target;
         const modal = ui.manager.dom.loginModal;
+        ui.manager.clearModalMessages(modal);
         const email = modal.querySelector('#loginEmail').value;
         const password = modal.querySelector('#loginPassword').value;
+        btn.disabled = true; btn.textContent = 'Logging in...';
         try {
             await auth.manager.login(email, password);
             ui.manager.closeAllModals();
             ui.manager.updateForAuthState();
         } catch (error) {
             ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Login';
         }
     }
-    async function handleRegisterSubmit() {
-        // Adicione a lógica aqui
+    
+    async function handleRegisterSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.registerModal;
+        ui.manager.clearModalMessages(modal);
+        const name = modal.querySelector('#registerName').value;
+        const email = modal.querySelector('#registerEmail').value;
+        const password = modal.querySelector('#registerPassword').value;
+        btn.disabled = true; btn.textContent = 'Creating...';
+        try {
+            await auth.manager.register(name, email, password);
+            ui.manager.closeAllModals();
+            ui.manager.updateForAuthState();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Create Account';
+        }
     }
-    // ... e outros handlers
+
+    async function handleNameChangeSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.nameChangeModal;
+        const newName = modal.querySelector('#newNameInput').value;
+        if (!newName) return ui.manager.showModalError(modal, 'Name cannot be empty.');
+        
+        btn.disabled = true; btn.textContent = 'Saving...';
+        try {
+            const updatedUser = await api.manager.updateUser({ name: newName });
+            state.currentUser = updatedUser;
+            ui.manager.updateForAuthState();
+            ui.manager.closeAllModals();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save';
+        }
+    }
+
+    async function handleForgotSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.forgotPasswordModal;
+        ui.manager.clearModalMessages(modal);
+        const email = modal.querySelector('#forgotEmail').value;
+        btn.disabled = true; btn.textContent = 'Sending...';
+        try {
+            const result = await api.manager.recoverPassword(email);
+            ui.manager.showModalSuccess(modal, result.message);
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Send Recovery Link';
+        }
+    }
 
     // ===================================================================================
-    // INICIALIZAÇÃO DA APLICAÇÃO
+    // INITIALIZATION
     // ===================================================================================
     async function init() {
         try {
@@ -352,8 +416,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.updateForAuthState();
             ui.manager.applyTheme(localStorage.getItem('avrenpediaTheme') || '#E50914');
             setupEventListeners();
-            renderHomePage();
-
+            await renderHomePage();
             ui.manager.dom.appLoader.style.display = 'none';
             ui.manager.dom.mainContainer.style.display = 'grid';
         } catch (error) {
