@@ -68,12 +68,47 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     
+    // ===================================================================================
+    // AUTH MANAGER
+    // ===================================================================================
     auth.manager = {
         async init() { if (localStorage.getItem('authToken')) { try { state.currentUser = await api.manager.fetchUser(); } catch (e) { this.logout(); }}},
         async login(email, password) { const data = await api.manager.login(email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         async register(name, email, password) { const data = await api.manager.register(name, email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
-        isFollowing: (id) => state.currentUser?.following.some(a => a.id === id)
+        isFollowing: (id) => state.currentUser?.following.some(a => a.id === id),
+
+        // ==============================================================================
+        // >>>>> CORREÇÃO: A FUNÇÃO "toggleFollow" FOI ADICIONADA AQUI <<<<<
+        // ==============================================================================
+        async toggleFollow(artist) {
+            if (!state.currentUser || !artist) return;
+
+            const artistData = {
+                id: artist.id,
+                name: artist.name,
+                images: artist.images,
+                genres: artist.genres
+            };
+            
+            const followingList = state.currentUser.following || [];
+            const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
+            let updatedFollowingList;
+
+            if (isCurrentlyFollowing) {
+                // Deixar de seguir
+                updatedFollowingList = followingList.filter(a => a.id !== artist.id);
+            } else {
+                // Seguir
+                updatedFollowingList = [...followingList, artistData];
+            }
+
+            // Atualiza o usuário no backend
+            state.currentUser = await api.manager.updateUser({ following: updatedFollowingList });
+            
+            // Retorna o novo status
+            return !isCurrentlyFollowing;
+        }
     };
     
     ui.manager = {
@@ -187,8 +222,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             const clickableArtist = e.target.closest('.clickable-artist');
             if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
+            
+            // ==============================================================================
+            // >>>>> CORREÇÃO: O CÓDIGO DO BOTÃO "Follow" FOI ENVOLVIDO EM UM TRY...CATCH <<<<<
+            // ==============================================================================
             const followBtn = e.target.closest('.follow-btn');
-            if (followBtn) { const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); const isFollowing = await auth.manager.toggleFollow(artist); followBtn.classList.toggle('following', isFollowing); followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`; followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow'; return; }
+            if (followBtn) { 
+                try {
+                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); 
+                    const isFollowing = await auth.manager.toggleFollow(artist); 
+                    followBtn.classList.toggle('following', isFollowing); 
+                    followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
+                    followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
+                } catch (error) {
+                    console.error("Follow/Unfollow failed:", error);
+                    alert(error.message);
+                }
+                return; 
+            }
+            
             const passToggle = e.target.closest('.password-toggle');
             if (passToggle) { const input = passToggle.previousElementSibling; const isPassword = input.type === 'password'; input.type = isPassword ? 'text' : 'password'; passToggle.className = `fas ${isPassword ? 'fa-eye-slash' : 'fa-eye'} password-toggle`; return; }
             if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
