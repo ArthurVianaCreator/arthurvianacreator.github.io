@@ -33,8 +33,6 @@ export default async function handler(req, res) {
     }
 
     const kv = createClient({
-      url: KV_REST_API_URL,
-      token: KV_REST_API_TOKEN,
     });
 
     if (req.method === 'GET') {
