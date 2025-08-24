@@ -5,30 +5,36 @@ import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
-  
-  const { name, email, password } = req.body;
-  
-  if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
-  if (name.trim().length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
-  if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
-  if (!passwordRegex.test(password)) { return res.status(400).json({ error: 'Password does not meet requirements.' }); }
 
-  const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
-  const normalizedName = name.trim().toLowerCase();
-  const normalizedEmail = email.trim().toLowerCase();
+  try { // Adicionado bloco try...catch
+    const { name, email, password } = req.body;
 
-  const [existingUser, nameTaken] = await Promise.all([ kv.get(`user:${normalizedEmail}`), kv.get(`name:${normalizedName}`) ]);
-  
-  if (existingUser) { return res.status(409).json({ error: 'Email already in use' }); }
-  if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+    if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
+    if (name.trim().length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
+    if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
+    if (!passwordRegex.test(password)) { return res.status(400).json({ error: 'Password does not meet requirements.' }); }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = { name: name.trim(), email: normalizedEmail, password: hashedPassword, following: [], votes: {} };
-  
-  await kv.set(`user:${normalizedEmail}`, user);
-  await kv.set(`name:${normalizedName}`, 1);
+    const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
+    const normalizedName = name.trim().toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
 
-  const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  res.status(201).json({ token });
+    const [existingUser, nameTaken] = await Promise.all([ kv.get(`user:${normalizedEmail}`), kv.get(`name:${normalizedName}`) ]);
+    
+    if (existingUser) { return res.status(409).json({ error: 'Email already in use' }); }
+    if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = { name: name.trim(), email: normalizedEmail, password: hashedPassword, following: [], votes: {} };
+    
+    await kv.set(`user:${normalizedEmail}`, user);
+    await kv.set(`name:${normalizedName}`, 1);
+
+    const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token });
+
+  } catch (error) {
+    console.error('Register API Error:', error);
+    return res.status(500).json({ error: 'A server-side error occurred during registration.' });
+  }
 }
