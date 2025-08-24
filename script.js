@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     // App State and Managers
     const state = { currentUser: null, spotifyAppToken: null };
-    const api = {}, auth = {}, ui = {}, quizz = {};
+    const api = {}, auth = {}, ui = {};
 
     // ===================================================================================
     // API MANAGER
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
         getSpotifyNewReleases: () => api.manager._spotifyRequest(`browse/new-releases?limit=12`),
         getSpotifySeveralArtists: (ids) => api.manager._spotifyRequest(`artists?ids=${ids.join(',')}`),
-        getSpotifyRecommendations: (p) => api.manager._spotifyRequest(`recommendations?${p}`),
         getWikipediaInfo: async (artistName) => {
             try {
                 const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(artistName + " band musician")}&srlimit=1&format=json&origin=*`;
@@ -65,6 +64,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     
+    // ===================================================================================
+    // AUTH MANAGER
+    // ===================================================================================
     auth.manager = {
         async init() { if (localStorage.getItem('authToken')) { try { state.currentUser = await api.manager.fetchUser(); } catch (e) { this.logout(); }}},
         async login(email, password) { const data = await api.manager.login(email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
@@ -80,12 +82,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     
+    // ===================================================================================
+    // UI MANAGER
+    // ===================================================================================
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), librarySection: document.getElementById('librarySection'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), forgotPasswordModal: document.getElementById('forgotPasswordModal'),
-            quizzIntro: document.getElementById('quizz-intro'), quizzQuestions: document.getElementById('quizz-questions'), discoverResults: document.getElementById('discover-results'), discoverGrid: document.getElementById('discover-grid'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
             homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid')
         },
@@ -101,53 +105,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         showModalSuccess(m, msg) { m.querySelector('.modal-success').textContent = msg; },
         clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; const s = m.querySelector('.modal-success'); if (s) s.textContent = ''; }
     };
-
-    quizz.manager = {
-        currentQuestionIndex: 0, answers: {},
-        questions: [ { id: 'mood', text: "How are you feeling right now?", options: { 'Happy 😃': { target_valence: 0.8 }, 'Energetic ⚡️': { target_energy: 0.8 }, 'Chill 😌': { target_energy: 0.3 }, 'Sad 😢': { target_valence: 0.2 } } }, { id: 'genre', text: "Pick a core sound:", options: { 'Pop Vocals': { seed_genres: 'pop' }, 'Rock Guitar': { seed_genres: 'rock' }, 'Hip-Hop Beats': { seed_genres: 'hip-hop' }, 'Electronic Synths': { seed_genres: 'electronic' } } }, { id: 'dance', text: "Do you feel like dancing?", options: { 'Absolutely!': { target_danceability: 0.9 }, "Maybe a little": { target_danceability: 0.6 }, 'Not at all': { target_acousticness: 0.8 } } } ],
-        start() { this.currentQuestionIndex = 0; this.answers = {}; ui.manager.dom.quizzIntro.style.display = 'none'; ui.manager.dom.quizzQuestions.style.display = 'block'; ui.manager.dom.discoverResults.style.display = 'none'; this.renderQuestion(); },
-        renderQuestion() { const q = this.questions[this.currentQuestionIndex]; const opts = Object.entries(q.options).map(([txt, val]) => `<div class="quizz-option" data-value='${JSON.stringify(val)}'>${txt}</div>`).join(''); ui.manager.dom.quizzQuestions.innerHTML = `<h3>${q.text}</h3><div class="quizz-options">${opts}</div>`; },
-        handleAnswer(val) { Object.assign(this.answers, JSON.parse(val)); this.currentQuestionIndex++; if (this.currentQuestionIndex < this.questions.length) this.renderQuestion(); else this.finish(); },
-        async finish() {
-            ui.manager.dom.quizzQuestions.innerHTML = ui.manager.renderLoader('Finding your recommendations...');
-            let params = new URLSearchParams();
-            params.append('seed_genres', this.answers.seed_genres || 'pop,rock,hip-hop');
-            Object.entries(this.answers).forEach(([key, value]) => { if(key !== 'seed_genres') params.append(key, value); });
-            
-            try {
-                const recommendations = await api.manager.getSpotifyRecommendations(params.toString());
-                const uniqueAlbums = [...new Map(recommendations?.tracks.map(t => [t.album.id, {...t.album, type: 'album'}])).values()];
-                ui.manager.dom.discoverGrid.innerHTML = ui.manager.populateGrid(uniqueAlbums);
-            } catch (error) {
-                console.error("Failed to get recommendations:", error);
-                ui.manager.dom.discoverGrid.innerHTML = `<p class="search-message">Could not load recommendations. Please try again.</p>`;
-            } finally {
-                ui.manager.dom.quizzQuestions.style.display = 'none';
-                ui.manager.dom.discoverResults.style.display = 'block';
-            }
-        }
-    };
     
+    // ===================================================================================
+    // PAGE RENDER FUNCTIONS
+    // ===================================================================================
     async function renderHomePage() {
-        const [newReleases, featuredIdsResponse] = await Promise.all([
-            api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; }),
-            api.manager.getSpotifyRecommendations("seed_genres=pop,rock,indie,hip-hop&limit=12").catch(e => { console.error(e); return null; })
+        ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.renderLoader('Loading Artists...');
+        ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.renderLoader('Loading Albums...');
+        
+        // MUDANÇA: Lista de artistas famosos
+        const featuredArtistIds = [ '6olE6TJLqED3rqDCT0FyPh', '04gDigrS5kc9YWfZHwBETP', '7jy3rLJdDQY21OgRLCZK48', '3WrFJ7ztbogyGnTHbHJFl2', '1dfeR4HaWDbWqFHLkxsg1d', '36QJpDe2go2KgaRleHCDls', '22bE4uQ6baNwSHPVcDxLCe', '06HL4z0CvFAxyc27GXpf02' ]; // Nirvana, The Beatles, Queen, Red Hot Chili Peppers, Metallica, Michael Jackson, Daft Punk, Queen
+        
+        const [artistsData, newReleases] = await Promise.all([
+            api.manager.getSpotifySeveralArtists(featuredArtistIds).catch(e => { console.error(e); return null; }),
+            api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; })
         ]);
-        ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.populateGrid(newReleases?.albums?.items);
-        const artistIds = [...new Set(featuredIdsResponse?.tracks.flatMap(t => t.artists.map(a => a.id)))];
-        if (artistIds.length) {
-            const artistsData = await api.manager.getSpotifySeveralArtists(artistIds);
-            ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.populateGrid(artistsData?.artists);
-        } else {
-             ui.manager.dom.homeArtistsGrid.innerHTML = `<p class="search-message">Could not load featured artists.</p>`;
-        }
+        
+        if (artistsData) ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.populateGrid(artistsData.artists);
+        else ui.manager.dom.homeArtistsGrid.innerHTML = `<p class="search-message">Could not load featured artists.</p>`;
+
+        if (newReleases) ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.populateGrid(newReleases.albums.items);
+        else ui.manager.dom.homeAlbumsGrid.innerHTML = `<p class="search-message">Could not load new releases.</p>`;
     }
 
     async function renderArtistView(artistId, artistName) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
         
-        // CORREÇÃO CRÍTICA: Executa as chamadas de forma segura para não travar
         const [artist, albumsData, wikiInfo] = await Promise.all([
             api.manager.getSpotifyArtist(artistId).catch(err => { console.error(err); return null; }),
             api.manager.getSpotifyArtistAlbums(artistId).catch(err => { console.error(err); return null; }),
@@ -166,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             <div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${followBtnHTML}</div></div>
             <div class="artist-layout">
                 <div class="artist-main-content">
-                    ${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}
+                    ${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : '<!-- No Wikipedia summary available -->'}
                     <h3>Discography</h3>${discographyHTML}
                 </div>
                 ${membersHTML}
@@ -180,22 +164,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             const card = e.target.closest('.music-card');
             if (card) return renderArtistView(card.dataset.id, decodeURIComponent(card.dataset.name));
             const followBtn = e.target.closest('.follow-btn');
-            if (followBtn) {
-                const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId);
-                const isFollowing = await auth.manager.toggleFollow(artist);
-                followBtn.classList.toggle('following', isFollowing);
-                followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
-                followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
-                return;
-            }
+            if (followBtn) { const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); const isFollowing = await auth.manager.toggleFollow(artist); followBtn.classList.toggle('following', isFollowing); followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`; followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow'; return; }
             const passToggle = e.target.closest('.password-toggle');
-            if (passToggle) {
-                const input = passToggle.previousElementSibling;
-                const isPassword = input.type === 'password';
-                input.type = isPassword ? 'text' : 'password';
-                passToggle.className = `fas ${isPassword ? 'fa-eye-slash' : 'fa-eye'} password-toggle`;
-                return;
-            }
+            if (passToggle) { const input = passToggle.previousElementSibling; const isPassword = input.type === 'password'; input.type = isPassword ? 'text' : 'password'; passToggle.className = `fas ${isPassword ? 'fa-eye-slash' : 'fa-eye'} password-toggle`; return; }
             if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
             if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
@@ -205,10 +176,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#closeNameBtn') || e.target.classList.contains('modal-overlay')) return ui.manager.closeAllModals();
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (e.target.closest('#settingsBtn')) return document.getElementById('themePicker').classList.toggle('active');
-            if(e.target.closest('.start-quizz-btn')) return quizz.manager.start();
-            if(e.target.closest('#retakeQuizzBtn')) return quizz.manager.start();
-            const quizzOption = e.target.closest('.quizz-option');
-            if(quizzOption) return quizz.manager.handleAnswer(quizzOption.dataset.value);
             if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
             if (!e.target.closest('#settingsBtn')) document.getElementById('themePicker').classList.remove('active');
         });
