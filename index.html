@@ -22,6 +22,11 @@
                 <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Home</span></div>
                 <div class="nav-item" data-target="descobrir"><i class="fas fa-compass"></i><span>Discover</span></div>
             </div>
+            <!-- A seção "Sua Biblioteca" só aparece para usuários logados -->
+            <div class="library-section" id="librarySection" style="display: none;">
+                <div class="section-title">YOUR LIBRARY</div>
+                <div class="nav-item" data-target="seguindo"><i class="fas fa-user-check"></i><span>Following</span></div>
+            </div>
         </div>
 
         <div class="main-content">
@@ -31,25 +36,42 @@
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Search for bands, albums...">
                 </div>
-                <!-- ÁREA DE PERFIL E CONFIGURAÇÕES REMOVIDA -->
+                <div class="user-profile-area">
+                    <!-- Botão de Login para visitantes -->
+                    <button class="btn-login" id="loginPromptBtn">Login</button>
+                    <!-- Área do usuário logado (inicialmente escondida) -->
+                    <div class="user-profile" id="userProfile" style="display: none;">
+                        <span id="userName">User</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span>Change Name</span></div>
+                        <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div>
+                    </div>
+                    <button class="control-btn" id="settingsBtn"><i class="fas fa-paint-brush"></i></button>
+                    <div class="theme-picker" id="themePicker">
+                        <div class="color-swatch" data-color="#E50914" style="background: #E50914;"></div>
+                        <div class="color-swatch" data-color="#1DB954" style="background: #1DB954;"></div>
+                        <div class="color-swatch" data-color="#FFC107" style="background: #FFC107;"></div>
+                        <div class="color-swatch" data-color="#007BFF" style="background: #007BFF;"></div>
+                        <div class="color-swatch" data-color="#9b59b6" style="background: #9b59b6;"></div>
+                    </div>
+                </div>
             </div>
 
-            <div id="inicio" class="content-section active">
-                <h2 class="section-title-main">New Releases</h2>
-                <div class="music-grid" id="home-albums-grid"><p class="search-message">Loading...</p></div>
-                <h2 class="section-title-main">Featured Artists</h2>
-                <div class="music-grid" id="home-artists-grid"><p class="search-message">Loading...</p></div>
-            </div>
-
-            <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div class="search-results-grid" id="searchResultsContainer"><p class="search-message">Type something in the search bar to begin.</p></div></div>
+            <div id="inicio" class="content-section active"><h2 class="section-title-main">New Releases</h2><div class="music-grid" id="home-albums-grid"></div><h2 class="section-title-main">Featured Artists</h2><div class="music-grid" id="home-artists-grid"></div></div>
+            <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div class="search-results-grid" id="searchResultsContainer"></div></div>
             <div id="details-view" class="content-section"></div>
-            
-            <div id="descobrir" class="content-section">
-                <h2 class="section-title-main">Discover Great Music</h2>
-                <div class="music-grid" id="discover-grid"><p class="search-message">Loading...</p></div>
-            </div>
+            <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div class="music-grid" id="followed-artists-grid"></div></div>
+            <div id="descobrir" class="content-section"><h2 class="section-title-main">Discover Great Music</h2><div class="music-grid" id="discover-grid"></div></div>
         </div>
     </div>
+
+    <!-- Modais de Login, Cadastro e Troca de Nome -->
+    <div id="loginModal" class="modal-overlay"><div class="modal-content"><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><input type="password" id="loginPassword" placeholder="Password"><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p></div></div>
+    <div id="registerModal" class="modal-overlay"><div class="modal-content"><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><input type="password" id="registerPassword" placeholder="Password"><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
+    <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="closeNameBtn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
+
     <script src="script.js"></script>
 </body>
 </html>
