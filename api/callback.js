@@ -7,11 +7,11 @@ export default async function handler(req, res) {
       return res.status(400).send('Error: Missing authorization code');
     }
   
-    // Pega as chaves secretas das Variáveis de Ambiente da Vercel
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
-    // A Vercel define esta variável automaticamente com a URL do seu site
-    const siteUrl = process.env.VERCEL_URL;
+    // A ÚNICA MUDANÇA É ESTA LINHA:
+    // Usamos nossa variável de ambiente SITE_URL em vez da automática da Vercel.
+    const siteUrl = process.env.SITE_URL; 
   
     const params = new URLSearchParams();
     params.append('grant_type', 'authorization_code');
@@ -31,7 +31,9 @@ export default async function handler(req, res) {
       const data = await response.json();
   
       if (!response.ok) {
-        throw new Error(data.error_description || 'Failed to fetch token');
+        // Se falhar, redireciona de volta com uma mensagem de erro clara
+        const frontendUrl = `https://${siteUrl}`;
+        return res.redirect(`${frontendUrl}#error=${encodeURIComponent(data.error_description || 'Failed to fetch token')}`);
       }
   
       // Redireciona de volta para a página inicial, passando os tokens no hash (#)
