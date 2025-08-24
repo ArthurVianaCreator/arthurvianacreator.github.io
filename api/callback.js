@@ -9,13 +9,16 @@ export default async function handler(req, res) {
   
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
-    // Usamos nossa variável de ambiente SITE_URL para garantir consistência.
+    // A variável SITE_URL ainda é usada para o redirecionamento final.
     const siteUrl = process.env.SITE_URL; 
+    // CORREÇÃO 1: Definir a redirect_uri como um valor fixo para garantir que seja idêntica à do front-end.
+    const redirectUri = 'https://arthurianacreator-github-io.vercel.app/api/callback';
   
     const params = new URLSearchParams();
     params.append('grant_type', 'authorization_code');
     params.append('code', code);
-    params.append('redirect_uri', `https://${siteUrl}/api/callback`);
+    // Usar a variável fixa aqui em vez de construir a partir do siteUrl.
+    params.append('redirect_uri', redirectUri);
   
     try {
       const response = await fetch('https://accounts.spotify.com/api/token', {
@@ -39,7 +42,7 @@ export default async function handler(req, res) {
       res.redirect(`${frontendUrl}#access_token=${data.access_token}&refresh_token=${data.refresh_token}`);
   
     } catch (error) {
-      // Se ocorrer um erro, mostra o erro na URL para depuração
+      // CORREÇÃO 2: Havia um erro de digitação aqui ("httpshttps://").
       const frontendUrl = `https://${siteUrl}`;
       console.error('Error in callback:', error);
       res.redirect(`${frontendUrl}#error=${encodeURIComponent(error.message)}`);

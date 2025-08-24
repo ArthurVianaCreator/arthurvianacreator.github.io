@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // CONFIGURAÇÃO E AUTENTICAÇÃO
     // ===================================================================================
     const clientId = '38a2cbe589494c8f8ed0820db317ae72'; // Sua Client ID
-    // O redirectUri é construído dinamicamente a partir da localização atual do site.
-    // Isso garante que ele sempre corresponda ao domínio que você está usando.
-    const redirectUri = `${window.location.origin}/api/callback`; 
+    
+    // CORREÇÃO: A URI de redirecionamento é definida como um valor fixo e exato.
+    const redirectUri = 'https://arthurianacreator-github-io.vercel.app/api/callback';
     
     // DEBUG: Mostra no console qual URI estamos usando. Compare com o Spotify Dashboard.
     console.log("Redirect URI being used by frontend:", redirectUri);
