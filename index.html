@@ -38,9 +38,17 @@
                 </div>
                 <div class="user-profile-area">
                     <div class="user-profile" id="userProfile">
+                        <!-- A FOTO DO USUÁRIO APARECERÁ AQUI -->
                         <div class="user-avatar" id="userAvatar">U</div>
                         <span id="userName">User</span>
                         <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <!-- MUDANÇA AQUI: Menu dropdown para logout -->
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-item" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Log Out</span>
+                        </div>
                     </div>
                     <button class="control-btn" id="settingsBtn"><i class="fas fa-paint-brush"></i></button>
                     <div class="theme-picker" id="themePicker">
@@ -71,15 +79,7 @@
         </div>
     </div>
 
-    <div id="nameChangeModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Change Your Name</h2>
-            <p>Your name is provided by Spotify and cannot be changed here.</p>
-            <div class="modal-actions">
-                <button id="closeNameBtn" class="btn-primary">OK</button>
-            </div>
-        </div>
-    </div>
+    <!-- O MODAL DE TROCA DE NOME FOI REMOVIDO -->
 
     <script src="script.js"></script>
 </body>
