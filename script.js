@@ -14,24 +14,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             const headers = { 'Content-Type': 'application/json' };
             const token = localStorage.getItem('authToken');
             if (token) headers['Authorization'] = `Bearer ${token}`;
-
             const config = { method, headers };
             if (body) config.body = JSON.stringify(body);
-            
             const response = await fetch(`/api/${endpoint}`, config);
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error || `API Error: ${response.status}`);
-            return data;
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({ error: 'An unknown error occurred' }));
+                throw new Error(data.error || `API Error: ${response.status}`);
+            }
+            return response.status === 204 ? { success: true } : response.json();
         },
         async _spotifyRequest(endpoint) {
             if (!state.spotifyAppToken) throw new Error("Spotify App Token not available.");
-            const response = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
-                headers: { 'Authorization': `Bearer ${state.spotifyAppToken}` }
-            });
-            if (response.status === 401) { // Token expired
-                await this.fetchSpotifyAppToken();
-                return this._spotifyRequest(endpoint);
-            }
+            const response = await fetch(`https://api.spotify.com/v1/${endpoint}`, { headers: { 'Authorization': `Bearer ${state.spotifyAppToken}` } });
+            if (response.status === 401) { await this.fetchSpotifyAppToken(); return this._spotifyRequest(endpoint); }
             if (!response.ok) throw new Error(`Spotify API Error: ${response.status}`);
             return response.json();
         },
@@ -39,21 +34,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             const data = await (await fetch('/api/getToken')).json();
             state.spotifyAppToken = data.access_token;
         },
-        // User API
         login: (email, password) => api.manager._request('login', 'POST', { email, password }),
         register: (name, email, password) => api.manager._request('register', 'POST', { name, email, password }),
         recoverPassword: (email) => api.manager._request('recover-password', 'POST', { email }),
         fetchUser: () => api.manager._request('user', 'GET'),
         updateUser: (userData) => api.manager._request('user', 'PUT', userData),
-        // Spotify API
         searchSpotify: (q, type) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${type}&limit=12`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
-        getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getSpotifyNewReleases: () => api.manager._spotifyRequest(`browse/new-releases?limit=12`),
         getSpotifySeveralArtists: (ids) => api.manager._spotifyRequest(`artists?ids=${ids.join(',')}`),
         getSpotifyRecommendations: (params) => api.manager._spotifyRequest(`recommendations?${params}`),
-        // Wikipedia API
         getWikipediaInfo: async (artistName) => {
             try {
                 const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(artistName + " band musician")}&srlimit=1&format=json&origin=*`;
@@ -61,41 +52,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const searchData = await searchRes.json();
                 const pageTitle = searchData.query.search[0]?.title;
                 if (!pageTitle) return null;
-
                 const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle.replace(/ /g, '_'))}`;
                 const contentUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(pageTitle)}&prop=text&format=json&origin=*`;
-                
                 const [summaryRes, contentRes] = await Promise.all([fetch(summaryUrl), fetch(contentUrl)]);
                 if (!summaryRes.ok || !contentRes.ok) return null;
-
                 const summaryData = await summaryRes.json();
                 const contentData = await contentRes.json();
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = contentData.parse.text['*'];
-                
                 let members = [];
                 const membersNode = Array.from(tempDiv.querySelectorAll('.infobox th')).find(th => th.textContent.trim().startsWith('Members'));
                 if (membersNode) {
                     const memberLinks = membersNode.parentElement.nextElementSibling?.querySelectorAll('a[title]');
                     if(memberLinks) members = Array.from(memberLinks).map(a => a.textContent).filter(name => !name.startsWith('['));
                 }
-
                 return { summary: summaryData.extract, members };
             } catch (e) { console.error("Wikipedia API error:", e); return null; }
         }
     };
     
-    // ===================================================================================
-    // AUTH MANAGER: Handles all user session logic
-    // ===================================================================================
     auth.manager = {
         async init() {
             if (localStorage.getItem('authToken')) {
-                try {
-                    state.currentUser = await api.manager.fetchUser();
-                } catch (e) {
-                    this.logout(); // Token is invalid or expired
-                }
+                try { state.currentUser = await api.manager.fetchUser(); } 
+                catch (e) { this.logout(); }
             }
         },
         async login(email, password) {
@@ -119,22 +99,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             const updatedFollowing = isFollowing
                 ? state.currentUser.following.filter(a => a.id !== artist.id)
                 : [...state.currentUser.following, {id: artist.id, name: artist.name, images: artist.images}];
-            
-            const updatedUser = await api.manager.updateUser({ following: updatedFollowing });
-            state.currentUser = updatedUser;
+            state.currentUser = await api.manager.updateUser({ following: updatedFollowing });
             return !isFollowing;
         }
     };
     
-    // ===================================================================================
-    // UI MANAGER: DOM manipulation and rendering
-    // ===================================================================================
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), librarySection: document.getElementById('librarySection'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), forgotPasswordModal: document.getElementById('forgotPasswordModal'),
-            quizzContainer: document.getElementById('quizz-container'), quizzIntro: document.getElementById('quizz-intro'), quizzQuestions: document.getElementById('quizz-questions'), discoverResults: document.getElementById('discover-results'), discoverGrid: document.getElementById('discover-grid'),
+            quizzIntro: document.getElementById('quizz-intro'), quizzQuestions: document.getElementById('quizz-questions'), discoverResults: document.getElementById('discover-results'), discoverGrid: document.getElementById('discover-grid'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'),
         },
         updateForAuthState() {
@@ -164,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.documentElement.style.setProperty('--primary-color', color);
             localStorage.setItem('avrenpediaTheme', color);
         },
-        openModal(modal) { modal.classList.add('active'); },
+        openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
         showModalError(modal, message) { modal.querySelector('.modal-error').textContent = message; },
         showModalSuccess(modal, message) { modal.querySelector('.modal-success').textContent = message; },
@@ -175,9 +150,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
 
-    // ===================================================================================
-    // QUIZZ MANAGER
-    // ===================================================================================
     quizz.manager = {
         currentQuestionIndex: 0, answers: {},
         questions: [
@@ -208,7 +180,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             let params = new URLSearchParams();
             params.append('seed_genres', this.answers.seed_genres || 'pop,rock,hip-hop');
             Object.entries(this.answers).forEach(([key, value]) => { if(key !== 'seed_genres') params.append(key, value); });
-            
             const recommendations = await api.manager.getSpotifyRecommendations(params.toString());
             const uniqueAlbums = [...new Map(recommendations?.tracks.map(t => [t.album.id, {...t.album, type: 'album'}])).values()];
             ui.manager.populateGrid(ui.manager.dom.discoverGrid, uniqueAlbums || []);
@@ -217,9 +188,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     
-    // ===================================================================================
-    // PAGE RENDER FUNCTIONS
-    // ===================================================================================
     async function renderHomePage() {
         const newReleases = await api.manager.getSpotifyNewReleases();
         ui.manager.populateGrid(document.getElementById('home-albums-grid'), newReleases?.albums?.items);
@@ -233,7 +201,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function renderArtistView(artistId, artistName) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Loading artist info...</p>`;
-        
         const [artist, albumsData, wikiInfo] = await Promise.all([
             api.manager.getSpotifyArtist(artistId), api.manager.getSpotifyArtistAlbums(artistId), api.manager.getWikipediaInfo(artistName)
         ]);
@@ -243,14 +210,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         const isFollowing = auth.manager.isFollowing(artistId);
         const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
         const membersHTML = wikiInfo?.members?.length > 0 ? `<div class="artist-sidebar"><h3>Members</h3><ul class="member-list">${wikiInfo.members.map(m => `<li>${m}</li>`).join('')}</ul></div>` : '';
-        
+        // ===================================================================================
+        // CORREÇÃO CRÍTICA AQUI:
+        // O código anterior estava quebrado. Esta é a forma correta de renderizar a discografia.
+        // ===================================================================================
+        const discographyHTML = albumsData?.items?.map(ui.manager.renderMusicCard).join('') || '<p>No albums found.</p>';
+
         ui.manager.dom.detailsView.innerHTML = `
             <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
             <div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${followBtnHTML}</div></div>
             <div class="artist-layout">
                 <div class="artist-main-content">
                     ${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}
-                    <h3>Discography</h3><div class="music-grid">${albumsData?.items ? ui.manager.populateGrid(document.createElement('div'), albumsData.items).innerHTML : '<p>No albums found.</p>'}</div>
+                    <h3>Discography</h3><div class="music-grid">${discographyHTML}</div>
                 </div>
                 ${membersHTML}
             </div>`;
@@ -261,15 +233,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.populateGrid(ui.manager.dom.followedArtistsGrid, state.currentUser.following.map(a => ({...a, type: 'artist'})));
     }
 
-    // ===================================================================================
-    // EVENT LISTENERS AND HANDLERS
-    // ===================================================================================
     function setupEventListeners() {
-        // Main Click Handler (delegation)
         document.body.addEventListener('click', async e => {
             const card = e.target.closest('.music-card');
             if (card) return renderArtistView(card.dataset.id, decodeURIComponent(card.dataset.name));
-
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) {
                 const artistId = followBtn.dataset.artistId;
@@ -280,7 +247,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 followBtn.querySelector('span').textContent = isNowFollowing ? 'Following' : 'Follow';
                 return;
             }
-
             if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
             if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
@@ -294,19 +260,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             if(e.target.closest('#retakeQuizzBtn')) return quizz.manager.start();
             const quizzOption = e.target.closest('.quizz-option');
             if(quizzOption) return quizz.manager.handleAnswer(quizzOption.dataset.value);
-            
-            // Close dropdowns if clicking outside
             if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
             if (!e.target.closest('#settingsBtn')) document.getElementById('themePicker').classList.remove('active');
         });
 
-        // Modal Form Submissions
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('forgotSubmitBtn').addEventListener('click', handleForgotSubmit);
 
-        // Other Listeners
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => {
             const target = item.dataset.target;
             if (target === 'seguindo') renderFollowingPage();
@@ -376,11 +338,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         const modal = ui.manager.dom.nameChangeModal;
         const newName = modal.querySelector('#newNameInput').value;
         if (!newName) return ui.manager.showModalError(modal, 'Name cannot be empty.');
-        
         btn.disabled = true; btn.textContent = 'Saving...';
         try {
-            const updatedUser = await api.manager.updateUser({ name: newName });
-            state.currentUser = updatedUser;
+            state.currentUser = await api.manager.updateUser({ name: newName });
             ui.manager.updateForAuthState();
             ui.manager.closeAllModals();
         } catch (error) {
@@ -406,9 +366,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // ===================================================================================
-    // INITIALIZATION
-    // ===================================================================================
     async function init() {
         try {
             await api.manager.fetchSpotifyAppToken();
@@ -424,6 +381,5 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.appLoader.innerHTML = `<div style="text-align: center; color: white;"><h2>Oops!</h2><p>Something went wrong during startup.</p><p style="font-size: 0.8em; color: var(--gray-text);">${error.message}</p></div>`;
         }
     }
-
     init();
 });
