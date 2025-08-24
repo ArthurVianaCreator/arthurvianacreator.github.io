@@ -9,6 +9,8 @@ export default async function handler(req, res) {
   const { email } = req.body;
   
   const kv = createClient({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
   });
 
   const userString = await kv.get(`user:${email}`);

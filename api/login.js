@@ -10,7 +10,10 @@ export default async function handler(req, res) {
 
   try { // Adicionado bloco try...catch
     const { email, password } = req.body;
-    const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
+    const kv = createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
     const user = await kv.get(`user:${email.toLowerCase()}`);
 
     if (!user) {

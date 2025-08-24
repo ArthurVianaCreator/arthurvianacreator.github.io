@@ -20,7 +20,10 @@ export default async function handler(req, res) {
     }
 
     // Usando a criação de cliente simplificada que você já implementou
-    const kv = createClient();
+    const kv = createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
     console.log("API /get-batch-votes: Cliente do Vercel KV criado com sucesso.");
 
     const likeKeys = items.map(key => `likes:${key}`);

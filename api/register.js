@@ -15,7 +15,10 @@ export default async function handler(req, res) {
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
     if (!passwordRegex.test(password)) { return res.status(400).json({ error: 'Password does not meet requirements.' }); }
 
-    const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
+    const kv = createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
     const normalizedName = name.trim().toLowerCase();
     const normalizedEmail = email.trim().toLowerCase();
 

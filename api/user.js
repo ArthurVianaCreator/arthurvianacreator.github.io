@@ -9,7 +9,10 @@ async function authenticate(req, env) {
   const token = authHeader.split(' ')[1];
   try {
     const { email } = jwt.verify(token, JWT_SECRET);
-    const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
+    const kv = createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
+    });
     return await kv.get(`user:${email}`);
   } catch (error) {
     console.error('Authentication Error:', error);
@@ -33,6 +36,8 @@ export default async function handler(req, res) {
     }
 
     const kv = createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
     });
 
     if (req.method === 'GET') {
