@@ -4,79 +4,46 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
 
-// A chave será lida a partir das variáveis de ambiente no seu servidor Vercel
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
+  if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
+  
   const { name, email, password } = req.body;
-
-  // Validação robusta no backend
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'All fields are required' });
-  }
-  if (name.trim().length < 4) {
-    return res.status(400).json({ error: 'Name must be at least 4 characters long' });
-  }
-  if (/\s/.test(name)) {
-    return res.status(400).json({ error: 'Name cannot contain spaces' });
-  }
+  
+  if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
+  if (name.trim().length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
+  if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
-  if (!passwordRegex.test(password)) {
-    return res.status(400).json({ error: 'Password: 4+ chars, 1 letter, 1 number, 1 special char.' });
-  }
+  if (!passwordRegex.test(password)) { return res.status(400).json({ error: 'Password does not meet requirements.' }); }
 
-  const kv = createClient({
-    url: process.env.KV_REST_API_URL,
-    token: process.env.KV_REST_API_TOKEN,
-  });
+  const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
 
   const normalizedName = name.trim().toLowerCase();
   const normalizedEmail = email.trim().toLowerCase();
 
-  const [existingUser, nameTaken] = await Promise.all([
-    kv.get(`user:${normalizedEmail}`),
-    kv.get(`name:${normalizedName}`)
-  ]);
+  const [existingUser, nameTaken] = await Promise.all([ kv.get(`user:${normalizedEmail}`), kv.get(`name:${normalizedName}`) ]);
   
-  if (existingUser) {
-    return res.status(409).json({ error: 'Email already in use' });
-  }
-  if (nameTaken) {
-    return res.status(409).json({ error: 'Name already taken (case-insensitive)' });
-  }
+  if (existingUser) { return res.status(409).json({ error: 'Email already in use' }); }
+  if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = {
-    name: name.trim(),
-    email: normalizedEmail,
-    password: hashedPassword,
-    following: [],
-    votes: {},
-    isVerified: false // Conta começa como não verificada
-  };
+  const user = { name: name.trim(), email: normalizedEmail, password: hashedPassword, following: [], votes: {}, isVerified: false };
   
   await kv.set(`user:${normalizedEmail}`, user);
   await kv.set(`name:${normalizedName}`, 1);
 
-  // Gerar token de verificação e construir a URL de verificação
   const verificationToken = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '1d' });
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/verify-email?token=${verificationToken}`;
 
   try {
-    // CORREÇÃO: Usando seu domínio verificado no endereço 'from'
     await resend.emails.send({
       from: 'Avrenpedia <nao-responda@avrenpedia.com>',
       to: normalizedEmail,
       subject: 'Verify Your Avrenpedia Account',
       html: `<h1>Welcome to Avrenpedia!</h1><p>Please click the link below to verify your email address:</p><a href="${verificationUrl}" style="background-color: #E50914; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a><p>This link will expire in 24 hours.</p>`
     });
-
     res.status(201).json({ message: 'Registration successful! Please check your email to verify your account.' });
-  
   } catch (error) {
     console.error('Email sending error:', error);
     res.status(500).json({ error: 'Could not send verification email.' });

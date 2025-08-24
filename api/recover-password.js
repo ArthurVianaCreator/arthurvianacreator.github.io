@@ -18,10 +18,10 @@ export default async function handler(req, res) {
 
     try {
       await resend.emails.send({
-        from: 'Avrenpedia Security <security@resend.dev>',
+        from: 'Avrenpedia Security <nao-responda@avrenpedia.com>',
         to: user.email,
         subject: 'Reset Your Avrenpedia Password',
-        html: `<h1>Password Reset Request</h1><p>Someone requested a password reset for your account. If this was you, click the link below to set a new password:</p><a href="${resetUrl}" style="color: #E50914;">Reset Password</a><p>This link is valid for 1 hour. If you did not request this, you can safely ignore this email.</p>`
+        html: `<h1>Password Reset Request</h1><p>Someone requested a password reset for your account. If this was you, click the link below to set a new password:</p><a href="${resetUrl}" style="background-color: #E50914; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a><p>This link is valid for 1 hour. If you did not request this, you can safely ignore this email.</p>`
       });
     } catch (error) {
       console.error('Password recovery email error:', error);
