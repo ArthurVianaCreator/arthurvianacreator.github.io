@@ -77,36 +77,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         async register(name, email, password) { const data = await api.manager.register(name, email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
         isFollowing: (id) => state.currentUser?.following.some(a => a.id === id),
-
-        // ==============================================================================
-        // >>>>> CORREÇÃO: A FUNÇÃO "toggleFollow" FOI ADICIONADA AQUI <<<<<
-        // ==============================================================================
         async toggleFollow(artist) {
             if (!state.currentUser || !artist) return;
-
-            const artistData = {
-                id: artist.id,
-                name: artist.name,
-                images: artist.images,
-                genres: artist.genres
-            };
-            
+            const artistData = { id: artist.id, name: artist.name, images: artist.images, genres: artist.genres };
             const followingList = state.currentUser.following || [];
             const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
-            let updatedFollowingList;
-
-            if (isCurrentlyFollowing) {
-                // Deixar de seguir
-                updatedFollowingList = followingList.filter(a => a.id !== artist.id);
-            } else {
-                // Seguir
-                updatedFollowingList = [...followingList, artistData];
-            }
-
-            // Atualiza o usuário no backend
+            let updatedFollowingList = isCurrentlyFollowing ? followingList.filter(a => a.id !== artist.id) : [...followingList, artistData];
             state.currentUser = await api.manager.updateUser({ following: updatedFollowingList });
-            
-            // Retorna o novo status
             return !isCurrentlyFollowing;
         }
     };
@@ -115,11 +92,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), libraryNavItem: document.getElementById('libraryNavItem'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
-            loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), forgotPasswordModal: document.getElementById('forgotPasswordModal'),
+            loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
             homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid')
         },
-        updateForAuthState() { const u = state.currentUser; this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; this.dom.userProfile.style.display = u ? 'flex' : 'none'; this.dom.libraryNavItem.style.display = u ? 'block' : 'none'; if (u) this.dom.userName.textContent = u.name; },
+        updateForAuthState() { const u = state.currentUser; this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; this.dom.userProfile.style.display = u ? 'flex' : 'none'; if (u) this.dom.userName.textContent = u.name; },
         switchContent(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id)); this.dom.mainContent.scrollTop = 0; },
         renderMusicCard(item) {
             const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
@@ -223,9 +200,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const clickableArtist = e.target.closest('.clickable-artist');
             if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
             
-            // ==============================================================================
-            // >>>>> CORREÇÃO: O CÓDIGO DO BOTÃO "Follow" FOI ENVOLVIDO EM UM TRY...CATCH <<<<<
-            // ==============================================================================
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) { 
                 try {
@@ -247,21 +221,34 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
-            if (e.target.closest('#switchToLogin') || e.target.closest('#backToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
-            if (e.target.closest('#switchToForgot')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.forgotPasswordModal); }
-            if (e.target.closest('#closeNameBtn') || e.target.classList.contains('modal-overlay')) return ui.manager.closeAllModals();
+            if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
+            if (e.target.closest('#closeNameBtn') || e.target.closest('.close-modal-btn')) return ui.manager.closeAllModals();
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (e.target.closest('#settingsBtn')) return document.getElementById('themePicker').classList.toggle('active');
             if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
             if (!e.target.closest('#settingsBtn')) document.getElementById('themePicker').classList.remove('active');
         });
+        
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
-        document.getElementById('forgotSubmitBtn').addEventListener('click', handleForgotSubmit);
-        document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { const target = item.dataset.target; if (target === 'seguindo') renderFollowingPage(); ui.manager.switchContent(target); }));
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const target = item.dataset.target;
+                if (target === 'seguindo') {
+                    if (!state.currentUser) {
+                        return ui.manager.openModal(ui.manager.dom.loginModal);
+                    }
+                    renderFollowingPage();
+                }
+                ui.manager.switchContent(target);
+            });
+        });
+
         document.querySelectorAll('.color-swatch').forEach(swatch => swatch.addEventListener('click', () => ui.manager.applyTheme(swatch.dataset.color)));
         document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); ui.manager.switchContent('inicio'); location.reload(); });
+        
         let searchTimeout;
         ui.manager.dom.searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
@@ -296,16 +283,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function handleRegisterSubmit(e) {
         const btn = e.target; const modal = ui.manager.dom.registerModal; ui.manager.clearModalMessages(modal);
         const name = modal.querySelector('#registerName').value; const email = modal.querySelector('#registerEmail').value; const password = modal.querySelector('#registerPassword').value;
-        if (name.length < 4) { return ui.manager.showModalError(modal, 'Name must be at least 4 characters long'); }
+        if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
         if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
-        if (!passwordRegex.test(password)) { return ui.manager.showModalError(modal, 'Password: 4+ chars, 1 letter, 1 number, 1 special char.'); }
+        if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
         btn.disabled = true; btn.textContent = 'Creating...';
         try {
             await auth.manager.register(name, email, password);
             ui.manager.closeAllModals();
             ui.manager.updateForAuthState();
-            renderHomePage(); // Atualiza a página para refletir o estado de login
+            renderHomePage();
         } catch (error) {
             ui.manager.showModalError(modal, error.message);
         } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
@@ -314,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function handleNameChangeSubmit(e) {
         const btn = e.target; const modal = ui.manager.dom.nameChangeModal; const newName = modal.querySelector('#newNameInput').value;
         if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
-        if (newName.length < 4) { return ui.manager.showModalError(modal, 'Name must be at least 4 characters long'); }
+        if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
         if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
         btn.disabled = true; btn.textContent = 'Saving...';
         try {
@@ -325,16 +311,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         } finally { btn.disabled = false; btn.textContent = 'Save'; }
     }
     
-    async function handleForgotSubmit(e) {
-        const btn = e.target; const modal = ui.manager.dom.forgotPasswordModal; ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Sending...';
-        try {
-            const result = await api.manager.recoverPassword(modal.querySelector('#forgotEmail').value);
-            ui.manager.showModalSuccess(modal, result.message);
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Send Recovery Link'; }
-    }
-
     async function init() {
         try {
             await api.manager.fetchSpotifyAppToken();

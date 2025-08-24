@@ -16,7 +16,7 @@
                 <div class="logo"><h1>Avrenpedia</h1></div>
                 <nav class="main-nav">
                     <div class="nav-item active" data-target="inicio">Home</div>
-                    <div class="nav-item" data-target="seguindo" id="libraryNavItem" style="display: none;">Following</div>
+                    <div class="nav-item" data-target="seguindo" id="libraryNavItem">Following</div>
                 </nav>
             </div>
             <div class="header-right">
@@ -45,10 +45,9 @@
             <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div class="music-grid" id="followed-artists-grid"></div></div>
         </div>
     </div>
-    <div id="loginModal" class="modal-overlay"><div class="modal-content"><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p><p class="modal-switch"><a href="#" id="switchToForgot">Forgot Password?</a></p></div></div>
-    <div id="registerModal" class="modal-overlay"><div class="modal-content"><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
+    <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p></div></div>
+    <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
     <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="closeNameBtn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
-    <div id="forgotPasswordModal" class="modal-overlay"><div class="modal-content"><h2>Recover Password</h2><p>Enter your email and we'll simulate sending a recovery link.</p><p class="modal-error"></p><p class="modal-success"></p><input type="email" id="forgotEmail" placeholder="Your Email"><div class="modal-actions"><button class="btn-primary" id="forgotSubmitBtn">Send Recovery Link</button></div><p class="modal-switch"><a href="#" id="backToLogin">Back to Login</a></p></div></div>
     <script src="script.js"></script>
 </body>
 </html>
