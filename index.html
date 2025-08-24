@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="main-container">
+    <!-- Este contêiner principal só será exibido após o login bem-sucedido -->
+    <div class="main-container" style="display: none;">
         <div class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
@@ -37,11 +38,11 @@
                 </div>
                 <div class="user-profile-area">
                     <div class="user-profile" id="userProfile">
-                        <div class="user-avatar" id="userAvatar">A</div>
-                        <span id="userName">Arthur</span>
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName">User</span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
-                    <button class="control-btn" id="settingsBtn"><i class="fas fa-paint-brush"></i></button> <!-- ÍCONE ALTERADO AQUI -->
+                    <button class="control-btn" id="settingsBtn"><i class="fas fa-paint-brush"></i></button>
                     <div class="theme-picker" id="themePicker">
                         <div class="color-swatch" data-color="#E50914" style="background: #E50914;"></div>
                         <div class="color-swatch" data-color="#1DB954" style="background: #1DB954;"></div>
@@ -52,56 +53,30 @@
                 </div>
             </div>
 
-            <!-- Page Content Sections -->
             <div id="inicio" class="content-section active">
-                <div class="category-tabs">
-                    <div class="category-tab active" data-category="All">All</div>
-                    <div class="category-tab" data-category="Grunge">Grunge</div>
-                    <div class="category-tab" data-category="Black Metal">Black Metal</div>
-                    <div class="category-tab" data-category="Thrash Metal">Thrash Metal</div>
-                    <div class="category-tab" data-category="Rap">Rap</div>
-                </div>
-                <h2 class="section-title-main">Bands & Artists</h2>
-                <div class="music-grid">
-                    <div class="music-card" data-type="band" data-name="Nirvana" data-category="Grunge" data-img="img/nirvana.band.jpg"><div class="music-img"><img src="img/nirvana.band.jpg" alt="Nirvana"></div><div class="music-title">Nirvana</div><div class="music-artist">Grunge</div></div>
-                    <div class="music-card" data-type="band" data-name="Megadeth" data-category="Thrash Metal" data-img="img/megadeth.jpg"><div class="music-img"><img src="img/megadeth.jpg" alt="Megadeth"></div><div class="music-title">Megadeth</div><div class="music-artist">Thrash Metal</div></div>
-                    <div class="music-card" data-type="band" data-name="Mayhem" data-category="Black Metal" data-img="img/mayhem.band.jpg"><div class="music-img"><img src="img/mayhem.band.jpg" alt="Mayhem"></div><div class="music-title">Mayhem</div><div class="music-artist">Black Metal</div></div>
-                    <div class="music-card" data-type="band" data-name="Aventrum" data-category="Black Metal" data-img="img/aventrum.jpg"><div class="music-img"><img src="img/aventrum.jpg" alt="Aventrum"></div><div class="music-title">Aventrum</div><div class="music-artist">Black Metal</div></div>
-                    <div class="music-card" data-type="band" data-name="Entropia" data-category="Thrash Metal" data-img="img/Entropia.jpg"><div class="music-img"><img src="img/Entropia.jpg" alt="Entropia"></div><div class="music-title">Entropia</div><div class="music-artist">Thrash Metal</div></div>
-                    <div class="music-card" data-type="artist" data-name="Rove Braki" data-category="Rap" data-img="img/ALTO MAR_track_cover.jpg"><div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Rove Braki"></div><div class="music-title">Rove Braki</div><div class="music-artist">Rap</div></div>
-                </div>
-                <h2 class="section-title-main">Albums</h2>
-                <div class="music-grid">
-                     <div class="music-card" data-type="album" data-name="Nevermind" data-artist="Nirvana" data-category="Grunge" data-img="img/NirvanaNevermindalbumcover.jpg"><div class="music-img"><img src="img/NirvanaNevermindalbumcover.jpg" alt="Nevermind"></div><div class="music-title">Nevermind</div><div class="music-artist">Nirvana • 1991</div></div>
-                     <div class="music-card" data-type="album" data-name="Rust in Peace" data-artist="Megadeth" data-category="Thrash Metal" data-img="img/Megadeth-RustInPeace.jpg"><div class="music-img"><img src="img/Megadeth-RustInPeace.jpg" alt="Rust in Peace"></div><div class="music-title">Rust in Peace</div><div class="music-artist">Megadeth • 1990</div></div>
-                    <div class="music-card" data-type="album" data-name="Countdown to Extinction" data-artist="Megadeth" data-category="Thrash Metal" data-img="img/Countdown_album_cover.jpg"><div class="music-img"><img src="img/Countdown_album_cover.jpg" alt="Countdown to Extinction"></div><div class="music-title">Countdown to Extinction</div><div class="music-artist">Megadeth • 1992</div></div>
-                     <div class="music-card" data-type="album" data-name="De Mysteriis Dom Sathanas" data-artist="Mayhem" data-category="Black Metal" data-img="img/Mayhem_demysteriisdomsathanas.jpg"><div class="music-img"><img src="img/Mayhem_demysteriisdomsathanas.jpg" alt="De Mysteriis Dom Sathanas"></div><div class="music-title">De Mysteriis Dom Sathanas</div><div class="music-artist">Mayhem • 1994</div></div>
-                    <div class="music-card" data-type="album" data-name="Chaos and Entropy" data-artist="Entropia" data-category="Thrash Metal" data-img="img/chaos and entropy.jpg"><div class="music-img"><img src="img/chaos and entropy.jpg" alt="Chaos and Entropy"></div><div class="music-title">Chaos and Entropy</div><div class="music-artist">Entropia • 2025</div></div>
-                    <div class="music-card" data-type="album" data-name="Alto Mar" data-artist="Rove Braki" data-category="Rap" data-img="img/ALTO MAR_track_cover.jpg"><div class="music-img"><img src="img/ALTO MAR_track_cover.jpg" alt="Alto Mar"></div><div class="music-title">Alto Mar</div><div class="music-artist">Rove Braki • 2025</div></div>
-                </div>
+                <h2 class="section-title-main">New Releases</h2>
+                <div class="music-grid" id="home-albums-grid"><p class="search-message">Loading...</p></div>
+                <h2 class="section-title-main">Featured Artists</h2>
+                <div class="music-grid" id="home-artists-grid"><p class="search-message">Loading...</p></div>
             </div>
+
             <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div class="search-results-grid" id="searchResultsContainer"><p class="search-message">Type something in the search bar to begin.</p></div></div>
             <div id="details-view" class="content-section"></div>
             <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div class="music-grid" id="followed-artists-grid"></div></div>
+            
             <div id="descobrir" class="content-section">
-                <h2 class="section-title-main">Featured Artists</h2>
-                <div class="music-grid" id="discover-artists-grid">
-                </div>
-                <h2 class="section-title-main">Essential Albums</h2>
-                <div class="music-grid" id="discover-albums-grid">
-                </div>
+                <h2 class="section-title-main">Recommendations</h2>
+                <div class="music-grid" id="discover-grid"><p class="search-message">Loading...</p></div>
             </div>
         </div>
     </div>
 
-    <!-- NEW NAME CHANGE MODAL -->
     <div id="nameChangeModal" class="modal-overlay">
         <div class="modal-content">
-            <h2>Choose Your Name</h2>
-            <input type="text" id="newNameInput" placeholder="Enter new name">
+            <h2>Change Your Name</h2>
+            <p>Your name is provided by Spotify and cannot be changed here.</p>
             <div class="modal-actions">
-                <button id="cancelNameBtn" class="btn-secondary">Cancel</button>
-                <button id="saveNameBtn" class="btn-primary">Save</button>
+                <button id="closeNameBtn" class="btn-primary">OK</button>
             </div>
         </div>
     </div>
