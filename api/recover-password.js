@@ -3,9 +3,15 @@ import { createClient } from '@vercel/kv';
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export default async function handler(req, res) {
+  // MUDANÇA CRÍTICA: Inicializando o Resend dentro da função
+  const { RESEND_API_KEY } = process.env;
+  if (!RESEND_API_KEY) {
+    console.error("Missing RESEND_API_KEY environment variable.");
+    return res.status(500).json({ error: "Server configuration error: Email service is not configured." });
+  }
+  const resend = new Resend(RESEND_API_KEY);
+
   if (req.method !== 'POST') { return res.status(405).end(); }
   
   const { email } = req.body;

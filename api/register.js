@@ -4,13 +4,21 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export default async function handler(req, res) {
+  // MUDANÇA CRÍTICA: Inicializando o Resend dentro da função
+  // Isso garante que, se a chave estiver faltando, teremos um erro claro.
+  const { RESEND_API_KEY } = process.env;
+  if (!RESEND_API_KEY) {
+    console.error("Missing RESEND_API_KEY environment variable.");
+    return res.status(500).json({ error: "Server configuration error: Email service is not configured." });
+  }
+  const resend = new Resend(RESEND_API_KEY);
+
   if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
   
   const { name, email, password } = req.body;
   
+  // Validações (sem alterações)
   if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
   if (name.trim().length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
   if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
