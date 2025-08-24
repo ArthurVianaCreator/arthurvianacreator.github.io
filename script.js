@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         searchSpotify: (q, t) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=12`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
-        getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`), // NOVO: Endpoint para buscar um álbum específico
+        getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getSpotifyNewReleases: () => api.manager._spotifyRequest(`browse/new-releases?limit=12`),
         getSpotifySeveralArtists: (ids) => api.manager._spotifyRequest(`artists?ids=${ids.join(',')}`),
         getWikipediaInfo: async (artistName) => {
@@ -54,22 +54,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const contentData = await contentRes.json();
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = contentData.parse.text['*'];
-                
                 let members = [], composers = [];
                 const allTh = Array.from(tempDiv.querySelectorAll('.infobox th'));
-                
-                // MUDANÇA: Função auxiliar para extrair dados do infobox
-                const extractInfoboxData = (thElement) => {
-                    const links = thElement?.parentElement.nextElementSibling?.querySelectorAll('a[title]');
-                    return links ? Array.from(links).map(a => a.textContent).filter(name => !name.startsWith('[')) : [];
-                };
-
+                const extractInfoboxData = (thElement) => { const links = thElement?.parentElement.nextElementSibling?.querySelectorAll('a[title]'); return links ? Array.from(links).map(a => a.textContent).filter(name => !name.startsWith('[')) : []; };
                 const membersNode = allTh.find(th => th.textContent.trim().startsWith('Members'));
                 if (membersNode) members = extractInfoboxData(membersNode);
-                
                 const composersNode = allTh.find(th => th.textContent.trim().includes('Songwriter(s)') || th.textContent.trim().includes('Composer(s)'));
                 if (composersNode) composers = extractInfoboxData(composersNode);
-
                 return { summary: summaryData.extract, members, composers };
             } catch (e) { console.error("Wikipedia API error:", e); return null; }
         }
@@ -107,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateForAuthState() { const u = state.currentUser; this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; this.dom.userProfile.style.display = u ? 'flex' : 'none'; this.dom.libraryNavItem.style.display = u ? 'block' : 'none'; if (u) this.dom.userName.textContent = u.name; },
         switchContent(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id)); this.dom.mainContent.scrollTop = 0; },
         renderMusicCard(item) { const img = item.images?.[0]?.url || 'https://via.placeholder.com/150'; const sub = item.type === 'artist' ? (item.genres?.[0] || 'Artist') : (item.artists.map(a => a.name).join(', ')); return `<div class="music-card" data-type="${item.type}" data-id="${item.id}" data-name="${encodeURIComponent(item.name)}"><div class="music-img"><img src="${img}" alt="${item.name}"></div><div class="music-title">${item.name}</div><div class="music-artist">${sub}</div></div>`; },
-        populateGrid(items) { if (!items || items.length === 0) return '<p class="search-message">Nothing to show here.</p>'; return `<div class="music-grid">${items.filter(item => item).map(this.renderMusicCard).join('')}</div>`; },
+        populateGrid(items, container) { if (!items || items.length === 0) { container.innerHTML = '<p class="search-message">Nothing to show here.</p>'; return; } container.innerHTML = items.filter(item => item).map(this.renderMusicCard).join(''); },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
         applyTheme(color) { document.documentElement.style.setProperty('--primary-color', color); localStorage.setItem('avrenpediaTheme', color); },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
@@ -123,12 +114,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     function formatDuration(ms) { const minutes = Math.floor(ms / 60000); const seconds = ((ms % 60000) / 1000).toFixed(0); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; }
 
     async function renderHomePage() {
-        ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.renderLoader('Loading Artists...');
-        ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.renderLoader('Loading Albums...');
+        ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.renderLoader('');
+        ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.renderLoader('');
         const featuredArtistIds = [ '6olE6TJLqED3rqDCT0FyPh', '04gDigrS5kc9YWfZHwBETP', '7jy3rLJdDQY21OgRLCZK48', '3WrFJ7ztbogyGnTHbHJFl2', '1dfeR4HaWDbWqFHLkxsg1d', '36QJpDe2go2KgaRleHCDls', '22bE4uQ6baNwSHPVcDxLCe', '06HL4z0CvFAxyc27GXpf02' ];
         const [artistsData, newReleases] = await Promise.all([ api.manager.getSpotifySeveralArtists(featuredArtistIds).catch(e => { console.error(e); return null; }), api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; }) ]);
-        if (artistsData) ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.populateGrid(artistsData.artists); else ui.manager.dom.homeArtistsGrid.innerHTML = `<p class="search-message">Could not load featured artists.</p>`;
-        if (newReleases) ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.populateGrid(newReleases.albums.items); else ui.manager.dom.homeAlbumsGrid.innerHTML = `<p class="search-message">Could not load new releases.</p>`;
+        ui.manager.populateGrid(artistsData?.artists, ui.manager.dom.homeArtistsGrid);
+        ui.manager.populateGrid(newReleases?.albums?.items, ui.manager.dom.homeAlbumsGrid);
     }
 
     async function renderArtistView(artistId, artistName) {
@@ -139,47 +130,37 @@ document.addEventListener('DOMContentLoaded', async function() {
         const isFollowing = auth.manager.isFollowing(artistId);
         const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
         const membersHTML = wikiInfo?.members?.length > 0 ? `<div class="artist-sidebar-section"><h3>Members</h3><ul class="member-list">${wikiInfo.members.map(m => `<li>${m}</li>`).join('')}</ul></div>` : '';
-        const composersHTML = wikiInfo?.composers?.length > 0 ? `<div class="artist-sidebar-section"><h3>Songwriters</h3><ul class="member-list">${wikiInfo.composers.map(m => `<li>${m}</li>`).join('')}</ul></div>` : ''; // NOVO
-        const discographyHTML = ui.manager.populateGrid(albumsData?.items);
+        const composersHTML = wikiInfo?.composers?.length > 0 ? `<div class="artist-sidebar-section"><h3>Songwriters</h3><ul class="member-list">${wikiInfo.composers.map(m => `<li>${m}</li>`).join('')}</ul></div>` : '';
+        const discographyHTML = `<div class="music-grid horizontal-music-grid">${albumsData?.items.filter(item => item).map(ui.manager.renderMusicCard).join('')}</div>`;
+        const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
         ui.manager.dom.detailsView.innerHTML = `
             <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
             <div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${followBtnHTML}</div></div>
-            <div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}<h3>Discography</h3>${discographyHTML}</div><div class="artist-sidebar">${membersHTML}${composersHTML}</div></div>`;
+            <div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div><div class="artist-sidebar">${membersHTML}${composersHTML}</div></div>`;
     }
 
-    // NOVO: Função inteira para renderizar a visualização do álbum
     async function renderAlbumView(albumId) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Album...');
         const album = await api.manager.getSpotifyAlbum(albumId).catch(err => { console.error(err); return null; });
         if (!album) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load album information. Please try again later.</p>`; return; }
-        const tracksHTML = album.tracks.items.map(track => `
-            <div class="track-item">
-                <div class="track-number">${track.track_number}</div>
-                <div class="track-info">
-                    <div class="track-title">${track.name}</div>
-                    <div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div>
-                </div>
-                <div class="track-duration">${formatDuration(track.duration_ms)}</div>
-            </div>
-        `).join('');
+        const artistsHTML = album.artists.map(a => `<span class="clickable-artist" data-artist-id="${a.id}" data-artist-name="${encodeURIComponent(a.name)}">${a.name}</span>`).join(', ');
+        const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
+        const tracksHTML = album.tracks.items.map(track => `<div class="track-item"><div class="track-number">${track.track_number}</div><div class="track-info"><div class="track-title">${track.name}</div><div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div></div><div class="track-duration">${formatDuration(track.duration_ms)}</div></div>`).join('');
         ui.manager.dom.detailsView.innerHTML = `
             <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
-            <div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${album.artists.map(a => a.name).join(', ')}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>
-            <div class="track-list">${tracksHTML}</div>`;
+            <div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>
+            ${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
     }
 
-    function renderFollowingPage() { if (!state.currentUser) return; ui.manager.dom.followedArtistsGrid.innerHTML = ui.manager.populateGrid(state.currentUser.following.map(a => ({...a, type: 'artist'}))); }
+    function renderFollowingPage() { if (!state.currentUser) return; ui.manager.populateGrid(state.currentUser.following.map(a => ({...a, type: 'artist'})), ui.manager.dom.followedArtistsGrid); }
 
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const card = e.target.closest('.music-card');
-            // MUDANÇA CRÍTICA: Diferencia o clique entre artista e álbum
-            if (card) {
-                const { type, id, name } = card.dataset;
-                if (type === 'artist') return renderArtistView(id, decodeURIComponent(name));
-                if (type === 'album') return renderAlbumView(id);
-            }
+            if (card) { const { type, id, name } = card.dataset; if (type === 'artist') return renderArtistView(id, decodeURIComponent(name)); if (type === 'album') return renderAlbumView(id); }
+            const clickableArtist = e.target.closest('.clickable-artist');
+            if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) { const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); const isFollowing = await auth.manager.toggleFollow(artist); followBtn.classList.toggle('following', isFollowing); followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`; followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow'; return; }
             const passToggle = e.target.closest('.password-toggle');
@@ -213,8 +194,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             searchTimeout = setTimeout(async () => {
                 const results = await api.manager.searchSpotify(query, 'artist,album');
                 let html = '';
-                if (results?.artists?.items?.length) html += `<h2 class="section-title-main">Artists</h2>${ui.manager.populateGrid(results.artists.items)}`;
-                if (results?.albums?.items?.length) html += `<h2 class="section-title-main">Albums</h2>${ui.manager.populateGrid(results.albums.items)}`;
+                if (results?.artists?.items?.length) html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${results.artists.items.filter(item => item).map(ui.manager.renderMusicCard).join('')}</div>`;
+                if (results?.albums?.items?.length) html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${results.albums.items.filter(item => item).map(ui.manager.renderMusicCard).join('')}</div>`;
                 ui.manager.dom.searchResultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
             }, 500);
         });

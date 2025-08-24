@@ -54,6 +54,12 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .music-card .music-img img { position: absolute; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease-out; }
 .music-title { color: var(--white-text); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; }
 .music-artist { font-size: 0.85rem; margin-top: 4px; color: var(--gray-text); text-transform: capitalize; }
+/* NOVOS ESTILOS PARA O GRID HORIZONTAL */
+.horizontal-music-grid { display: flex; overflow-x: auto; overflow-y: hidden; padding-bottom: 20px; margin-bottom: 16px; grid-template-columns: none; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: var(--primary-color) #222; }
+.horizontal-music-grid::-webkit-scrollbar { height: 8px; }
+.horizontal-music-grid::-webkit-scrollbar-track { background: #222; border-radius: 4px; }
+.horizontal-music-grid::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 4px; }
+.horizontal-music-grid .music-card { flex: 0 0 160px; width: 160px; }
 .search-message { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
 .details-header { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-bottom: 32px; text-align: center; animation: slideUpFadeIn 0.5s ease-out forwards; }
 @media (min-width: 600px) { .details-header { flex-direction: row; text-align: left; } }
@@ -63,6 +69,9 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .details-info h2 { color: var(--white-text); font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; }
 .details-info .meta-info { font-weight: 500; color: var(--light-gray-text); margin-top: 4px; text-transform: capitalize; }
 .details-info .album-meta { font-size: 0.9rem; color: var(--gray-text); margin-top: 8px; }
+/* NOVO ESTILO PARA ARTISTA CLICÁVEL */
+.clickable-artist { cursor: pointer; transition: color 0.2s; }
+.clickable-artist:hover { color: var(--white-text); text-decoration: underline; }
 .artist-layout { display: grid; grid-template-columns: 1fr; gap: 40px; }
 @media(min-width: 900px) { .artist-layout { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 50px; } }
 .artist-main-content h3, .artist-sidebar h3 { font-size: 1.5rem; color: var(--white-text); margin-bottom: 15px; border-left: 3px solid var(--primary-color); padding-left: 10px; }
@@ -75,7 +84,10 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .follow-btn.following { background: var(--primary-color); border-color: var(--primary-color); color: var(--white-text); }
 .back-btn { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: var(--white-text); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; margin-bottom: 16px; display: inline-flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s; }
 .back-btn:hover { background: #000; transform: scale(1.1); }
-/* ESTILOS DA LISTA DE FAIXAS (NOVO) */
+/* NOVO ESTILO PARA O PLAYER DO SPOTIFY */
+.spotify-embed { margin: 30px 0; }
+.spotify-embed iframe { border-radius: 12px; }
+.tracks-title { margin-top: 30px; }
 .track-list { display: flex; flex-direction: column; gap: 8px; }
 .track-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-radius: 6px; transition: background-color 0.2s; }
 .track-item:hover { background-color: rgba(255,255,255,0.07); }
