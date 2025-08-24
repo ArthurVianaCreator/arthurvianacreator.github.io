@@ -1,5 +1,4 @@
 // /api/user.js
-
 import { createClient } from '@vercel/kv';
 import jwt from 'jsonwebtoken';
 
@@ -7,28 +6,20 @@ async function authenticate(req, env) {
   const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = env;
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  
   const token = authHeader.split(' ')[1];
-  
-  const kv = createClient({
-    url: KV_REST_API_URL,
-    token: KV_REST_API_TOKEN,
-  });
-
+  const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
   try {
     const { email } = jwt.verify(token, JWT_SECRET);
-    const user = await kv.get(`user:${email}`);
-    return user;
+    return await kv.get(`user:${email}`);
   } catch (error) {
     return null;
   }
 }
 
 export default async function handler(req, res) {
-  // MUDANÇA 1: Verificação explícita
   const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = process.env;
   if (!KV_REST_API_URL || !KV_REST_API_TOKEN || !JWT_SECRET) {
-    return res.status(500).json({ error: 'Server configuration error: Missing environment variables.' });
+    return res.status(500).json({ error: 'Server configuration error.' });
   }
 
   const user = await authenticate(req, process.env);
@@ -44,15 +35,50 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { password, ...userData } = user;
     res.status(200).json(userData);
+
   } else if (req.method === 'PUT') {
     const updatedData = req.body;
-    if (updatedData.name) user.name = updatedData.name;
-    if (Array.isArray(updatedData.following)) user.following = updatedData.following;
     
-    await kv.set(`user:${user.email}`, user);
+    // Lógica completa e corrigida para atualização de nome
+    if (updatedData.name) {
+      const newName = updatedData.name.trim();
+
+      // Validação do novo nome
+      if (newName.length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
+      if (/\s/.test(newName)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
+      
+      const normalizedNewName = newName.toLowerCase();
+      const normalizedOldName = user.name.trim().toLowerCase();
+
+      // Só executa a lógica de verificação se o nome realmente mudou (ignorando maiúsculas/minúsculas)
+      if (normalizedNewName !== normalizedOldName) {
+        const nameTaken = await kv.get(`name:${normalizedNewName}`);
+        if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+        
+        // Usa uma transação para garantir que ambas as operações ocorram
+        const multi = kv.multi();
+        multi.del(`name:${normalizedOldName}`); // Libera o nome antigo
+        multi.set(`name:${normalizedNewName}`, 1); // Reserva o novo nome
+        user.name = newName; // Atualiza o nome no objeto do usuário
+        multi.set(`user:${user.email}`, user); // Salva o objeto do usuário atualizado
+        await multi.exec();
+        
+      } else {
+        // Permite apenas mudança de capitalização sem verificar
+        user.name = newName;
+        await kv.set(`user:${user.email}`, user);
+      }
+    }
+
+    // Lógica para atualizar a lista de artistas seguidos
+    if (Array.isArray(updatedData.following)) {
+      user.following = updatedData.following;
+      await kv.set(`user:${user.email}`, user);
+    }
     
     const { password, ...userData } = user;
     res.status(200).json(userData);
+
   } else {
     res.status(405).json({ error: 'Method Not Allowed' });
   }
