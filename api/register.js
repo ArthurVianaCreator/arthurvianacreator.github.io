@@ -6,14 +6,18 @@ import jwt from 'jsonwebtoken';
 export default async function handler(req, res) {
   if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
 
-  try { // Adicionado bloco try...catch
+  try {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
-    if (name.trim().length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
+    if (name.trim().length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
     if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{4,}$/;
-    if (!passwordRegex.test(password)) { return res.status(400).json({ error: 'Password does not meet requirements.' }); }
+    
+    // ===== CORREÇÃO APLICADA AQUI =====
+    // A regra complexa foi removida e substituída por uma verificação de tamanho simples.
+    if (password.length <= 4) { 
+      return res.status(400).json({ error: 'Password must be more than 4 characters long.' }); 
+    }
 
     const kv = createClient({
       url: process.env.KV_REST_API_URL,
