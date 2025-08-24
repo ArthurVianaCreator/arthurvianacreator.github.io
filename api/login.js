@@ -1,7 +1,7 @@
 // /api/login.js
 
 import { createClient } from '@vercel/kv';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'; // <-- MUDANÇA AQUI
 import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
