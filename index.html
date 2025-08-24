@@ -11,20 +11,15 @@
 <body>
     <div id="app-loader"><div class="spinner"></div></div>
     <div class="main-container" style="display: none;">
-        <div class="sidebar">
-            <div class="sidebar-header"><div class="logo"><h1>Avrenpedia</h1><p>Music Encyclopedia</p></div><button class="control-btn close-btn" id="closeSidebarBtn"><i class="fas fa-times"></i></button></div>
-            <div class="nav-menu">
-                <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Home</span></div>
-                <div class="nav-item" data-target="descobrir"><i class="fas fa-compass"></i><span>Discover</span></div>
+        <div class="header">
+            <div class="header-left">
+                <div class="logo"><h1>Avrenpedia</h1></div>
+                <nav class="main-nav">
+                    <div class="nav-item active" data-target="inicio">Home</div>
+                    <div class="nav-item" data-target="seguindo" id="libraryNavItem" style="display: none;">Following</div>
+                </nav>
             </div>
-            <div class="library-section" id="librarySection" style="display: none;">
-                <div class="section-title">YOUR LIBRARY</div>
-                <div class="nav-item" data-target="seguindo"><i class="fas fa-user-check"></i><span>Following</span></div>
-            </div>
-        </div>
-        <div class="main-content">
-            <div class="header">
-                <button class="control-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+            <div class="header-right">
                 <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search for bands, albums..."></div>
                 <div class="user-profile-area">
                     <button class="btn-login" id="loginPromptBtn">Login</button>
@@ -37,25 +32,12 @@
                     <div class="theme-picker" id="themePicker"><div class="color-swatch" data-color="#E50914" style="background: #E50914;"></div><div class="color-swatch" data-color="#1DB954" style="background: #1DB954;"></div><div class="color-swatch" data-color="#FFC107" style="background: #FFC107;"></div><div class="color-swatch" data-color="#007BFF" style="background: #007BFF;"></div><div class="color-swatch" data-color="#9b59b6" style="background: #9b59b6;"></div></div>
                 </div>
             </div>
+        </div>
+        <div class="main-content">
             <div id="inicio" class="content-section active"><h2 class="section-title-main">New Releases</h2><div class="music-grid" id="home-albums-grid"></div><h2 class="section-title-main">Featured Artists</h2><div class="music-grid" id="home-artists-grid"></div></div>
             <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
             <div id="details-view" class="content-section"></div>
             <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div class="music-grid" id="followed-artists-grid"></div></div>
-            <div id="descobrir" class="content-section">
-                <div id="quizz-container">
-                    <div id="quizz-intro">
-                        <h2 class="section-title-main">Find Your Next Favorite Artist</h2>
-                        <p>Answer a few questions and we'll recommend something you might love.</p>
-                        <button class="btn-primary start-quizz-btn">Start the Quizz</button>
-                    </div>
-                    <div id="quizz-questions" style="display: none;"></div>
-                </div>
-                <div id="discover-results" style="display: none;">
-                    <h2 class="section-title-main">Your Recommendations</h2>
-                    <button class="btn-secondary" id="retakeQuizzBtn">Take Quizz Again</button>
-                    <div class="music-grid" id="discover-grid"></div>
-                </div>
-            </div>
         </div>
     </div>
     <div id="loginModal" class="modal-overlay"><div class="modal-content"><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p><p class="modal-switch"><a href="#" id="switchToForgot">Forgot Password?</a></p></div></div>
