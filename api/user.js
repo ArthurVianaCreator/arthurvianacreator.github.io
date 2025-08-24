@@ -3,20 +3,20 @@
 import { createClient } from '@vercel/kv';
 import jwt from 'jsonwebtoken';
 
-async function authenticate(req) {
+async function authenticate(req, env) {
+  const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = env;
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   
   const token = authHeader.split(' ')[1];
   
   const kv = createClient({
-    url: process.env.KV_REST_API_URL,
-    token: process.env.KV_REST_API_TOKEN,
+    url: KV_REST_API_URL,
+    token: KV_REST_API_TOKEN,
   });
 
   try {
-    const { email } = jwt.verify(token, process.env.JWT_SECRET);
-    // CORREÇÃO AQUI: kv.get() já retorna o objeto.
+    const { email } = jwt.verify(token, JWT_SECRET);
     const user = await kv.get(`user:${email}`);
     return user;
   } catch (error) {
@@ -25,14 +25,20 @@ async function authenticate(req) {
 }
 
 export default async function handler(req, res) {
-  const user = await authenticate(req);
+  // MUDANÇA 1: Verificação explícita
+  const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = process.env;
+  if (!KV_REST_API_URL || !KV_REST_API_TOKEN || !JWT_SECRET) {
+    return res.status(500).json({ error: 'Server configuration error: Missing environment variables.' });
+  }
+
+  const user = await authenticate(req, process.env);
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const kv = createClient({
-    url: process.env.KV_REST_API_URL,
-    token: process.env.KV_REST_API_TOKEN,
+    url: KV_REST_API_URL,
+    token: KV_REST_API_TOKEN,
   });
 
   if (req.method === 'GET') {
