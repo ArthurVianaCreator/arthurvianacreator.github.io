@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchResultsContainer = document.getElementById('searchResultsContainer');
     const detailsViewContainer = document.getElementById('details-view');
     const followedArtistsGrid = document.getElementById('followed-artists-grid');
+    const discoverArtistsGrid = document.getElementById('discover-artists-grid');
+    const discoverAlbumsGrid = document.getElementById('discover-albums-grid');
     const settingsBtn = document.getElementById('settingsBtn');
     const themePicker = document.getElementById('themePicker');
     const colorSwatches = document.querySelectorAll('.color-swatch');
@@ -120,6 +122,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- RENDER LOGIC ---
+    
+    function renderDiscoverPage() {
+        const allArtists = {...database.bands, ...database.artists};
+        const allAlbums = database.albums;
+
+        // Embaralha e pega 4 artistas aleatórios
+        const randomArtists = Object.keys(allArtists).sort(() => 0.5 - Math.random()).slice(0, 4);
+        // Embaralha e pega 4 álbuns aleatórios
+        const randomAlbums = Object.keys(allAlbums).sort(() => 0.5 - Math.random()).slice(0, 4);
+
+        let artistsHTML = '';
+        randomArtists.forEach(name => {
+            const artist = allArtists[name];
+            artistsHTML += `
+                <div class="music-card" data-type="${database.bands[name] ? 'band' : 'artist'}" data-name="${name}">
+                    <div class="music-img"><img src="${artist.img}" alt="${name}"></div>
+                    <div class="music-title">${name}</div>
+                    <div class="music-artist">${artist.category}</div>
+                </div>`;
+        });
+
+        let albumsHTML = '';
+        randomAlbums.forEach(name => {
+            const album = allAlbums[name];
+            albumsHTML += `
+                <div class="music-card" data-type="album" data-name="${name}" data-artist="${album.artist}">
+                    <div class="music-img"><img src="${album.img}" alt="${name}"></div>
+                    <div class="music-title">${name}</div>
+                    <div class="music-artist">${album.artist} • ${album.year}</div>
+                </div>`;
+        });
+        
+        discoverArtistsGrid.innerHTML = artistsHTML;
+        discoverAlbumsGrid.innerHTML = albumsHTML;
+    }
 
     function renderArtistView(artistName) {
         const artist = database.bands[artistName] || database.artists[artistName];
@@ -236,12 +273,27 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById(targetId).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === targetId));
         mainContent.scrollTop = 0;
-        if (targetId === 'seguindo') renderFollowedArtists();
+        
+        if (targetId === 'seguindo') {
+            renderFollowedArtists();
+        } else if (targetId === 'descobrir') {
+            renderDiscoverPage();
+        }
+        
         document.querySelector('.main-container').classList.remove('sidebar-open');
+        document.body.style.overflow = 'auto'; // Garante que o scroll volte ao normal
     }
     document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => switchContent(item.dataset.target)));
-    document.getElementById('menuBtn').addEventListener('click', () => document.querySelector('.main-container').classList.add('sidebar-open'));
-    document.getElementById('closeSidebarBtn').addEventListener('click', () => document.querySelector('.main-container').classList.remove('sidebar-open'));
+    
+    // Correção do Bug Mobile
+    document.getElementById('menuBtn').addEventListener('click', () => {
+        document.querySelector('.main-container').classList.add('sidebar-open');
+        document.body.style.overflow = 'hidden'; // Impede o scroll do conteúdo principal
+    });
+    document.getElementById('closeSidebarBtn').addEventListener('click', () => {
+        document.querySelector('.main-container').classList.remove('sidebar-open');
+        document.body.style.overflow = 'auto'; // Permite o scroll novamente
+    });
 
     document.querySelectorAll('.category-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -254,21 +306,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Pesquisa Melhorada
     searchInput.addEventListener('input', e => {
         const query = e.target.value.toLowerCase().trim();
         if (!query) { switchContent('inicio'); return; }
+
         const allArtists = {...database.bands, ...database.artists};
         const artistResults = Object.keys(allArtists).filter(name => name.toLowerCase().includes(query));
         const albumResults = Object.keys(database.albums).filter(name => name.toLowerCase().includes(query));
+        
         let resultsHTML = '';
-        artistResults.forEach(name => {
-            const artist = allArtists[name];
-            resultsHTML += `<div class="music-card" data-type="${database.bands[name] ? 'band' : 'artist'}" data-name="${name}"><div class="music-img"><img src="${artist.img}" alt="${name}"></div><div class="music-title">${name}</div><div class="music-artist">${artist.category}</div></div>`;
-        });
-        albumResults.forEach(name => {
-            const album = database.albums[name];
-            resultsHTML += `<div class="music-card" data-type="album" data-name="${name}" data-artist="${album.artist}"><div class="music-img"><img src="${album.img}" alt="${name}"></div><div class="music-title">${name}</div><div class="music-artist">${album.artist}</div></div>`;
-        });
+
+        if (artistResults.length > 0) {
+            resultsHTML += `<h2 class="section-title-main">Bands & Artists</h2><div class="music-grid">`;
+            artistResults.forEach(name => {
+                const artist = allArtists[name];
+                resultsHTML += `<div class="music-card" data-type="${database.bands[name] ? 'band' : 'artist'}" data-name="${name}"><div class="music-img"><img src="${artist.img}" alt="${name}"></div><div class="music-title">${name}</div><div class="music-artist">${artist.category}</div></div>`;
+            });
+            resultsHTML += `</div>`;
+        }
+
+        if (albumResults.length > 0) {
+            resultsHTML += `<h2 class="section-title-main">Albums</h2><div class="music-grid">`;
+            albumResults.forEach(name => {
+                const album = database.albums[name];
+                resultsHTML += `<div class="music-card" data-type="album" data-name="${name}" data-artist="${album.artist}"><div class="music-img"><img src="${album.img}" alt="${name}"></div><div class="music-title">${name}</div><div class="music-artist">${album.artist}</div></div>`;
+            });
+            resultsHTML += `</div>`;
+        }
+
         searchResultsContainer.innerHTML = resultsHTML || '<p class="search-message">No results found.</p>';
         switchContent('buscar');
     });
@@ -290,4 +356,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- INITIALIZATION ---
     loadState();
+    renderDiscoverPage(); // Popula a página "Descobrir" na primeira carga
 });
