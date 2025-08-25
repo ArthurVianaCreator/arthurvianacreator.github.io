@@ -107,15 +107,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                     this.dom.userAvatar.textContent = u.name.charAt(0).toUpperCase();
                 }
                 
-                let badgesHTML = '<div class="user-badges">';
+                let badgesHTML = '';
                 if (u.badges && u.badges.length > 0) {
+                    badgesHTML += '<div class="user-badges">';
                     [...new Set(u.badges)].forEach(badgeKey => {
                         if (badgeMap[badgeKey]) {
                             badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${badgeMap[badgeKey].title}" class="badge-icon" data-badge-key="${badgeKey}">`;
                         }
                     });
+                    badgesHTML += '</div>';
                 }
-                badgesHTML += '</div>';
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
             }
         },
@@ -294,6 +295,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.body.addEventListener('mouseout', e => { if (e.target.closest('.badge-icon')) ui.manager.dom.badgeTooltip.classList.remove('active'); });
 
         document.body.addEventListener('click', async e => {
+            // Dropdown do perfil
             if (e.target.closest('#userProfile')) {
                 ui.manager.dom.userDropdown.classList.toggle('active');
                 return;
@@ -301,6 +303,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (!e.target.closest('.user-dropdown')) {
                  ui.manager.dom.userDropdown.classList.remove('active');
             }
+
+            // Cards de Música
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) {
                 if (cardContent.dataset.type === 'artist') {
@@ -308,6 +312,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
                 return;
             }
+
+            // Botão Follow
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) { 
                 try {
@@ -317,10 +323,42 @@ document.addEventListener('DOMContentLoaded', async function() {
                     followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
                     followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
                 } catch (error) { alert(error.message); }
+                return;
             }
-            if (e.target.closest('.back-btn')) ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
+            
+            // Botão Voltar
+            if (e.target.closest('.back-btn')) {
+                ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
+                return;
+            }
+
+            // Toggle de Senha
+            const passToggle = e.target.closest('.password-toggle');
+            if (passToggle) {
+                const input = passToggle.previousElementSibling;
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                passToggle.className = `fas ${isPassword ? 'fa-eye-slash' : 'fa-eye'} password-toggle`;
+                return;
+            }
+
+            // Navegação entre Modais
+            if (e.target.closest('#switchToRegister')) {
+                ui.manager.closeAllModals();
+                ui.manager.openModal(ui.manager.dom.registerModal);
+                return;
+            }
+            if (e.target.closest('#switchToLogin')) {
+                ui.manager.closeAllModals();
+                ui.manager.openModal(ui.manager.dom.loginModal);
+                return;
+            }
+            
+            // Botões de Abertura de Modais
             if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) ui.manager.openModal(ui.manager.dom.nameChangeModal);
+            
+            // Lógica do Modal de Avatar
             if (e.target.closest('#changeAvatarBtn')) {
                 const previewImage = document.getElementById('avatarPreviewImage');
                 const savedAvatar = localStorage.getItem(`userAvatar_${state.currentUser.email}`);
@@ -343,7 +381,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
                 ui.manager.closeAllModals();
             }
-            if (e.target.closest('.close-modal-btn') || e.target.matches('.modal-overlay')) ui.manager.closeAllModals();
+
+            // Fechar Modais
+            if (e.target.closest('.close-modal-btn') || e.target.matches('.modal-overlay')) {
+                ui.manager.closeAllModals();
+            }
         });
         
         ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));

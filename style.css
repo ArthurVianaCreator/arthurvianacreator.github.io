@@ -58,18 +58,17 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .sidebar .nav-item.active { color: #121212; background-color: var(--primary-color); box-shadow: 0 4px 15px var(--primary-glow); }
 
 /* TOP BAR & PERFIL DO USUÁRIO */
-.mobile-header { display: none; }
 .user-profile-area { display: flex; align-items: center; gap: 15px; position: relative; }
-.user-profile { display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 50px; padding: 4px 12px 4px 4px; cursor: pointer; transition: all 0.2s ease-in-out; }
+.user-profile { display: flex; align-items: center; gap: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 50px; padding: 4px 12px 4px 4px; cursor: pointer; transition: all 0.2s ease-in-out; }
 .user-profile:hover { background-color: var(--card-hover-bg); transform: scale(1.03); }
 .user-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--elegant-font); font-size: 1.2rem; font-weight: bold; color: #fff; overflow: hidden; }
 .user-avatar .profile-picture { width: 100%; height: 100%; object-fit: cover; }
-.user-info { display: flex; flex-direction: column; align-items: flex-start; }
-.user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
-.user-badges { display: flex; align-items: center; gap: 5px; height: 16px; margin-top: 2px; }
+.user-info { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); line-height: 1.2; }
+.user-badges { display: flex; align-items: center; gap: 4px; margin-top: 3px; }
 .badge-icon { width: 16px; height: 16px; cursor: pointer; transition: transform 0.2s; }
 .badge-icon:hover { transform: scale(1.2); }
-.user-profile i.fa-chevron-down { color: var(--gray-text); font-size: 0.8rem; transition: transform 0.2s; }
+.user-profile i.fa-chevron-down { color: var(--gray-text); font-size: 0.8rem; transition: transform 0.2s; margin-left: 4px; }
 .user-dropdown { position: absolute; top: 60px; right: 0; background: var(--card-hover-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 180px; overflow: hidden; z-index: 10; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; }
 .user-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
 .dropdown-item { padding: 12px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; color: var(--light-gray-text); }
@@ -80,12 +79,6 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .search-bar input { background: none; border: none; color: var(--white-text); outline: none; width: 100%; font-family: var(--body-font); font-size: 0.95rem; }
 .btn-login { background-color: var(--primary-color); color: #121212; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
 .btn-login:hover { filter: brightness(1.2); transform: scale(1.05); }
-.control-btn { background: none; border: none; color: var(--gray-text); cursor: pointer; padding: 5px; transition: color 0.2s, transform 0.2s; font-size: 1.5rem; }
-.control-btn:hover { color: var(--primary-color); transform: scale(1.1); }
-#themeToggleBtn .fa-sun { display: none; }
-#themeToggleBtn .fa-moon { display: block; }
-body.light-theme #themeToggleBtn .fa-sun { display: block; }
-body.light-theme #themeToggleBtn .fa-moon { display: none; }
 
 /* PÁGINA DE DETALHES DO ARTISTA */
 .back-btn { position: absolute; top: 15px; left: 15px; background: var(--card-hover-bg); color: var(--light-gray-text); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s ease-in-out; z-index: 10; }
@@ -95,28 +88,10 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .details-header .details-img img { width: 100%; height: 100%; object-fit: cover; }
 .details-header .details-info h2 { font-family: var(--elegant-font); font-size: 3rem; color: var(--white-text); margin: 0; }
 .details-header .details-info .meta-info { font-size: 1rem; color: var(--gray-text); text-transform: capitalize; margin: 5px 0 10px; }
-.details-header .details-info .artist-origin { font-size: 0.9rem; color: var(--light-gray-text); }
 .details-info .follow-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 30px; border-radius: 50px; border: none; background: linear-gradient(45deg, var(--primary-color), #ffd54f); color: #121212; font-size: 1rem; font-weight: bold; font-family: var(--body-font); cursor: pointer; transition: all 0.3s ease; margin-top: 20px; box-shadow: 0 4px 15px var(--primary-glow); }
 .details-info .follow-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px var(--primary-glow); filter: brightness(1.1); }
 .details-info .follow-btn.following { background: transparent; border: 2px solid var(--gray-text); color: var(--light-gray-text); box-shadow: none; }
 .details-info .follow-btn.following:hover { background-color: var(--card-hover-bg); border-color: var(--light-gray-text); color: var(--white-text); transform: scale(1.05); filter: none; }
-
-/* CONTEÚDO GERAL E CARDS */
-.section-title-main { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: 1.8rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 12px; margin-top: 16px; }
-.music-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 24px; margin-bottom: 32px; justify-items: center; }
-.horizontal-music-grid { display: flex; overflow-x: auto; grid-template-columns: none; gap: 16px; padding-bottom: 20px; justify-items: initial; }
-.horizontal-music-grid .music-card { flex-shrink: 0; width: 160px; }
-.music-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; transition: all 0.2s ease-in-out; opacity: 0; animation: slideUpFadeIn 0.5s ease-out forwards; max-width: 200px; width: 100%; }
-@keyframes slideUpFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.music-card-content { cursor: pointer; }
-.music-card:hover { background: var(--card-hover-bg); transform: translateY(-5px); box-shadow: 0 8px 25px var(--primary-glow); border-color: var(--gray-text); }
-.music-card .music-img { width: 100%; padding-bottom: 100%; position: relative; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
-.music-card .music-img img { position: absolute; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease-out; }
-.music-card:hover .music-img img { transform: scale(1.05); }
-.music-title { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; margin-bottom: 4px; }
-.music-artist { font-size: 0.85rem; color: var(--gray-text); text-transform: capitalize; }
-.search-message, .loading-container { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
-.loading-container .spinner { margin: 0 auto 15px; }
 
 /* MODAIS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; animation: fadeInModal 0.3s; }
@@ -126,23 +101,9 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 @keyframes zoomInModal { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .close-modal-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2rem; color: var(--gray-text); cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
 .close-modal-btn:hover { color: var(--white-text); }
-.modal-content h2 { color: var(--white-text); margin-bottom: 15px; }
-.modal-content input { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--gray-text); background: var(--card-bg); color: var(--white-text); font-size: 1rem; margin-bottom: 15px; }
 .password-wrapper { position: relative; margin-bottom: 15px; }
-.password-wrapper input { margin-bottom: 0; padding-right: 45px; }
+.password-wrapper input { padding-right: 45px; }
 .password-toggle { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: var(--gray-text); cursor: pointer; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; width: 100%;}
-.modal-actions button, .modal-actions-grid button { padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: 700; transition: all 0.2s; }
-.btn-primary { background-color: var(--primary-color); color: #121212; }
-.btn-primary:hover { filter: brightness(1.2); transform: scale(1.05); }
-.btn-primary:disabled { filter: brightness(0.6); cursor: not-allowed; }
-.btn-secondary { background-color: var(--gray-text); color: var(--darker-bg); }
-.btn-secondary:hover { filter: brightness(0.8); }
-.btn-danger { background-color: var(--danger-color); color: white; }
-.btn-danger:hover { filter: brightness(1.2); }
-.modal-switch { margin-top: 20px; font-size: 0.9rem; }
-.modal-switch a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
-.modal-error { min-height: 20px; font-size: 0.9em; font-weight: 500; text-align: left; margin-bottom: 10px; color: #ff4757; }
 
 /* MODAL DE TROCA DE AVATAR */
 #avatarChangeModal .modal-content { display: flex; flex-direction: column; align-items: center; }
