@@ -33,7 +33,47 @@ export default async function handler(req, res) {
       const { password, ...userData } = user;
       res.status(200).json(userData);
     } else if (req.method === 'PUT') {
-      // ... (lógica do PUT inalterada)
+      const updatedData = req.body;
+      let userWasUpdated = false;
+
+      if (updatedData.name) {
+        const newName = updatedData.name.trim();
+        if (newName.length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
+        if (/\s/.test(newName)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
+        const normalizedNewName = newName.toLowerCase();
+        const normalizedOldName = (user.name || '').trim().toLowerCase();
+        if (normalizedNewName !== normalizedOldName) {
+          const nameTaken = await kv.get(`name:${normalizedNewName}`);
+          if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+          const multi = kv.multi();
+          if (normalizedOldName) {
+            multi.del(`name:${normalizedOldName}`);
+          }
+          multi.set(`name:${normalizedNewName}`, 1);
+          user.name = newName;
+          await multi.exec();
+        } else {
+          user.name = newName;
+        }
+        userWasUpdated = true;
+      }
+      
+      if (Array.isArray(updatedData.following)) {
+        user.following = updatedData.following;
+        userWasUpdated = true;
+      }
+
+      if (Array.isArray(updatedData.badges)) {
+        user.badges = updatedData.badges;
+        userWasUpdated = true;
+      }
+
+      if (userWasUpdated) {
+          await kv.set(`user:${user.email}`, user);
+      }
+
+      const { password, ...userData } = user;
+      res.status(200).json(userData);
     } else {
       res.status(405).json({ error: 'Method Not Allowed' });
     }

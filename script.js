@@ -232,8 +232,32 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    async function renderArtistView(artistId, artistName) { /* ... (código inalterado, como na última versão) ... */ }
-    async function renderAlbumView(albumId) { /* ... (código inalterado, como na última versão) ... */ }
+    async function renderArtistView(artistId, artistName) {
+        ui.manager.switchContent('details-view');
+        ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
+        const [artist, albumsData, wikiInfo] = await Promise.all([ 
+            api.manager.getSpotifyArtist(artistId).catch(err => null), 
+            api.manager.getSpotifyArtistAlbums(artistId).catch(err => null), 
+            api.manager.getWikipediaInfo(artistName).catch(err => null) 
+        ]);
+        if (!artist) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load artist information.</p>`; return; }
+        const isFollowing = auth.manager.isFollowing(artistId);
+        const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
+        const discographyHTML = `<div class="music-grid horizontal-music-grid">${albumsData?.items?.map(ui.manager.renderMusicCard).join('') || ''}</div>`;
+        const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
+        const originHTML = wikiInfo?.origin ? `<p class="artist-origin"><i class="fas fa-map-marker-alt"></i> ${wikiInfo.origin}</p>` : '';
+        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${originHTML}${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div></div>`;
+    }
+    async function renderAlbumView(albumId) {
+        ui.manager.switchContent('details-view');
+        ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Album...');
+        const album = await api.manager.getSpotifyAlbum(albumId).catch(err => null);
+        if (!album) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load album information.</p>`; return; }
+        const artistsHTML = album.artists.map(a => `<span class="clickable-artist" data-artist-id="${a.id}" data-artist-name="${encodeURIComponent(a.name)}">${a.name}</span>`).join(', ');
+        const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
+        const tracksHTML = album.tracks.items.map(track => `<div class="track-item"><div class="track-number">${track.track_number}</div><div class="track-info"><div class="track-title">${track.name}</div><div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div></div><div class="track-duration">${formatDuration(track.duration_ms)}</div></div>`).join('');
+        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
+    }
     
     function renderProfilePage() { 
         if (!state.currentUser) return;
@@ -286,9 +310,38 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.populateGrid(artistsToRender, followedArtistsGrid); 
     }
     
-    async function handleLoginSubmit(e) { /* ... (código inalterado) ... */ }
-    async function handleRegisterSubmit(e) { /* ... (código inalterado) ... */ }
-    async function handleNameChangeSubmit(e) { /* ... (código inalterado) ... */ }
+    async function handleLoginSubmit(e) {
+        const btn = e.target; const modal = ui.manager.dom.loginModal;
+        ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
+        try {
+            await auth.manager.login(modal.querySelector('#loginEmail').value, modal.querySelector('#loginPassword').value);
+            ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
+        } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Login'; }
+    }
+    async function handleRegisterSubmit(e) {
+        const btn = e.target; const modal = ui.manager.dom.registerModal;
+        ui.manager.clearModalMessages(modal); const name = modal.querySelector('#registerName').value; const email = modal.querySelector('#registerEmail').value; const password = modal.querySelector('#registerPassword').value;
+        if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
+        if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
+        if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
+        btn.disabled = true; btn.textContent = 'Creating...';
+        try {
+            await auth.manager.register(name, email, password);
+            ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
+        } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
+    }
+    async function handleNameChangeSubmit(e) {
+        const btn = e.target; const modal = ui.manager.dom.nameChangeModal;
+        const newName = modal.querySelector('#newNameInput').value;
+        if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
+        if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
+        if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
+        btn.disabled = true; btn.textContent = 'Saving...';
+        try {
+            state.currentUser = await api.manager.updateUser({ name: newName });
+            ui.manager.updateForAuthState(); ui.manager.closeAllModals();
+        } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Save'; }
+    }
     
     function initCropper(imageElement) {
         if (state.cropper) state.cropper.destroy();
@@ -349,13 +402,114 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
-            if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
+            if (e.target.closest('#userProfile')) {
+                ui.manager.dom.userDropdown.classList.toggle('active');
+                return;
+            }
+            if (!e.target.closest('.user-dropdown')) {
+                 ui.manager.dom.userDropdown.classList.remove('active');
+            }
             
-            // ... (resto da lógica de clique inalterada)
+            const cardContent = e.target.closest('.music-card-content');
+            if (cardContent) { const { type, id, name } = cardContent.dataset; if (type === 'artist') return renderArtistView(id, decodeURIComponent(name)); if (type === 'album') return renderAlbumView(id); }
+            
+            const clickableArtist = e.target.closest('.clickable-artist');
+            if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
+            
+            const followBtn = e.target.closest('.follow-btn');
+            if (followBtn) { 
+                try {
+                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); 
+                    const isFollowing = await auth.manager.toggleFollow(artist); 
+                    followBtn.classList.toggle('following', isFollowing); 
+                    followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
+                    followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
+                } catch (error) { alert(error.message); }
+                return; 
+            }
+
+            const passToggle = e.target.closest('.password-toggle');
+            if (passToggle) { const input = passToggle.previousElementSibling; const isPassword = input.type === 'password'; input.type = isPassword ? 'text' : 'password'; passToggle.className = `fas ${isPassword ? 'fa-eye-slash' : 'fa-eye'} password-toggle`; return; }
+            if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
+            if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
+            if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
+            
+            if (e.target.closest('#changeAvatarBtn')) {
+                const previewImage = document.getElementById('avatarPreviewImage');
+                const savedAvatar = localStorage.getItem(`userAvatar_${state.currentUser.email}`);
+                previewImage.src = savedAvatar || "";
+                previewImage.style.opacity = savedAvatar ? 1 : 0;
+                ui.manager.openModal(ui.manager.dom.avatarChangeModal);
+                if (savedAvatar) previewImage.onload = () => initCropper(previewImage);
+            }
+            if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
+            if (e.target.closest('#removeAvatarBtn')) {
+                localStorage.removeItem(`userAvatar_${state.currentUser.email}`);
+                if (state.cropper) { state.cropper.destroy(); state.cropper = null; }
+                ui.manager.updateForAuthState();
+                ui.manager.closeAllModals();
+            }
+            if (e.target.closest('#saveAvatarBtn')) {
+                if (state.cropper) {
+                    const canvas = state.cropper.getCroppedCanvas({ width: 256, height: 256 });
+                    localStorage.setItem(`userAvatar_${state.currentUser.email}`, canvas.toDataURL('image/png'));
+                    ui.manager.updateForAuthState();
+                }
+                if (state.cropper) { state.cropper.destroy(); state.cropper = null; }
+                ui.manager.closeAllModals();
+            }
+            
+            if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
+            if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
+            
+            if (e.target.closest('.close-modal-btn') || e.target.id === 'nameChangeModal') {
+                 if (state.cropper && ui.manager.dom.avatarChangeModal.contains(e.target)) { state.cropper.destroy(); state.cropper = null; }
+                ui.manager.closeAllModals();
+            }
         });
         
-        // ... (resto dos listeners inalterados)
+        ui.manager.dom.themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('lyricaTheme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            ui.manager.applyTheme(newTheme);
+        });
+
+        document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
+        document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
+        document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
+        document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
+        
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const target = item.dataset.target;
+                if (target === 'profile') {
+                    if (!state.currentUser) return ui.manager.openModal(ui.manager.dom.loginModal);
+                    renderProfilePage();
+                }
+                ui.manager.switchContent(target);
+            });
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); ui.manager.switchContent('inicio'); location.reload(); });
+        
+        let searchTimeout;
+        ui.manager.dom.searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            if (!query) return ui.manager.switchContent('inicio');
+            ui.manager.dom.searchResultsContainer.innerHTML = ui.manager.renderLoader('Searching...');
+            ui.manager.switchContent('buscar');
+            searchTimeout = setTimeout(async () => {
+                const results = await api.manager.searchSpotify(query, 'artist,album');
+                const allItems = [...(results?.artists?.items || []), ...(results?.albums?.items || [])];
+                const artists = allItems.filter(i => i.type === 'artist');
+                const albums = allItems.filter(i => i.type === 'album');
+                let html = '';
+                if (artists.length) html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${artists.map(ui.manager.renderMusicCard).join('')}</div>`;
+                if (albums.length) html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${albums.map(ui.manager.renderMusicCard).join('')}</div>`;
+                ui.manager.dom.searchResultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
+            }, 500);
+        });
     }
 
     async function init() {
