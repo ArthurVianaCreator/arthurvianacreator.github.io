@@ -1,12 +1,16 @@
-// /api/getToken.js
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
   if (!clientId || !clientSecret) {
-    console.error('Spotify credentials are not set in environment variables.');
+    console.error('Server configuration error: Spotify credentials are not set.');
     return res.status(500).json({ error: 'Server configuration error.' });
   }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   try {
     const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
@@ -20,7 +24,7 @@ export default async function handler(req, res) {
     const data = await tokenResponse.json();
     if (!tokenResponse.ok) {
       console.error('Spotify Token API Error:', data);
-      return res.status(tokenResponse.status).json({ error: data.error_description || 'Failed to fetch token from Spotify.' });
+      return res.status(tokenResponse.status).json({ error: data.error_description || 'Failed to fetch token.' });
     }
     res.status(200).json({ access_token: data.access_token });
   } catch (error) {

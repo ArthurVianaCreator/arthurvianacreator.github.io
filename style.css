@@ -102,9 +102,6 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .search-message, .loading-container { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
 .loading-container .spinner { margin: 0 auto 15px; }
 
-/* DETALHES E VIEW ESPECÍFICA */
-.content-section { display: none; } .content-section.active { display: block; }
-
 /* ESTILOS DA PÁGINA DE PERFIL */
 .profile-header-main {
     display: flex;
