@@ -1,13 +1,12 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const state = { currentUser: null, spotifyAppToken: null };
+    const state = { currentUser: null, spotifyAppToken: null, cropper: null };
     const api = {}, auth = {}, ui = {};
 
-    // --- FUNÇÃO AUXILIAR PARA DETERMINAR O LIMITE DE SEGUIR ---
     const getFollowLimit = (user) => {
-        if (!user || !Array.isArray(user.badges)) return 50; // Limite padrão
+        if (!user || !Array.isArray(user.badges)) return 50;
         if (user.badges.includes('admin')) return 1000;
         if (user.badges.includes('supporter')) return 150;
-        return 50; // Limite para usuários gratuitos
+        return 50;
     };
 
     api.manager = {
@@ -40,10 +39,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
-        getSpotifyNewReleases: () => api.manager._spotifyRequest(`browse/new-releases?limit=12`),
         getSpotifySeveralArtists: (ids) => api.manager._spotifyRequest(`artists?ids=${ids.join(',')}`),
-        // --- NOVA FUNÇÃO ---
         getSpotifyPlaylist: (id) => api.manager._spotifyRequest(`playlists/${id}?fields=tracks.items(track(album,name))&limit=12`),
+        getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
         getWikipediaInfo: async (artistName) => {
             try {
                 const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(artistName + " artist")}&srlimit=1&format=json&origin=*`;
@@ -123,13 +121,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             homeContainer: document.getElementById('home-container'),
             followingStats: document.getElementById('following-stats'), themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip')
         },
-        // --- FUNÇÃO MODIFICADA ---
         updateForAuthState() {
             const u = state.currentUser;
             this.dom.loginPromptBtn.style.display = u ? 'none' : 'block';
             this.dom.userProfile.style.display = u ? 'flex' : 'none';
             if (u) {
-                // Lógica para carregar a foto do perfil ou mostrar as iniciais
                 const savedAvatar = localStorage.getItem(`userAvatar_${u.email}`);
                 if (savedAvatar) {
                     this.dom.userAvatar.innerHTML = `<img src="${savedAvatar}" alt="User Avatar" class="profile-picture">`;
@@ -189,7 +185,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     const formatDuration = (ms) => { const minutes = Math.floor(ms / 60000); const seconds = ((ms % 60000) / 1000).toFixed(0); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; };
     
-    // --- FUNÇÃO MODIFICADA ---
     async function renderHomePage() {
         const homeContainer = ui.manager.dom.homeContainer;
         homeContainer.innerHTML = ui.manager.renderLoader('Loading recommendations...');
@@ -206,23 +201,22 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             },
             {
-                title: 'New Releases',
+                title: 'Popular Lyrica Artists',
                 fetcher: async () => {
-                    const data = await api.manager.getSpotifyNewReleases();
-                    return data?.albums?.items || [];
+                    const data = await api.manager.getPopularArtists();
+                    return data?.artists || [];
                 }
             },
             {
-                title: 'Global Top 50',
+                title: 'Global Top 50 Albums',
                 fetcher: async () => {
                     const data = await api.manager.getSpotifyPlaylist('37i9dQZEVXbMDoHDwVN2tF');
                     const albums = data?.tracks?.items?.map(item => item.track?.album).filter(Boolean) || [];
-                    // Remove duplicates
                     return [...new Map(albums.map(item => [item['id'], item])).values()];
                 }
             },
             {
-                title: 'Rock Classics',
+                title: 'Rock Classics Albums',
                 fetcher: async () => {
                     const data = await api.manager.getSpotifyPlaylist('37i9dQZF1DWXRqgorJj26U');
                     const albums = data?.tracks?.items?.map(item => item.track?.album).filter(Boolean) || [];
@@ -324,30 +318,49 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Save'; }
     }
     
-    // --- NOVA FUNÇÃO ---
+    function initCropper(imageElement) {
+        if (state.cropper) {
+            state.cropper.destroy();
+        }
+        state.cropper = new Cropper(imageElement, {
+            aspectRatio: 1 / 1,
+            viewMode: 1,
+            background: false,
+            autoCropArea: 1,
+            responsive: true,
+            restore: false,
+            checkOrientation: false,
+            modal: false,
+            guides: false,
+            center: false,
+            highlight: false,
+            cropBoxMovable: false,
+            cropBoxResizable: false,
+            toggleDragModeOnDblclick: false,
+        });
+    }
+
     function handleAvatarChange() {
         const fileInput = document.getElementById('avatarFileInput');
         const file = fileInput.files[0];
         if (!file) return;
 
-        // Validar tipo de arquivo
         if (!file.type.startsWith('image/')) {
-            ui.manager.showModalError(ui.manager.dom.avatarChangeModal, 'Please select an image file (e.g., JPG, PNG).');
-            return;
+            return ui.manager.showModalError(ui.manager.dom.avatarChangeModal, 'Please select an image file (e.g., JPG, PNG).');
         }
-
-        // Validar tamanho do arquivo (ex: 2MB)
         if (file.size > 2 * 1024 * 1024) {
-            ui.manager.showModalError(ui.manager.dom.avatarChangeModal, 'File is too large. Maximum size is 2MB.');
-            return;
+            return ui.manager.showModalError(ui.manager.dom.avatarChangeModal, 'File is too large. Maximum size is 2MB.');
         }
-
+        
+        const previewImage = document.getElementById('avatarPreviewImage');
         const reader = new FileReader();
+        
         reader.onload = e => {
-            const preview = document.getElementById('avatarPreview');
-            preview.innerHTML = `<img src="${e.target.result}" alt="Avatar Preview">`;
-            preview.dataset.newAvatar = e.target.result; // Armazena temporariamente
+            previewImage.src = e.target.result;
+            previewImage.style.opacity = 1;
+            initCropper(previewImage);
         };
+        
         reader.readAsDataURL(file);
         ui.manager.clearModalMessages(ui.manager.dom.avatarChangeModal);
     }
@@ -409,36 +422,44 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
             
-            // --- NOVOS EVENTOS PARA O MODAL DE AVATAR ---
             if (e.target.closest('#changeAvatarBtn')) {
-                const preview = document.getElementById('avatarPreview');
+                const previewImage = document.getElementById('avatarPreviewImage');
                 const savedAvatar = localStorage.getItem(`userAvatar_${state.currentUser.email}`);
-                if (savedAvatar) {
-                    preview.innerHTML = `<img src="${savedAvatar}" alt="Current Avatar">`;
-                } else {
-                    preview.innerHTML = `<i class="fas fa-user-circle"></i>`;
-                }
-                delete preview.dataset.newAvatar;
+                previewImage.src = savedAvatar || "";
+                previewImage.style.opacity = savedAvatar ? 1 : 0;
                 ui.manager.openModal(ui.manager.dom.avatarChangeModal);
+                if(savedAvatar) {
+                    previewImage.onload = () => initCropper(previewImage);
+                }
             }
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
             if (e.target.closest('#removeAvatarBtn')) {
                 localStorage.removeItem(`userAvatar_${state.currentUser.email}`);
+                if (state.cropper) { state.cropper.destroy(); state.cropper = null; }
                 ui.manager.updateForAuthState();
                 ui.manager.closeAllModals();
             }
             if (e.target.closest('#saveAvatarBtn')) {
-                const preview = document.getElementById('avatarPreview');
-                if (preview.dataset.newAvatar) {
-                    localStorage.setItem(`userAvatar_${state.currentUser.email}`, preview.dataset.newAvatar);
+                if (state.cropper) {
+                    const canvas = state.cropper.getCroppedCanvas({ width: 256, height: 256 });
+                    localStorage.setItem(`userAvatar_${state.currentUser.email}`, canvas.toDataURL('image/png'));
                     ui.manager.updateForAuthState();
                 }
+                if (state.cropper) { state.cropper.destroy(); state.cropper = null; }
                 ui.manager.closeAllModals();
             }
             
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
             if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
-            if (e.target.closest('.close-modal-btn')) return ui.manager.closeAllModals();
+            
+            if (e.target.closest('.close-modal-btn')) {
+                 if (state.cropper && ui.manager.dom.avatarChangeModal.contains(e.target)) {
+                    state.cropper.destroy();
+                    state.cropper = null;
+                }
+                ui.manager.closeAllModals();
+            }
+            
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
         });

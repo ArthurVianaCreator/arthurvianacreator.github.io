@@ -6,6 +6,7 @@
     <title>Lyrica - Music Encyclopedia</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Delius+Unicase:wght@400;700&family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
@@ -46,7 +47,6 @@
                     </div>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span>Change Name</span></div>
-                        <!-- NOVO ITEM DE MENU -->
                         <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span>Change Picture</span></div>
                         <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div>
                     </div>
@@ -54,10 +54,8 @@
             </div>
 
             <div class="main-content">
-                <!-- SEÇÃO HOME MODIFICADA -->
                 <div id="inicio" class="content-section active">
                     <div id="home-container">
-                        <!-- Conteúdo dinâmico será injetado aqui pelo JS -->
                     </div>
                 </div>
                 <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
@@ -71,14 +69,13 @@
     <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
     <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="closeNameBtn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
     
-    <!-- NOVO MODAL PARA MUDAR AVATAR -->
     <div id="avatarChangeModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal-btn">&times;</button>
             <h2>Change Profile Picture</h2>
             <p class="modal-error"></p>
-            <div id="avatarPreview" class="avatar-preview">
-                <i class="fas fa-user-circle"></i>
+            <div class="avatar-preview-container">
+                <img id="avatarPreviewImage" src="" alt="Avatar Preview">
             </div>
             <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
             <div class="modal-actions-grid">
@@ -86,9 +83,9 @@
                 <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> Remove</button>
             </div>
             <div class="modal-actions">
-                <button class="btn-primary" id="saveAvatarBtn">Save & Close</button>
+                 <button class="btn-primary" id="saveAvatarBtn">Save & Close</button>
             </div>
-            <p class="modal-info">For best results, use a square image. Max 2MB.</p>
+            <p class="modal-info">Use o mouse para mover e o scroll para dar zoom.</p>
         </div>
     </div>
     
@@ -96,7 +93,7 @@
         <h3 id="badgeTooltipTitle"></h3>
         <p id="badgeTooltipDesc"></p>
     </div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
