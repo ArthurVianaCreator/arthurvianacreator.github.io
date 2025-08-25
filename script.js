@@ -65,15 +65,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         isFollowing: (id) => state.currentUser?.following.some(a => a.id === id),
         async toggleFollow(artist) {
             if (!state.currentUser || !artist) return;
-            
-            // Lógica futura de monetização:
-            // const isPremium = state.currentUser.isPremium; // (Exemplo)
-            // const followLimit = isPremium ? 150 : 50;
-            // if (state.currentUser.following.length >= followLimit) {
-            //     alert(`You have reached your follow limit of ${followLimit} artists. Go Premium to follow more!`);
-            //     return;
-            // }
-
             const artistData = { id: artist.id, name: artist.name, images: artist.images, genres: artist.genres };
             const followingList = state.currentUser.following || [];
             const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
@@ -82,41 +73,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             return !isCurrentlyFollowing;
         }
     };
-
+    
+    // ===================================================================================
+    // UI MANAGER
+    // ===================================================================================
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
-            loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), userBadges: document.getElementById('userBadges'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
+            loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
             homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid'),
-            followingStats: document.getElementById('following-stats')
+            followingStats: document.getElementById('following-stats'),
+            themeToggleBtn: document.getElementById('themeToggleBtn')
         },
         updateForAuthState() { 
             const u = state.currentUser; 
             this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; 
             this.dom.userProfile.style.display = u ? 'flex' : 'none'; 
-            if (u) {
-                this.dom.userName.textContent = u.name;
-                
-                // ===== LÓGICA DAS INSÍGNIAS IMPLEMENTADA AQUI =====
-                const badgeMap = {
-                    admin: { src: 'img/Admn.png', title: 'Administrator' },
-                    supporter: { src: 'img/Apoiad.png', title: 'Lyrica Supporter' },
-                    veteran: { src: 'img/Vetern.png', title: 'Veteran' }
-                };
-
-                let badgesHTML = '';
-                if (u.badges && u.badges.length > 0) {
-                    u.badges.forEach(badgeKey => {
-                        if (badgeMap[badgeKey]) {
-                            const badge = badgeMap[badgeKey];
-                            badgesHTML += `<img src="${badge.src}" alt="${badge.title}" title="${badge.title}" class="badge-icon">`;
-                        }
-                    });
-                }
-                this.dom.userBadges.innerHTML = badgesHTML;
-            }
+            if (u) this.dom.userName.textContent = u.name;
         },
         switchContent(id) { 
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
@@ -131,7 +106,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         },
         populateGrid(items, container) { if (!items || items.length === 0) { container.innerHTML = '<p class="search-message">Nothing to show here.</p>'; return; } container.innerHTML = items.filter(item => item).map(this.renderMusicCard).join(''); },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
-        applyTheme(color) { document.documentElement.style.setProperty('--primary-color', color); localStorage.setItem('lyricaTheme', color); },
+        applyTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+            localStorage.setItem('lyricaTheme', theme);
+        },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
@@ -164,12 +146,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             api.manager.getWikipediaInfo(artistName).catch(err => null) 
         ]);
         if (!artist) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load artist information.</p>`; return; }
-
         const isFollowing = auth.manager.isFollowing(artistId);
         const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
         const discographyHTML = `<div class="music-grid horizontal-music-grid">${albumsData?.items?.map(ui.manager.renderMusicCard).join('') || ''}</div>`;
         const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
-        
         ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div></div>`;
     }
 
@@ -178,26 +158,99 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Album...');
         const album = await api.manager.getSpotifyAlbum(albumId).catch(err => null);
         if (!album) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load album information.</p>`; return; }
-
         const artistsHTML = album.artists.map(a => `<span class="clickable-artist" data-artist-id="${a.id}" data-artist-name="${encodeURIComponent(a.name)}">${a.name}</span>`).join(', ');
         const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
         const tracksHTML = album.tracks.items.map(track => `<div class="track-item"><div class="track-number">${track.track_number}</div><div class="track-info"><div class="track-title">${track.name}</div><div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div></div><div class="track-duration">${formatDuration(track.duration_ms)}</div></div>`).join('');
-        
         ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
     }
 
     function renderFollowingPage() { 
         if (!state.currentUser) return;
         const followingCount = state.currentUser.following.length;
-        const limit = 50; // Futuramente: state.currentUser.isPremium ? 150 : 50;
+        const limit = 50;
         ui.manager.dom.followingStats.innerHTML = `You are following <strong>${followingCount}</strong> out of <strong>${limit}</strong> artists.`;
-
         const artistsToRender = state.currentUser.following.map(a => ({...a, type: 'artist'}));
         ui.manager.populateGrid(artistsToRender, ui.manager.dom.followedArtistsGrid); 
     }
     
     // ===================================================================================
-    // EVENT LISTENERS E HANDLERS
+    // EVENT HANDLERS (CORRIGIDOS)
+    // ===================================================================================
+    async function handleLoginSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.loginModal; // Usando a referência direta
+        ui.manager.clearModalMessages(modal);
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+        try {
+            await auth.manager.login(
+                modal.querySelector('#loginEmail').value,
+                modal.querySelector('#loginPassword').value
+            );
+            ui.manager.closeAllModals();
+            ui.manager.updateForAuthState();
+            renderHomePage();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Login';
+        }
+    }
+
+    async function handleRegisterSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.registerModal; // Usando a referência direta
+        ui.manager.clearModalMessages(modal);
+
+        const name = modal.querySelector('#registerName').value;
+        const email = modal.querySelector('#registerEmail').value;
+        const password = modal.querySelector('#registerPassword').value;
+
+        if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
+        if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
+        if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
+
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+        try {
+            await auth.manager.register(name, email, password);
+            ui.manager.closeAllModals();
+            ui.manager.updateForAuthState();
+            renderHomePage();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+        }
+    }
+    
+    async function handleNameChangeSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.nameChangeModal; // Usando a referência direta
+        const newName = modal.querySelector('#newNameInput').value;
+
+        if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
+        if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
+        if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
+        
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        try {
+            state.currentUser = await api.manager.updateUser({ name: newName });
+            ui.manager.updateForAuthState();
+            ui.manager.closeAllModals();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save';
+        }
+    }
+    
+    // ===================================================================================
+    // EVENT LISTENERS SETUP
     // ===================================================================================
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
@@ -228,11 +281,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
             if (e.target.closest('#closeNameBtn') || e.target.closest('.close-modal-btn')) return ui.manager.closeAllModals();
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
-            if (e.target.closest('#settingsBtn')) return document.getElementById('themePicker').classList.toggle('active');
             if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
-            if (!e.target.closest('#settingsBtn')) document.getElementById('themePicker').classList.remove('active');
         });
         
+        ui.manager.dom.themeToggleBtn.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('lyricaTheme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            ui.manager.applyTheme(newTheme);
+        });
+
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
@@ -250,7 +307,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         });
 
-        document.querySelectorAll('.color-swatch').forEach(swatch => swatch.addEventListener('click', () => ui.manager.applyTheme(swatch.dataset.color)));
         document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); ui.manager.switchContent('inicio'); location.reload(); });
         
         let searchTimeout;
@@ -273,10 +329,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    async function handleLoginSubmit(e) { /* ... (sem alterações) ... */ }
-    async function handleRegisterSubmit(e) { /* ... (sem alterações) ... */ }
-    async function handleNameChangeSubmit(e) { /* ... (sem alterações) ... */ }
-    
     // ===================================================================================
     // INITIALIZATION
     // ===================================================================================
@@ -285,7 +337,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();
             ui.manager.updateForAuthState();
-            ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || '#E50914');
+            
+            const savedTheme = localStorage.getItem('lyricaTheme') || 'dark';
+            ui.manager.applyTheme(savedTheme);
+
             setupEventListeners();
             await renderHomePage();
             ui.manager.dom.appLoader.style.display = 'none';
@@ -294,46 +349,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error("Initialization failed:", error);
             ui.manager.dom.appLoader.innerHTML = `<div style="text-align: center; color: white;"><h2>Oops!</h2><p>Something went wrong during startup.</p><p style="font-size: 0.8em; color: var(--gray-text);">${error.message}</p></div>`;
         }
-    }
-
-    // Funções de handler sem alteração
-    async function handleLoginSubmit(e) {
-        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
-        try {
-            await auth.manager.login(modal.querySelector('input[type="email"]').value, modal.querySelector('input[type="password"]').value);
-            ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Login'; }
-    }
-    async function handleRegisterSubmit(e) {
-        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal);
-        const name = modal.querySelector('input[placeholder="Your Name"]').value; const email = modal.querySelector('input[type="email"]').value; const password = modal.querySelector('input[type="password"]').value;
-        if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
-        if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
-        if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
-        btn.disabled = true; btn.textContent = 'Creating...';
-        try {
-            await auth.manager.register(name, email, password);
-            ui.manager.closeAllModals();
-            ui.manager.updateForAuthState();
-            renderHomePage();
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
-    }
-    async function handleNameChangeSubmit(e) {
-        const btn = e.target; const modal = e.target.closest('.modal-overlay'); const newName = modal.querySelector('#newNameInput').value;
-        if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
-        if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
-        if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
-        btn.disabled = true; btn.textContent = 'Saving...';
-        try {
-            state.currentUser = await api.manager.updateUser({ name: newName });
-            ui.manager.updateForAuthState(); ui.manager.closeAllModals();
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Save'; }
     }
 
     init();
