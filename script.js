@@ -82,10 +82,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             return !isCurrentlyFollowing;
         }
     };
-    
-    // ===================================================================================
-    // UI MANAGER
-    // ===================================================================================
+
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
@@ -101,11 +98,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.dom.userProfile.style.display = u ? 'flex' : 'none'; 
             if (u) {
                 this.dom.userName.textContent = u.name;
-                // Lógica futura de insígnias:
-                // let badgesHTML = '';
-                // if (u.isPremium) badgesHTML += '<span class="badge" title="Lyrica Supporter">💖</span>';
-                // if (u.isAdmin) badgesHTML += '<span class="badge" title="Administrator">👑</span>';
-                // this.dom.userBadges.innerHTML = badgesHTML;
+                
+                // ===== LÓGICA DAS INSÍGNIAS IMPLEMENTADA AQUI =====
+                const badgeMap = {
+                    admin: { src: 'img/Admn.png', title: 'Administrator' },
+                    supporter: { src: 'img/Apoiad.png', title: 'Lyrica Supporter' },
+                    veteran: { src: 'img/Vetern.png', title: 'Veteran' }
+                };
+
+                let badgesHTML = '';
+                if (u.badges && u.badges.length > 0) {
+                    u.badges.forEach(badgeKey => {
+                        if (badgeMap[badgeKey]) {
+                            const badge = badgeMap[badgeKey];
+                            badgesHTML += `<img src="${badge.src}" alt="${badge.title}" title="${badge.title}" class="badge-icon">`;
+                        }
+                    });
+                }
+                this.dom.userBadges.innerHTML = badgesHTML;
             }
         },
         switchContent(id) { 

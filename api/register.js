@@ -12,12 +12,7 @@ export default async function handler(req, res) {
     if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
     if (name.trim().length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
     if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
-    
-    // ===== CORREÇÃO APLICADA AQUI =====
-    // A regra complexa foi removida e substituída por uma verificação de tamanho simples.
-    if (password.length <= 4) { 
-      return res.status(400).json({ error: 'Password must be more than 4 characters long.' }); 
-    }
+    if (password.length <= 4) { return res.status(400).json({ error: 'Password must be more than 4 characters long.' }); }
 
     const kv = createClient({
       url: process.env.KV_REST_API_URL,
@@ -32,7 +27,14 @@ export default async function handler(req, res) {
     if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = { name: name.trim(), email: normalizedEmail, password: hashedPassword, following: [], votes: {} };
+    // Adicionado o campo "badges" para novos usuários
+    const user = { 
+      name: name.trim(), 
+      email: normalizedEmail, 
+      password: hashedPassword, 
+      following: [], 
+      badges: [] // Novo campo para as insígnias
+    };
     
     await kv.set(`user:${normalizedEmail}`, user);
     await kv.set(`name:${normalizedName}`, 1);
@@ -40,7 +42,8 @@ export default async function handler(req, res) {
     const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token });
 
-  } catch (error) {
+  } catch (error)
+{
     console.error('Register API Error:', error);
     return res.status(500).json({ error: 'A server-side error occurred during registration.' });
   }
