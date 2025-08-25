@@ -20,7 +20,7 @@
             <div class="logo"><h1>Lyrica</h1></div>
             <nav class="main-nav">
                 <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Home</span></div>
-                <div class="nav-item" data-target="seguindo" id="libraryNavItem"><i class="fas fa-heart"></i><span>Following</span></div>
+                <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span>Profile</span></div>
             </nav>
         </div>
 
@@ -30,7 +30,7 @@
                     <div class="logo"><h1>L</h1></div>
                      <nav class="main-nav-mobile">
                         <div class="nav-item active" data-target="inicio">Home</div>
-                        <div class="nav-item" data-target="seguindo" id="libraryNavItemMobile">Following</div>
+                        <div class="nav-item" data-target="profile" id="profileNavItemMobile">Profile</div>
                     </nav>
                 </div>
                 <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search..."></div>
@@ -56,11 +56,14 @@
             <div class="main-content">
                 <div id="inicio" class="content-section active">
                     <div id="home-container">
+                        <!-- Conteúdo da Home Page será injetado aqui -->
                     </div>
                 </div>
                 <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
-                <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div id="following-stats"></div><div class="music-grid" id="followed-artists-grid"></div></div>
+                <div id="profile" class="content-section">
+                    <!-- Conteúdo do Perfil será injetado aqui -->
+                </div>
             </div>
         </div>
     </div>
@@ -93,6 +96,7 @@
         <h3 id="badgeTooltipTitle"></h3>
         <p id="badgeTooltipDesc"></p>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
     <script src="script.js"></script>
 </body>

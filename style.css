@@ -104,30 +104,60 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 
 /* DETALHES E VIEW ESPECÍFICA */
 .content-section { display: none; } .content-section.active { display: block; }
-#following-stats { color: var(--light-gray-text); margin-bottom: 20px; font-weight: 500; }
-.details-header { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-bottom: 32px; text-align: center; }
-@media (min-width: 600px) { .details-header { flex-direction: row; text-align: left; } }
-.details-img img { width: 200px; height: 200px; object-fit: cover; box-shadow: 0 4px 25px rgba(0,0,0,0.2); flex-shrink: 0; }
-.details-img.band-img img { border-radius: 50%; }
-.details-img.album-art img { border-radius: 8px; }
-.details-info h2 { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: clamp(2rem, 5vw, 3.5rem); }
-.details-info .meta-info { font-weight: 500; color: var(--light-gray-text); margin-top: 4px; text-transform: capitalize; }
-.details-info .album-meta { font-size: 0.9rem; color: var(--gray-text); margin-top: 8px; }
-.artist-origin { display: flex; align-items: center; gap: 8px; color: var(--light-gray-text); font-weight: 500; margin-top: 10px; }
-.artist-origin i { color: var(--primary-color); }
-.back-btn { background: var(--card-hover-bg); border: none; color: var(--white-text); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; margin-bottom: 16px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease-in-out; }
-.back-btn:hover { background: var(--primary-color); color: var(--darker-bg); transform: scale(1.1); }
-.follow-btn { border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); padding: 8px 20px; border-radius: 50px; cursor: pointer; font-weight: 700; margin-top: 20px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-.follow-btn:hover { background: var(--primary-color); color: #121212; }
-.follow-btn.following { background: var(--primary-color); color: #121212; border-color: var(--primary-color); }
-.follow-btn.following:hover { filter: brightness(1.2); }
-.clickable-artist { cursor: pointer; transition: color 0.2s; }
-.clickable-artist:hover { color: var(--white-text); text-decoration: underline; }
-.badge-tooltip { position: absolute; background: var(--card-hover-bg); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 220px; z-index: 3000; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
-.badge-tooltip.active { opacity: 1; visibility: visible; transform: translateY(0); }
-.badge-tooltip h3 { color: var(--primary-color); font-size: 1rem; margin-bottom: 5px; }
-.badge-tooltip p { color: var(--light-gray-text); font-size: 0.85rem; line-height: 1.5; }
-.badge-tooltip::after { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border-width: 6px; border-style: solid; border-color: transparent transparent var(--card-hover-bg) transparent; }
+
+/* ESTILOS DA PÁGINA DE PERFIL */
+.profile-header-main {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+    background-color: var(--card-bg);
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.profile-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--elegant-font);
+    font-size: 4rem;
+    font-weight: bold;
+    color: #fff;
+    overflow: hidden;
+    border: 4px solid var(--dark-bg);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+.profile-avatar-large .profile-picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.profile-info-main h2 {
+    font-family: var(--elegant-font);
+    font-size: 2.5rem;
+    color: var(--white-text);
+    margin: 0;
+}
+.profile-info-main .user-badges {
+    margin-top: 8px;
+    gap: 8px;
+}
+.profile-info-main .user-badges .badge-icon {
+    width: 24px;
+    height: 24px;
+}
+.following-stats { 
+    color: var(--light-gray-text); 
+    margin-top: 16px; 
+    font-weight: 500; 
+}
+
+/* MODAIS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s; }
 .modal-overlay.active { display: flex; }
 .modal-content { background: var(--card-hover-bg); border: 1px solid var(--border-color); padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); text-align: center; position: relative; }
@@ -152,7 +182,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .modal-switch a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
 .modal-error { min-height: 20px; font-size: 0.9em; font-weight: 500; text-align: left; margin-bottom: 10px; color: #ff4757; }
 
-/* ESTILOS PARA O MODAL DE AVATAR COM RECORTE */
+/* MODAL DE AVATAR COM RECORTE */
 .modal-info { font-size: 0.8rem; color: var(--gray-text); margin-top: 15px; }
 .avatar-preview-container {
     width: 100%;
@@ -201,6 +231,15 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     .main-nav-mobile .nav-item.active { color: var(--white-text); border-bottom-color: var(--primary-color); }
     .search-bar { display: flex; order: 3; width: 100%; margin-top: 10px; max-width: none; }
 }
+@media (max-width: 600px) {
+    .profile-header-main {
+        flex-direction: column;
+        text-align: center;
+    }
+    .profile-info-main h2 {
+        font-size: 2rem;
+    }
+}
 @media (max-width: 500px) {
     .user-profile-area { gap: 8px; }
     .user-dropdown { right: 0; }
@@ -208,7 +247,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     .main-nav-mobile .nav-item { font-size: 0.9rem; }
 }
 
-/* ESTILO DA BARRA DE ROLAGEM CUSTOMIZADA */
+/* BARRA DE ROLAGEM */
 ::-webkit-scrollbar { width: 12px; }
 ::-webkit-scrollbar-track { background: var(--dark-bg); border-radius: 10px; }
 ::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 10px; border: 3px solid var(--dark-bg); }
