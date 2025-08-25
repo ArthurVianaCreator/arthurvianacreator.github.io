@@ -24,8 +24,6 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .sidebar .nav-item i { font-size: 1.2rem; width: 25px; text-align: center; }
 .sidebar .nav-item:hover { color: var(--white-text); background-color: var(--card-hover-bg); }
 .sidebar .nav-item.active { color: var(--white-text); background-color: var(--primary-color); }
-.sidebar-footer { margin-top: auto; position: relative; }
-.theme-picker { bottom: 50px; top: auto; right: auto; left: 0; }
 
 /* ===== ESTILOS DO CABEÇALHO SUPERIOR (TOP-BAR) ===== */
 .search-bar { flex-grow: 1; max-width: 400px; }
@@ -48,11 +46,12 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .user-profile { display: flex; align-items: center; background: rgba(0,0,0,0.5); border-radius: 50px; padding: 6px 12px; cursor: pointer; transition: background-color 0.2s; }
 .user-profile:hover { background-color: var(--card-hover-bg); }
 .user-profile span { margin-right: 8px; font-weight: 500; font-size: 0.9rem; }
-.user-dropdown { position: absolute; top: 55px; right: 0; background: var(--card-hover-bg); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 180px; overflow: hidden; z-index: 10; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; }
+.user-dropdown { position: absolute; top: 55px; right: 50px; background: var(--card-hover-bg); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 180px; overflow: hidden; z-index: 10; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; }
 .user-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
 .dropdown-item { padding: 12px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; }
 .dropdown-item:hover { background-color: rgba(255,255,255,0.1); }
 .dropdown-item i { color: var(--gray-text); width: 20px; }
+.theme-picker { position: absolute; top: 55px; right: 0; background: var(--card-hover-bg); padding: 10px; border-radius: 8px; display: flex; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; z-index: 10; }
 .theme-picker.active { opacity: 1; visibility: visible; transform: translateY(0); }
 .color-swatch { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid var(--dark-bg); transition: transform 0.2s; }
 .color-swatch:hover { transform: scale(1.15); }
@@ -165,4 +164,5 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
     .user-dropdown { right: 0; }
     .main-nav-mobile { gap: 10px; }
     .main-nav-mobile .nav-item { font-size: 0.9rem; }
+    .user-profile-area .control-btn { font-size: 1.3rem; }
 }
