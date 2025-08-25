@@ -31,24 +31,22 @@
                 </div>
                 <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search..."></div>
                 <div class="user-profile-area">
+                    <!-- ID CORRIGIDO AQUI -->
+                    <button class="control-btn" id="themeToggleBtn">
+                        <i class="fas fa-sun"></i>
+                        <i class="fas fa-moon"></i>
+                    </button>
                     <button class="btn-login" id="loginPromptBtn">Login</button>
                     <div class="user-profile" id="userProfile" style="display: none;">
-                        <span id="userBadges" class="user-badges"></span>
+                        <div class="user-avatar">
+                           <img src="img/Apoiad.png" alt="User Avatar"> 
+                        </div>
                         <span id="userName">User</span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span>Change Name</span></div>
-                        <div class="dropdown-item premium-link" id="goPremiumBtn"><i class="fas fa-star"></i><span>Go Premium</span></div>
                         <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div>
-                    </div>
-                    <button class="control-btn" id="settingsBtn"><i class="fas fa-paint-brush"></i></button>
-                    <div class="theme-picker" id="themePicker">
-                        <div class="color-swatch" data-color="#E50914" style="background: #E50914;"></div>
-                        <div class="color-swatch" data-color="#1DB954" style="background: #1DB954;"></div>
-                        <div class="color-swatch" data-color="#FFC107" style="background: #FFC107;"></div>
-                        <div class="color-swatch" data-color="#007BFF" style="background: #007BFF;"></div>
-                        <div class="color-swatch" data-color="#9b59b6" style="background: #9b59b6;"></div>
                     </div>
                 </div>
             </div>
@@ -68,7 +66,7 @@
     </div>
 
     <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p></div></div>
-    <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
+    <div id="registerModal" class="modal-overlay"><div class="modal-content"><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
     <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="closeNameBtn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
     
     <script src="script.js"></script>

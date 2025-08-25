@@ -24,7 +24,6 @@ export default async function handler(req, res) {
   try {
     const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = process.env;
 
-    // Esta verificação é boa e foi mantida
     if (!KV_REST_API_URL || !KV_REST_API_TOKEN || !JWT_SECRET) {
       console.error('Erro de Configuração: Uma ou mais variáveis de ambiente essenciais não foram encontradas.');
       return res.status(500).json({ error: 'Server configuration error.' });
@@ -49,18 +48,21 @@ export default async function handler(req, res) {
       
       if (updatedData.name) {
         const newName = updatedData.name.trim();
-        if (newName.length < 4) { return res.status(400).json({ error: 'Name must be at least 4 characters long' }); }
+        if (newName.length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
         if (/\s/.test(newName)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
         
         const normalizedNewName = newName.toLowerCase();
-        const normalizedOldName = user.name.trim().toLowerCase();
+        // CÓDIGO CORRIGIDO AQUI para ser mais seguro
+        const normalizedOldName = (user.name || '').trim().toLowerCase();
 
         if (normalizedNewName !== normalizedOldName) {
           const nameTaken = await kv.get(`name:${normalizedNewName}`);
           if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
           
           const multi = kv.multi();
-          multi.del(`name:${normalizedOldName}`);
+          if (normalizedOldName) { // Só deleta o nome antigo se ele existir
+            multi.del(`name:${normalizedOldName}`);
+          }
           multi.set(`name:${normalizedNewName}`, 1);
           user.name = newName;
           multi.set(`user:${user.email}`, user);
