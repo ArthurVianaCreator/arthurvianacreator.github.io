@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Delius+Unicase:wght@400;700&family=Poppins:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;500;700&display=swap');
 
 /* TEMA ESCURO (PADRÃO) */
 :root { 
@@ -11,7 +11,8 @@
     --card-bg: #202020; 
     --card-hover-bg: #282828; 
     --border-color: #282828;
-    --elegant-font: 'Delius Unicase', cursive;
+    /* --- FONTE ATUALIZADA --- */
+    --elegant-font: 'Lora', serif;
     --body-font: 'Poppins', sans-serif;
 }
 
@@ -60,8 +61,8 @@ body.light-theme .sidebar .nav-item:hover { color: var(--white-text); }
 .user-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--elegant-font); font-size: 1.2rem; font-weight: bold; color: #fff; }
 .user-info { display: flex; flex-direction: column; align-items: flex-start; }
 .user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
-.user-badges { display: flex; align-items: center; gap: 4px; height: 12px; margin-top: 2px; }
-.badge-icon { width: 12px; height: 12px; cursor: pointer; transition: transform 0.2s; }
+.user-badges { display: flex; align-items: center; gap: 5px; height: 16px; margin-top: 2px; }
+.badge-icon { width: 16px; height: 16px; cursor: pointer; transition: transform 0.2s; }
 .badge-icon:hover { transform: scale(1.2); }
 .user-profile i.fa-chevron-down { color: var(--gray-text); font-size: 0.8rem; transition: transform 0.2s; }
 .user-profile:hover i.fa-chevron-down { transform: scale(1.2); }
@@ -100,7 +101,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .search-message, .loading-container { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
 .loading-container .spinner { margin: 0 auto 15px; }
 
-/* ... (O resto do CSS permanece o mesmo) ... */
+/* DETALHES E VIEW ESPECÍFICA */
 .content-section { display: none; } .content-section.active { display: block; }
 #following-stats { color: var(--light-gray-text); margin-bottom: 20px; font-weight: 500; }
 .details-header { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-bottom: 32px; text-align: center; }
@@ -166,4 +167,22 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     .user-dropdown { right: 0; }
     .main-nav-mobile { gap: 10px; }
     .main-nav-mobile .nav-item { font-size: 0.9rem; }
+}
+
+/* --- ESTILO DA BARRA DE ROLAGEM CUSTOMIZADA --- */
+::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--card-bg);
+  border-radius: 10px;
+  border: 3px solid var(--dark-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-color);
+  border-color: var(--dark-bg);
 }

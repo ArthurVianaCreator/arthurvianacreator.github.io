@@ -68,16 +68,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (localStorage.getItem('authToken')) {
                 try {
                     const user = await api.manager.fetchUser();
-                    // --- CORREÇÃO APLICADA AQUI ---
-                    // Normaliza o objeto do usuário para garantir que as propriedades essenciais existam.
-                    // Isso evita erros se um usuário antigo no banco de dados não tiver esses campos.
-                    user.name = user.name || 'User'; // Garante que o nome seja sempre uma string
-                    user.following = user.following || []; // Garante que 'following' seja sempre um array
-                    user.badges = user.badges || []; // Garante que 'badges' seja sempre um array
-                    // --- FIM DA CORREÇÃO ---
-                    state.currentUser = user; // Atribui o usuário já corrigido ao estado
+                    user.name = user.name || 'User';
+                    user.following = user.following || [];
+                    user.badges = user.badges || [];
+                    state.currentUser = user;
                 } catch (e) {
-                    // Se houver um erro (ex: token inválido), faz o logout.
                     this.logout();
                 }
             }
@@ -244,11 +239,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function setupEventListeners() {
-        document.body.addEventListener('click', async e => {
+        // --- EVENTOS DE HOVER PARA AS INSÍGNIAS ---
+        document.body.addEventListener('mouseover', e => {
             const badgeIcon = e.target.closest('.badge-icon');
-            const tooltip = ui.manager.dom.badgeTooltip;
             if (badgeIcon) {
-                e.stopPropagation();
+                const tooltip = ui.manager.dom.badgeTooltip;
                 const badgeKey = badgeIcon.dataset.badgeKey;
                 const badgeMap = {
                     admin: { title: 'Administrator', description: 'Reserved for Lyrica creators and managers.' },
@@ -256,25 +251,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                     veteran: { title: 'Beta Member', description: 'Unlocked by members of the beta version.' }
                 };
                 const badgeData = badgeMap[badgeKey];
-                if (tooltip.classList.contains('active') && tooltip.dataset.currentBadge === badgeKey) {
-                    tooltip.classList.remove('active');
-                    return;
-                }
+
                 if (badgeData) {
                     document.getElementById('badgeTooltipTitle').textContent = badgeData.title;
                     document.getElementById('badgeTooltipDesc').textContent = badgeData.description;
+                    
                     const badgeRect = badgeIcon.getBoundingClientRect();
+                    tooltip.classList.add('active'); // Mostra o tooltip para calcular suas dimensões
+                    
+                    // Posiciona o tooltip centralizado abaixo do ícone
                     tooltip.style.left = `${badgeRect.left + (badgeRect.width / 2) - (tooltip.offsetWidth / 2)}px`;
-                    tooltip.style.top = `${badgeRect.bottom + 10}px`;
-                    tooltip.classList.add('active');
-                    tooltip.dataset.currentBadge = badgeKey;
+                    tooltip.style.top = `${badgeRect.bottom + 8}px`; // Um pouco mais perto que antes
                 }
-                return;
             }
-            if (tooltip.classList.contains('active') && !e.target.closest('.badge-tooltip')) {
-                tooltip.classList.remove('active');
-            }
+        });
 
+        document.body.addEventListener('mouseout', e => {
+            const badgeIcon = e.target.closest('.badge-icon');
+            if (badgeIcon) {
+                ui.manager.dom.badgeTooltip.classList.remove('active');
+            }
+        });
+        // --- FIM DOS EVENTOS DE HOVER ---
+
+        document.body.addEventListener('click', async e => {
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) { const { type, id, name } = cardContent.dataset; if (type === 'artist') return renderArtistView(id, decodeURIComponent(name)); if (type === 'album') return renderAlbumView(id); }
             const clickableArtist = e.target.closest('.clickable-artist');
