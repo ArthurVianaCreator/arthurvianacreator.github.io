@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const api = {}, auth = {}, ui = {};
 
     // ===================================================================================
-    // API MANAGER
+    // API MANAGER (Sem alterações)
     // ===================================================================================
     api.manager = {
         async _request(endpoint, method = 'GET', body = null) {
@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         fetchSpotifyAppToken: async () => { const data = await (await fetch('/api/getToken')).json(); state.spotifyAppToken = data.access_token; },
         login: (e, p) => api.manager._request('login', 'POST', { email: e, password: p }),
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
-        recoverPassword: (e) => api.manager._request('recover-password', 'POST', { email: e }),
         fetchUser: () => api.manager._request('user', 'GET'),
         updateUser: (d) => api.manager._request('user', 'PUT', d),
         getBatchVotes: (items) => api.manager._request('get-batch-votes', 'POST', { items }),
@@ -49,27 +48,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const pageTitle = searchData.query.search[0]?.title;
                 if (!pageTitle) return null;
                 const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle.replace(/ /g, '_'))}`;
-                const contentUrl = `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(pageTitle)}&prop=text&format=json&origin=*`;
-                const [summaryRes, contentRes] = await Promise.all([fetch(summaryUrl), fetch(contentUrl)]);
-                if (!summaryRes.ok || !contentRes.ok) return null;
+                const [summaryRes] = await Promise.all([fetch(summaryUrl)]);
+                if (!summaryRes.ok) return null;
                 const summaryData = await summaryRes.json();
-                const contentData = await contentRes.json();
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = contentData.parse.text['*'];
-                let members = [], composers = [];
-                const allTh = Array.from(tempDiv.querySelectorAll('.infobox th'));
-                const extractInfoboxData = (thElement) => { const links = thElement?.parentElement.nextElementSibling?.querySelectorAll('a[title]'); return links ? Array.from(links).map(a => a.textContent).filter(name => !name.startsWith('[')) : []; };
-                const membersNode = allTh.find(th => th.textContent.trim().startsWith('Members'));
-                if (membersNode) members = extractInfoboxData(membersNode);
-                const composersNode = allTh.find(th => th.textContent.trim().includes('Songwriter(s)') || th.textContent.trim().includes('Composer(s)'));
-                if (composersNode) composers = extractInfoboxData(composersNode);
-                return { summary: summaryData.extract, members, composers };
+                return { summary: summaryData.extract, members: [], composers: [] };
             } catch (e) { console.error("Wikipedia API error:", e); return null; }
         }
     };
     
     // ===================================================================================
-    // AUTH MANAGER
+    // AUTH MANAGER (Sem alterações)
     // ===================================================================================
     auth.manager = {
         async init() { if (localStorage.getItem('authToken')) { try { state.currentUser = await api.manager.fetchUser(); } catch (e) { this.logout(); }}},
@@ -88,16 +76,24 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     
+    // ===================================================================================
+    // UI MANAGER
+    // ===================================================================================
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
-            loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), libraryNavItem: document.getElementById('libraryNavItem'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
+            loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
             homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid')
         },
         updateForAuthState() { const u = state.currentUser; this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; this.dom.userProfile.style.display = u ? 'flex' : 'none'; if (u) this.dom.userName.textContent = u.name; },
-        switchContent(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id)); this.dom.mainContent.scrollTop = 0; },
+        switchContent(id) { 
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id)); 
+            this.dom.mainContent.scrollTop = 0; 
+        },
         renderMusicCard(item) {
             const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
             const sub = item.type === 'artist' ? (item.genres?.[0] || 'Artist') : (item.artists.map(a => a.name).join(', '));
@@ -110,10 +106,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
-        showModalSuccess(m, msg) { m.querySelector('.modal-success').textContent = msg; },
         clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; const s = m.querySelector('.modal-success'); if (s) s.textContent = ''; }
     };
     
+    // ===================================================================================
+    // RENDER FUNCTIONS (Sem alterações)
+    // ===================================================================================
     async function enrichItemsWithVotes(items) {
         if (!items || items.length === 0) return [];
         const validItems = items.filter(item => item);
@@ -146,12 +144,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const isFollowing = auth.manager.isFollowing(artistId);
         const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
         const voteControlsHTML = `<div class="vote-controls" data-item-id="${artist.id}" data-item-type="artist"><button class="vote-btn like-btn ${userVote === 'like' ? 'active' : ''}"><i class="fas fa-thumbs-up"></i> <span class="likes-count">${votes.likes}</span></button><button class="vote-btn dislike-btn ${userVote === 'dislike' ? 'active' : ''}"><i class="fas fa-thumbs-down"></i> <span class="dislikes-count">${votes.dislikes}</span></button></div>`;
-        const membersHTML = wikiInfo?.members?.length > 0 ? `<div class="artist-sidebar-section"><h3>Members</h3><ul class="member-list">${wikiInfo.members.map(m => `<li>${m}</li>`).join('')}</ul></div>` : '';
-        const composersHTML = wikiInfo?.composers?.length > 0 ? `<div class="artist-sidebar-section"><h3>Songwriters</h3><ul class="member-list">${wikiInfo.composers.map(m => `<li>${m}</li>`).join('')}</ul></div>` : '';
         const enrichedAlbums = await enrichItemsWithVotes(albumsData?.items);
         const discographyHTML = `<div class="music-grid horizontal-music-grid">${enrichedAlbums?.map(ui.manager.renderMusicCard).join('') || ''}</div>`;
         const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
-        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${voteControlsHTML}${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div><div class="artist-sidebar">${membersHTML}${composersHTML}</div></div>`;
+        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${voteControlsHTML}${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div></div>`;
     }
 
     async function renderAlbumView(albumId) {
@@ -173,7 +169,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         const enrichedArtists = await enrichItemsWithVotes(state.currentUser.following.map(a => ({...a, type: 'artist'})));
         ui.manager.populateGrid(enrichedArtists, ui.manager.dom.followedArtistsGrid); 
     }
-
+    
+    // ===================================================================================
+    // EVENT LISTENERS E HANDLERS
+    // ===================================================================================
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const cardContent = e.target.closest('.music-card-content');
@@ -208,10 +207,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     followBtn.classList.toggle('following', isFollowing); 
                     followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
                     followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
-                } catch (error) {
-                    console.error("Follow/Unfollow failed:", error);
-                    alert(error.message);
-                }
+                } catch (error) { console.error("Follow/Unfollow failed:", error); alert(error.message); }
                 return; 
             }
             
@@ -271,9 +267,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function handleLoginSubmit(e) {
-        const btn = e.target; const modal = ui.manager.dom.loginModal; ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
+        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
         try {
-            await auth.manager.login(modal.querySelector('#loginEmail').value, modal.querySelector('#loginPassword').value);
+            await auth.manager.login(modal.querySelector('input[type="email"]').value, modal.querySelector('input[type="password"]').value);
             ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
         } catch (error) {
             ui.manager.showModalError(modal, error.message);
@@ -281,8 +277,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function handleRegisterSubmit(e) {
-        const btn = e.target; const modal = ui.manager.dom.registerModal; ui.manager.clearModalMessages(modal);
-        const name = modal.querySelector('#registerName').value; const email = modal.querySelector('#registerEmail').value; const password = modal.querySelector('#registerPassword').value;
+        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal);
+        const name = modal.querySelector('input[placeholder="Your Name"]').value; const email = modal.querySelector('input[type="email"]').value; const password = modal.querySelector('input[type="password"]').value;
         if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
         if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
         if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
@@ -298,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     async function handleNameChangeSubmit(e) {
-        const btn = e.target; const modal = ui.manager.dom.nameChangeModal; const newName = modal.querySelector('#newNameInput').value;
+        const btn = e.target; const modal = e.target.closest('.modal-overlay'); const newName = modal.querySelector('#newNameInput').value;
         if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
         if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
         if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
@@ -311,6 +307,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         } finally { btn.disabled = false; btn.textContent = 'Save'; }
     }
     
+    // ===================================================================================
+    // INITIALIZATION
+    // ===================================================================================
     async function init() {
         try {
             await api.manager.fetchSpotifyAppToken();
