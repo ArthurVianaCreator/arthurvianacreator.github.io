@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  try { // Adicionado bloco try...catch
+  try {
     const { email, password } = req.body;
     const kv = createClient({
       url: process.env.KV_REST_API_URL,
@@ -16,9 +16,13 @@ export default async function handler(req, res) {
     });
     const user = await kv.get(`user:${email.toLowerCase()}`);
 
-    if (!user) {
+    // --- INÍCIO DA CORREÇÃO ---
+    // Se o usuário não for encontrado OU se o objeto do usuário não tiver uma senha,
+    // retorne o mesmo erro genérico para não vazar informações.
+    if (!user || !user.password) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+    // --- FIM DA CORREÇÃO ---
 
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
@@ -29,8 +33,7 @@ export default async function handler(req, res) {
     res.status(200).json({ token });
 
   } catch (error) {
-    console.error('Login API Error:', error); // Log do erro no Vercel para depuração
-    // Retorna um erro 500 com uma mensagem clara em formato JSON
+    console.error('Login API Error:', error);
     return res.status(500).json({ error: 'A server-side error occurred. Please check the logs.' });
   }
 }
