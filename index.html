@@ -6,6 +6,10 @@
     <title>Lyrica - Music Encyclopedia</title>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FONTES ADICIONADAS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Delius+Unicase:wght@400;700&family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,9 +41,8 @@
                     </button>
                     <button class="btn-login" id="loginPromptBtn">Login</button>
                     <div class="user-profile" id="userProfile" style="display: none;">
-                        <div class="user-avatar">
-                           <img src="img/default-avatar.png" alt="User Avatar" id="userAvatarImg"> 
-                        </div>
+                        <!-- O avatar agora é um DIV vazio que será preenchido pelo JS -->
+                        <div class="user-avatar" id="userAvatar"></div>
                         <div id="userInfo" class="user-info"></div>
                         <i class="fas fa-chevron-down"></i>
                     </div>
