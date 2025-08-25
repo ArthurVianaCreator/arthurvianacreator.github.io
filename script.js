@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const api = {}, auth = {}, ui = {};
 
     // ===================================================================================
-    // API MANAGER (Sem alterações)
+    // API MANAGER
     // ===================================================================================
     api.manager = {
         async _request(endpoint, method = 'GET', body = null) {
@@ -32,8 +32,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
         fetchUser: () => api.manager._request('user', 'GET'),
         updateUser: (d) => api.manager._request('user', 'PUT', d),
-        getBatchVotes: (items) => api.manager._request('get-batch-votes', 'POST', { items }),
-        castVote: (itemId, itemType, voteType) => api.manager._request('vote', 'POST', { itemId, itemType, voteType }),
         searchSpotify: (q, t) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=12`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
@@ -51,13 +49,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const [summaryRes] = await Promise.all([fetch(summaryUrl)]);
                 if (!summaryRes.ok) return null;
                 const summaryData = await summaryRes.json();
-                return { summary: summaryData.extract, members: [], composers: [] };
+                return { summary: summaryData.extract };
             } catch (e) { console.error("Wikipedia API error:", e); return null; }
         }
     };
     
     // ===================================================================================
-    // AUTH MANAGER (Sem alterações)
+    // AUTH MANAGER
     // ===================================================================================
     auth.manager = {
         async init() { if (localStorage.getItem('authToken')) { try { state.currentUser = await api.manager.fetchUser(); } catch (e) { this.logout(); }}},
@@ -67,6 +65,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         isFollowing: (id) => state.currentUser?.following.some(a => a.id === id),
         async toggleFollow(artist) {
             if (!state.currentUser || !artist) return;
+            
+            // Lógica futura de monetização:
+            // const isPremium = state.currentUser.isPremium; // (Exemplo)
+            // const followLimit = isPremium ? 150 : 50;
+            // if (state.currentUser.following.length >= followLimit) {
+            //     alert(`You have reached your follow limit of ${followLimit} artists. Go Premium to follow more!`);
+            //     return;
+            // }
+
             const artistData = { id: artist.id, name: artist.name, images: artist.images, genres: artist.genres };
             const followingList = state.currentUser.following || [];
             const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
@@ -82,12 +89,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
-            loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
+            loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userName: document.getElementById('userName'), userBadges: document.getElementById('userBadges'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
-            homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid')
+            homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid'),
+            followingStats: document.getElementById('following-stats')
         },
-        updateForAuthState() { const u = state.currentUser; this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; this.dom.userProfile.style.display = u ? 'flex' : 'none'; if (u) this.dom.userName.textContent = u.name; },
+        updateForAuthState() { 
+            const u = state.currentUser; 
+            this.dom.loginPromptBtn.style.display = u ? 'none' : 'block'; 
+            this.dom.userProfile.style.display = u ? 'flex' : 'none'; 
+            if (u) {
+                this.dom.userName.textContent = u.name;
+                // Lógica futura de insígnias:
+                // let badgesHTML = '';
+                // if (u.isPremium) badgesHTML += '<span class="badge" title="Lyrica Supporter">💖</span>';
+                // if (u.isAdmin) badgesHTML += '<span class="badge" title="Administrator">👑</span>';
+                // this.dom.userBadges.innerHTML = badgesHTML;
+            }
+        },
         switchContent(id) { 
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
             document.getElementById(id).classList.add('active'); 
@@ -97,8 +117,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderMusicCard(item) {
             const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
             const sub = item.type === 'artist' ? (item.genres?.[0] || 'Artist') : (item.artists.map(a => a.name).join(', '));
-            const userVote = state.currentUser?.votes?.[`${item.type}:${item.id}`];
-            return `<div class="music-card"><div class="music-card-content" data-type="${item.type}" data-id="${item.id}" data-name="${encodeURIComponent(item.name)}"><div class="music-img"><img src="${img}" alt="${item.name}"></div><div class="music-title">${item.name}</div><div class="music-artist">${sub}</div></div><div class="card-votes" data-item-id="${item.id}" data-item-type="${item.type}"><button class="vote-btn like-btn ${userVote === 'like' ? 'active' : ''}"><i class="fas fa-thumbs-up"></i></button><span class="likes-count">${item.votes?.likes ?? 0}</span><button class="vote-btn dislike-btn ${userVote === 'dislike' ? 'active' : ''}"><i class="fas fa-thumbs-down"></i></button><span class="dislikes-count">${item.votes?.dislikes ?? 0}</span></div></div>`;
+            return `<div class="music-card"><div class="music-card-content" data-type="${item.type}" data-id="${item.id}" data-name="${encodeURIComponent(item.name)}"><div class="music-img"><img src="${img}" alt="${item.name}"></div><div class="music-title">${item.name}</div><div class="music-artist">${sub}</div></div></div>`;
         },
         populateGrid(items, container) { if (!items || items.length === 0) { container.innerHTML = '<p class="search-message">Nothing to show here.</p>'; return; } container.innerHTML = items.filter(item => item).map(this.renderMusicCard).join(''); },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
@@ -106,68 +125,65 @@ document.addEventListener('DOMContentLoaded', async function() {
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
-        clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; const s = m.querySelector('.modal-success'); if (s) s.textContent = ''; }
+        clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; }
     };
     
     // ===================================================================================
-    // RENDER FUNCTIONS (Sem alterações)
+    // RENDER FUNCTIONS
     // ===================================================================================
-    async function enrichItemsWithVotes(items) {
-        if (!items || items.length === 0) return [];
-        const validItems = items.filter(item => item);
-        if (validItems.length === 0) return [];
-        const itemKeys = validItems.map(item => `${item.type}:${item.id}`);
-        const votesData = await api.manager.getBatchVotes(itemKeys);
-        return validItems.map(item => ({ ...item, votes: votesData[`${item.type}:${item.id}`] || { likes: 0, dislikes: 0 } }));
-    }
-
     function formatDuration(ms) { const minutes = Math.floor(ms / 60000); const seconds = ((ms % 60000) / 1000).toFixed(0); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; }
 
     async function renderHomePage() {
         ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.renderLoader('');
         ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.renderLoader('');
         const featuredArtistIds = [ '6olE6TJLqED3rqDCT0FyPh', '04gDigrS5kc9YWfZHwBETP', '7jy3rLJdDQY21OgRLCZK48', '3WrFJ7ztbogyGnTHbHJFl2', '1dfeR4HaWDbWqFHLkxsg1d', '36QJpDe2go2KgaRleHCDls', '22bE4uQ6baNwSHPVcDxLCe', '06HL4z0CvFAxyc27GXpf02' ];
-        const [artistsData, newReleases] = await Promise.all([ api.manager.getSpotifySeveralArtists(featuredArtistIds).catch(e => { console.error(e); return null; }), api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; }) ]);
-        const enrichedArtists = await enrichItemsWithVotes(artistsData?.artists);
-        const enrichedAlbums = await enrichItemsWithVotes(newReleases?.albums?.items);
-        ui.manager.populateGrid(enrichedArtists, ui.manager.dom.homeArtistsGrid);
-        ui.manager.populateGrid(enrichedAlbums, ui.manager.dom.homeAlbumsGrid);
+        const [artistsData, newReleases] = await Promise.all([ 
+            api.manager.getSpotifySeveralArtists(featuredArtistIds).catch(e => { console.error(e); return null; }), 
+            api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; }) 
+        ]);
+        ui.manager.populateGrid(artistsData?.artists, ui.manager.dom.homeArtistsGrid);
+        ui.manager.populateGrid(newReleases?.albums?.items, ui.manager.dom.homeAlbumsGrid);
     }
 
     async function renderArtistView(artistId, artistName) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
-        const [[artist, albumsData, wikiInfo], votesData] = await Promise.all([ Promise.all([ api.manager.getSpotifyArtist(artistId).catch(err => null), api.manager.getSpotifyArtistAlbums(artistId).catch(err => null), api.manager.getWikipediaInfo(artistName).catch(err => null) ]), api.manager.getBatchVotes([`artist:${artistId}`]).catch(err => ({})) ]);
+        const [artist, albumsData, wikiInfo] = await Promise.all([ 
+            api.manager.getSpotifyArtist(artistId).catch(err => null), 
+            api.manager.getSpotifyArtistAlbums(artistId).catch(err => null), 
+            api.manager.getWikipediaInfo(artistName).catch(err => null) 
+        ]);
         if (!artist) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load artist information.</p>`; return; }
-        const votes = votesData[`artist:${artistId}`] || { likes: 0, dislikes: 0 };
-        const userVote = state.currentUser?.votes?.[`artist:${artistId}`];
+
         const isFollowing = auth.manager.isFollowing(artistId);
         const followBtnHTML = state.currentUser ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` : '';
-        const voteControlsHTML = `<div class="vote-controls" data-item-id="${artist.id}" data-item-type="artist"><button class="vote-btn like-btn ${userVote === 'like' ? 'active' : ''}"><i class="fas fa-thumbs-up"></i> <span class="likes-count">${votes.likes}</span></button><button class="vote-btn dislike-btn ${userVote === 'dislike' ? 'active' : ''}"><i class="fas fa-thumbs-down"></i> <span class="dislikes-count">${votes.dislikes}</span></button></div>`;
-        const enrichedAlbums = await enrichItemsWithVotes(albumsData?.items);
-        const discographyHTML = `<div class="music-grid horizontal-music-grid">${enrichedAlbums?.map(ui.manager.renderMusicCard).join('') || ''}</div>`;
+        const discographyHTML = `<div class="music-grid horizontal-music-grid">${albumsData?.items?.map(ui.manager.renderMusicCard).join('') || ''}</div>`;
         const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
-        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${voteControlsHTML}${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div></div>`;
+        
+        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div></div>`;
     }
 
     async function renderAlbumView(albumId) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Album...');
-        const [album, votesData] = await Promise.all([ api.manager.getSpotifyAlbum(albumId).catch(err => null), api.manager.getBatchVotes([`album:${albumId}`]).catch(err => ({})) ]);
+        const album = await api.manager.getSpotifyAlbum(albumId).catch(err => null);
         if (!album) { ui.manager.dom.detailsView.innerHTML = `<p class="search-message">Could not load album information.</p>`; return; }
-        const votes = votesData[`album:${albumId}`] || { likes: 0, dislikes: 0 };
-        const userVote = state.currentUser?.votes?.[`album:${albumId}`];
+
         const artistsHTML = album.artists.map(a => `<span class="clickable-artist" data-artist-id="${a.id}" data-artist-name="${encodeURIComponent(a.name)}">${a.name}</span>`).join(', ');
-        const voteControlsHTML = `<div class="vote-controls" data-item-id="${album.id}" data-item-type="album"><button class="vote-btn like-btn ${userVote === 'like' ? 'active' : ''}"><i class="fas fa-thumbs-up"></i> <span class="likes-count">${votes.likes}</span></button><button class="vote-btn dislike-btn ${userVote === 'dislike' ? 'active' : ''}"><i class="fas fa-thumbs-down"></i> <span class="dislikes-count">${votes.dislikes}</span></button></div>`;
         const spotifyEmbedHTML = `<div class="spotify-embed"><iframe src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="352" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
         const tracksHTML = album.tracks.items.map(track => `<div class="track-item"><div class="track-number">${track.track_number}</div><div class="track-info"><div class="track-title">${track.name}</div><div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div></div><div class="track-duration">${formatDuration(track.duration_ms)}</div></div>`).join('');
-        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p>${voteControlsHTML}</div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
+        
+        ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
     }
 
-    async function renderFollowingPage() { 
-        if (!state.currentUser) return; 
-        const enrichedArtists = await enrichItemsWithVotes(state.currentUser.following.map(a => ({...a, type: 'artist'})));
-        ui.manager.populateGrid(enrichedArtists, ui.manager.dom.followedArtistsGrid); 
+    function renderFollowingPage() { 
+        if (!state.currentUser) return;
+        const followingCount = state.currentUser.following.length;
+        const limit = 50; // Futuramente: state.currentUser.isPremium ? 150 : 50;
+        ui.manager.dom.followingStats.innerHTML = `You are following <strong>${followingCount}</strong> out of <strong>${limit}</strong> artists.`;
+
+        const artistsToRender = state.currentUser.following.map(a => ({...a, type: 'artist'}));
+        ui.manager.populateGrid(artistsToRender, ui.manager.dom.followedArtistsGrid); 
     }
     
     // ===================================================================================
@@ -177,25 +193,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.body.addEventListener('click', async e => {
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) { const { type, id, name } = cardContent.dataset; if (type === 'artist') return renderArtistView(id, decodeURIComponent(name)); if (type === 'album') return renderAlbumView(id); }
-            const voteBtn = e.target.closest('.vote-btn');
-            if (voteBtn) {
-                if (!state.currentUser) return ui.manager.openModal(ui.manager.dom.loginModal);
-                const voteControls = voteBtn.parentElement;
-                const { itemId, itemType } = voteControls.dataset;
-                const voteType = voteBtn.classList.contains('like-btn') ? 'like' : 'dislike';
-                try {
-                    const newVotes = await api.manager.castVote(itemId, itemType, voteType);
-                    state.currentUser = await api.manager.fetchUser();
-                    document.querySelectorAll(`[data-item-id="${itemId}"][data-item-type="${itemType}"]`).forEach(vc => {
-                        vc.querySelector('.likes-count').textContent = newVotes.likes;
-                        vc.querySelector('.dislikes-count').textContent = newVotes.dislikes;
-                        const userVote = state.currentUser.votes[`${itemType}:${itemId}`];
-                        vc.querySelector('.like-btn').classList.toggle('active', userVote === 'like');
-                        vc.querySelector('.dislike-btn').classList.toggle('active', userVote === 'dislike');
-                    });
-                } catch (error) { console.error("Vote failed", error); alert(error.message); }
-                return;
-            }
+            
             const clickableArtist = e.target.closest('.clickable-artist');
             if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
             
@@ -254,8 +252,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.switchContent('buscar');
             searchTimeout = setTimeout(async () => {
                 const results = await api.manager.searchSpotify(query, 'artist,album');
-                let allItems = [...(results?.artists?.items || []), ...(results?.albums?.items || [])];
-                if (allItems.length > 0) { allItems = await enrichItemsWithVotes(allItems); }
+                const allItems = [...(results?.artists?.items || []), ...(results?.albums?.items || [])];
                 const artists = allItems.filter(i => i.type === 'artist');
                 const albums = allItems.filter(i => i.type === 'album');
                 let html = '';
@@ -266,46 +263,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     }
 
-    async function handleLoginSubmit(e) {
-        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
-        try {
-            await auth.manager.login(modal.querySelector('input[type="email"]').value, modal.querySelector('input[type="password"]').value);
-            ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Login'; }
-    }
-
-    async function handleRegisterSubmit(e) {
-        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal);
-        const name = modal.querySelector('input[placeholder="Your Name"]').value; const email = modal.querySelector('input[type="email"]').value; const password = modal.querySelector('input[type="password"]').value;
-        if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
-        if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
-        if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
-        btn.disabled = true; btn.textContent = 'Creating...';
-        try {
-            await auth.manager.register(name, email, password);
-            ui.manager.closeAllModals();
-            ui.manager.updateForAuthState();
-            renderHomePage();
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
-    }
-    
-    async function handleNameChangeSubmit(e) {
-        const btn = e.target; const modal = e.target.closest('.modal-overlay'); const newName = modal.querySelector('#newNameInput').value;
-        if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
-        if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
-        if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
-        btn.disabled = true; btn.textContent = 'Saving...';
-        try {
-            state.currentUser = await api.manager.updateUser({ name: newName });
-            ui.manager.updateForAuthState(); ui.manager.closeAllModals();
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally { btn.disabled = false; btn.textContent = 'Save'; }
-    }
+    async function handleLoginSubmit(e) { /* ... (sem alterações) ... */ }
+    async function handleRegisterSubmit(e) { /* ... (sem alterações) ... */ }
+    async function handleNameChangeSubmit(e) { /* ... (sem alterações) ... */ }
     
     // ===================================================================================
     // INITIALIZATION
@@ -325,5 +285,46 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.appLoader.innerHTML = `<div style="text-align: center; color: white;"><h2>Oops!</h2><p>Something went wrong during startup.</p><p style="font-size: 0.8em; color: var(--gray-text);">${error.message}</p></div>`;
         }
     }
+
+    // Funções de handler sem alteração
+    async function handleLoginSubmit(e) {
+        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
+        try {
+            await auth.manager.login(modal.querySelector('input[type="email"]').value, modal.querySelector('input[type="password"]').value);
+            ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally { btn.disabled = false; btn.textContent = 'Login'; }
+    }
+    async function handleRegisterSubmit(e) {
+        const btn = e.target; const modal = e.target.closest('.modal-overlay'); ui.manager.clearModalMessages(modal);
+        const name = modal.querySelector('input[placeholder="Your Name"]').value; const email = modal.querySelector('input[type="email"]').value; const password = modal.querySelector('input[type="password"]').value;
+        if (name.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
+        if (/\s/.test(name)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
+        if (password.length <= 4) { return ui.manager.showModalError(modal, 'Password must be more than 4 characters long.'); }
+        btn.disabled = true; btn.textContent = 'Creating...';
+        try {
+            await auth.manager.register(name, email, password);
+            ui.manager.closeAllModals();
+            ui.manager.updateForAuthState();
+            renderHomePage();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
+    }
+    async function handleNameChangeSubmit(e) {
+        const btn = e.target; const modal = e.target.closest('.modal-overlay'); const newName = modal.querySelector('#newNameInput').value;
+        if (!newName) { return ui.manager.showModalError(modal, 'Name cannot be empty.'); }
+        if (newName.length <= 4) { return ui.manager.showModalError(modal, 'Name must be more than 4 characters long'); }
+        if (/\s/.test(newName)) { return ui.manager.showModalError(modal, 'Name cannot contain spaces'); }
+        btn.disabled = true; btn.textContent = 'Saving...';
+        try {
+            state.currentUser = await api.manager.updateUser({ name: newName });
+            ui.manager.updateForAuthState(); ui.manager.closeAllModals();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally { btn.disabled = false; btn.textContent = 'Save'; }
+    }
+
     init();
 });

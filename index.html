@@ -12,7 +12,6 @@
     <div id="app-loader"><div class="spinner"></div></div>
     
     <div class="main-container" style="display: none;">
-        <!-- ===== BARRA LATERAL PARA DESKTOP ===== -->
         <div class="sidebar">
             <div class="logo"><h1>Lyrica</h1></div>
             <nav class="main-nav">
@@ -21,9 +20,7 @@
             </nav>
         </div>
 
-        <!-- ===== CONTEÚDO PRINCIPAL (DIREITA) ===== -->
         <div class="content-wrapper">
-            <!-- ===== CABEÇALHO SUPERIOR (contém a versão mobile também) ===== -->
             <div class="top-bar">
                 <div class="mobile-header">
                     <div class="logo"><h1>L</h1></div>
@@ -35,9 +32,14 @@
                 <div class="search-bar"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search..."></div>
                 <div class="user-profile-area">
                     <button class="btn-login" id="loginPromptBtn">Login</button>
-                    <div class="user-profile" id="userProfile" style="display: none;"><span id="userName">User</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="user-profile" id="userProfile" style="display: none;">
+                        <span id="userBadges" class="user-badges"></span>
+                        <span id="userName">User</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span>Change Name</span></div>
+                        <div class="dropdown-item premium-link" id="goPremiumBtn"><i class="fas fa-star"></i><span>Go Premium</span></div>
                         <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div>
                     </div>
                     <button class="control-btn" id="settingsBtn"><i class="fas fa-paint-brush"></i></button>
@@ -60,7 +62,7 @@
                 </div>
                 <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
-                <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div class="music-grid" id="followed-artists-grid"></div></div>
+                <div id="seguindo" class="content-section"><h2 class="section-title-main">Artists You Follow</h2><div id="following-stats"></div><div class="music-grid" id="followed-artists-grid"></div></div>
             </div>
         </div>
     </div>
