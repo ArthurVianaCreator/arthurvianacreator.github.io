@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       email: normalizedEmail, 
       password: hashedPassword, 
       following: [], 
-      badges: ["veteran"] // <<< NOVO USUÁRIO AGORA É VETERANO
+      badges: ["veteran"]
     };
     
     await kv.set(`user:${normalizedEmail}`, user);
