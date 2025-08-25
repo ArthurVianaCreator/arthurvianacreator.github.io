@@ -27,13 +27,12 @@ export default async function handler(req, res) {
     if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Adicionado o campo "badges" para novos usuários
     const user = { 
       name: name.trim(), 
       email: normalizedEmail, 
       password: hashedPassword, 
       following: [], 
-      badges: [] // Novo campo para as insígnias
+      badges: ["veteran"] // <<< NOVO USUÁRIO AGORA É VETERANO
     };
     
     await kv.set(`user:${normalizedEmail}`, user);
@@ -42,8 +41,7 @@ export default async function handler(req, res) {
     const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token });
 
-  } catch (error)
-{
+  } catch (error) {
     console.error('Register API Error:', error);
     return res.status(500).json({ error: 'A server-side error occurred during registration.' });
   }
