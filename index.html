@@ -40,7 +40,6 @@
                         <div class="user-avatar">
                            <img src="img/default-avatar.png" alt="User Avatar" id="userAvatarImg"> 
                         </div>
-                        <!-- ESTRUTURA SIMPLIFICADA PARA NOME E INSÍGNIAS -->
                         <div id="userInfo" class="user-info"></div>
                         <i class="fas fa-chevron-down"></i>
                     </div>
@@ -65,11 +64,15 @@
         </div>
     </div>
     
-    <!-- Modais (sem alterações) -->
     <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p></div></div>
     <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
     <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="closeNameBtn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
     
+    <div id="badgeTooltip" class="badge-tooltip">
+        <h3 id="badgeTooltipTitle"></h3>
+        <p id="badgeTooltipDesc"></p>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
