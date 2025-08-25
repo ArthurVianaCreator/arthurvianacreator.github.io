@@ -1,39 +1,49 @@
-// /api/register.js
-import { createClient } from '@vercel/kv';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+// /api/getToken.js
 
+// Lida com a busca do token de acesso do Spotify (Client Credentials Flow)
 export default async function handler(req, res) {
-  if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
+  // Este endpoint deve aceitar apenas requisições GET do nosso frontend.
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Pega as credenciais do Spotify das variáveis de ambiente do servidor.
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+  // Validação para garantir que as variáveis de ambiente foram configuradas.
+  if (!clientId || !clientSecret) {
+    console.error('Spotify credentials are not set in environment variables.');
+    return res.status(500).json({ error: 'Server configuration error.' });
+  }
+
+  // Spotify exige que as credenciais sejam enviadas em Base64 no cabeçalho de autorização.
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
-    if (name.trim().length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
-    if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
-    if (password.length <= 4) { return res.status(400).json({ error: 'Password must be more than 4 characters long.' }); }
-    const kv = createClient({
-      url: process.env.KV_REST_API_URL,
-      token: process.env.KV_REST_API_TOKEN,
+    // Faz a requisição POST para a API de contas do Spotify para obter o token.
+    const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
     });
-    const normalizedName = name.trim().toLowerCase();
-    const normalizedEmail = email.trim().toLowerCase();
-    const [existingUser, nameTaken] = await Promise.all([ kv.get(`user:${normalizedEmail}`), kv.get(`name:${normalizedName}`) ]);
-    if (existingUser) { return res.status(409).json({ error: 'Email already in use' }); }
-    if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = { 
-      name: name.trim(), 
-      email: normalizedEmail, 
-      password: hashedPassword, 
-      following: [], 
-      badges: ["veteran"]
-    };
-    await kv.set(`user:${normalizedEmail}`, user);
-    await kv.set(`name:${normalizedName}`, 1);
-    const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token });
+
+    const data = await tokenResponse.json();
+
+    // Se a resposta não for bem-sucedida, retorna o erro.
+    if (!tokenResponse.ok) {
+      console.error('Spotify Token API Error:', data);
+      return res.status(tokenResponse.status).json({ error: data.error_description || 'Failed to fetch token from Spotify.' });
+    }
+
+    // Se tudo der certo, envia o token de acesso de volta para o frontend.
+    res.status(200).json({ access_token: data.access_token });
+
   } catch (error) {
-    console.error('Register API Error:', error);
-    return res.status(500).json({ error: 'A server-side error occurred during registration.' });
+    console.error('Internal Server Error fetching Spotify token:', error);
+    return res.status(500).json({ error: 'An internal server error occurred.' });
   }
 }
