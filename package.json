@@ -1,5 +1,5 @@
 {
-  "name": "avrenpedia",
+  "name": "lyrica",
   "version": "1.0.0",
   "description": "A Music Encyclopedia",
   "main": "index.js",
@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Arthur Viana",
   "license": "ISC",
   "dependencies": {
     "@vercel/kv": "^1.0.1",

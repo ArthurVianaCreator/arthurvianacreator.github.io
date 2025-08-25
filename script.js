@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         },
         populateGrid(items, container) { if (!items || items.length === 0) { container.innerHTML = '<p class="search-message">Nothing to show here.</p>'; return; } container.innerHTML = items.filter(item => item).map(this.renderMusicCard).join(''); },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
-        applyTheme(color) { document.documentElement.style.setProperty('--primary-color', color); localStorage.setItem('avrenpediaTheme', color); },
+        applyTheme(color) { document.documentElement.style.setProperty('--primary-color', color); localStorage.setItem('lyricaTheme', color); },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();
             ui.manager.updateForAuthState();
-            ui.manager.applyTheme(localStorage.getItem('avrenpediaTheme') || '#E50914');
+            ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || '#E50914');
             setupEventListeners();
             await renderHomePage();
             ui.manager.dom.appLoader.style.display = 'none';
