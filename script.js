@@ -189,46 +189,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function renderHomePage() {
         const homeContainer = document.getElementById('home-container');
         homeContainer.innerHTML = ui.manager.renderLoader('Loading...');
-        let finalHTML = '';
-
         try {
-            finalHTML += `<h2 class="section-title-main">Top 9 Popular Lyrica Artists</h2>`;
+            let finalHTML = `<h2 class="section-title-main">Top 9 Popular Lyrica Artists</h2>`;
             const popularGrid = document.createElement('div');
             popularGrid.className = 'music-grid horizontal-music-grid';
             popularGrid.innerHTML = ui.manager.renderLoader('');
             finalHTML += popularGrid.outerHTML;
 
+            homeContainer.innerHTML = finalHTML; // Render the skeleton first
+            
             const popularData = await api.manager.getPopularArtists();
-            homeContainer.innerHTML = finalHTML;
             ui.manager.populateGrid(popularData?.artists || [], homeContainer.querySelector('.horizontal-music-grid'));
 
         } catch (e) {
             console.error("Failed to load popular artists:", e);
             homeContainer.innerHTML = `<h2 class="section-title-main">Top 9 Popular Lyrica Artists</h2><p class="search-message">Could not load this section.</p>`;
-        }
-
-        if (state.currentUser && state.currentUser.following.length > 0) {
-            const recommendationsContainer = document.createElement('div');
-            recommendationsContainer.innerHTML = `<h2 class="section-title-main">Featured For You</h2><div class="music-grid horizontal-music-grid" id="recommendations-grid">${ui.manager.renderLoader('')}</div>`;
-            homeContainer.appendChild(recommendationsContainer);
-            const recommendationsGrid = document.getElementById('recommendations-grid');
-
-            try {
-                const followedArtists = state.currentUser.following;
-                const randomArtist = followedArtists[Math.floor(Math.random() * followedArtists.length)];
-                
-                const relatedData = await api.manager.getSpotifyRelatedArtists(randomArtist.id);
-
-                if (relatedData && relatedData.artists && relatedData.artists.length > 0) {
-                    ui.manager.populateGrid(relatedData.artists, recommendationsGrid);
-                } else {
-                    recommendationsGrid.innerHTML = `<p class="search-message">We couldn't find recommendations based on '${randomArtist.name}'. Try following more artists!</p>`;
-                }
-
-            } catch (e) {
-                console.error("Failed to load recommendations:", e);
-                recommendationsGrid.innerHTML = `<p class="search-message">Could not load recommendations at this time.</p>`;
-            }
         }
     }
 
@@ -260,7 +235,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function renderProfilePage() { 
-        if (!state.currentUser) return;
+        if (!state.currentUser) {
+            ui.manager.switchContent('inicio');
+            ui.manager.openModal(ui.manager.dom.loginModal);
+            return;
+        }
+        ui.manager.switchContent('profile');
         const u = state.currentUser;
         const profileContainer = document.getElementById('profile');
         
@@ -462,9 +442,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
             if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
             
-            if (e.target.closest('.close-modal-btn') || e.target.id === 'nameChangeModal') {
-                 if (state.cropper && ui.manager.dom.avatarChangeModal.contains(e.target)) { state.cropper.destroy(); state.cropper = null; }
-                ui.manager.closeAllModals();
+            if (e.target.closest('.close-modal-btn') || e.target.id === 'nameChangeModal' || e.target.id === 'loginModal' || e.target.id === 'registerModal' || e.target.id === 'avatarChangeModal') {
+                if (e.target === e.currentTarget) { // Only close if clicking on the overlay itself
+                    if (state.cropper && ui.manager.dom.avatarChangeModal.contains(e.target)) { state.cropper.destroy(); state.cropper = null; }
+                    ui.manager.closeAllModals();
+                }
+                 if (e.target.closest('.close-modal-btn')) {
+                     if (state.cropper && ui.manager.dom.avatarChangeModal.contains(e.target)) { state.cropper.destroy(); state.cropper = null; }
+                    ui.manager.closeAllModals();
+                 }
             }
         });
         
@@ -483,10 +469,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             item.addEventListener('click', () => {
                 const target = item.dataset.target;
                 if (target === 'profile') {
-                    if (!state.currentUser) return ui.manager.openModal(ui.manager.dom.loginModal);
-                    renderProfilePage();
+                    renderProfilePage(); // This handles both showing the page and the login modal if needed
+                } else {
+                    ui.manager.switchContent(target);
                 }
-                ui.manager.switchContent(target);
             });
         });
 
@@ -496,18 +482,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
-            if (!query) return ui.manager.switchContent('inicio');
-            ui.manager.dom.searchResultsContainer.innerHTML = ui.manager.renderLoader('Searching...');
+            if (!query) {
+                ui.manager.switchContent('inicio');
+                return;
+            }
             ui.manager.switchContent('buscar');
+            ui.manager.dom.searchResultsContainer.innerHTML = ui.manager.renderLoader('Searching...');
             searchTimeout = setTimeout(async () => {
-                const results = await api.manager.searchSpotify(query, 'artist,album');
-                const allItems = [...(results?.artists?.items || []), ...(results?.albums?.items || [])];
-                const artists = allItems.filter(i => i.type === 'artist');
-                const albums = allItems.filter(i => i.type === 'album');
-                let html = '';
-                if (artists.length) html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${artists.map(ui.manager.renderMusicCard).join('')}</div>`;
-                if (albums.length) html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${albums.map(ui.manager.renderMusicCard).join('')}</div>`;
-                ui.manager.dom.searchResultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
+                try {
+                    const results = await api.manager.searchSpotify(query, 'artist,album');
+                    const allItems = [...(results?.artists?.items || []), ...(results?.albums?.items || [])];
+                    const artists = allItems.filter(i => i.type === 'artist');
+                    const albums = allItems.filter(i => i.type === 'album');
+                    let html = '';
+                    if (artists.length) html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${artists.map(ui.manager.renderMusicCard).join('')}</div>`;
+                    if (albums.length) html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${albums.map(ui.manager.renderMusicCard).join('')}</div>`;
+                    ui.manager.dom.searchResultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
+                } catch(error) {
+                    console.error("Search failed:", error);
+                    ui.manager.dom.searchResultsContainer.innerHTML = '<p class="search-message">Search failed. Please try again later.</p>';
+                }
             }, 500);
         });
     }

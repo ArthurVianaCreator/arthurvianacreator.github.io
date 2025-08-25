@@ -30,7 +30,8 @@ export default async function handler(req, res) {
     }
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     if (req.method === 'GET') {
-      const { password, ...userData } = user;
+      // Return user data MINUS password and IP for security
+      const { password, ip, ...userData } = user;
       res.status(200).json(userData);
     } else if (req.method === 'PUT') {
       const updatedData = req.body;
@@ -71,8 +72,9 @@ export default async function handler(req, res) {
       if (userWasUpdated) {
           await kv.set(`user:${user.email}`, user);
       }
-
-      const { password, ...userData } = user;
+      
+      // Return updated user data MINUS password and IP
+      const { password, ip, ...userData } = user;
       res.status(200).json(userData);
     } else {
       res.status(405).json({ error: 'Method Not Allowed' });
