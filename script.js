@@ -64,7 +64,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
     
     auth.manager = {
-        async init() { if (localStorage.getItem('authToken')) { try { state.currentUser = await api.manager.fetchUser(); } catch (e) { this.logout(); }}},
+        async init() {
+            if (localStorage.getItem('authToken')) {
+                try {
+                    const user = await api.manager.fetchUser();
+                    // --- CORREÇÃO APLICADA AQUI ---
+                    // Normaliza o objeto do usuário para garantir que as propriedades essenciais existam.
+                    // Isso evita erros se um usuário antigo no banco de dados não tiver esses campos.
+                    user.name = user.name || 'User'; // Garante que o nome seja sempre uma string
+                    user.following = user.following || []; // Garante que 'following' seja sempre um array
+                    user.badges = user.badges || []; // Garante que 'badges' seja sempre um array
+                    // --- FIM DA CORREÇÃO ---
+                    state.currentUser = user; // Atribui o usuário já corrigido ao estado
+                } catch (e) {
+                    // Se houver um erro (ex: token inválido), faz o logout.
+                    this.logout();
+                }
+            }
+        },
         async login(email, password) { const data = await api.manager.login(email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         async register(name, email, password) { const data = await api.manager.register(name, email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
