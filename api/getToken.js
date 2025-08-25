@@ -1,51 +1,39 @@
-// /api/getToken.js
+// /api/register.js
+import { createClient } from '@vercel/kv';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 export default async function handler(req, res) {
-  // ==================== INÍCIO DO CÓDIGO DE DIAGNÓSTICO ====================
-  console.log("--- Diagnóstico de Ambiente da Função /api/getToken ---");
-  
-  // Iremos listar apenas os NOMES das variáveis, não os seus valores secretos.
-  // Isso é seguro e nos dirá se as variáveis do KV estão sendo injetadas.
-  const envKeys = Object.keys(process.env);
-  console.log("Variáveis de ambiente disponíveis:", envKeys);
-  
-  // Verificação específica para as variáveis do Vercel KV
-  console.log("Verificando a presença das variáveis do Vercel KV:");
-  console.log("-> KV_REST_API_URL existe?", envKeys.includes('KV_REST_API_URL'));
-  console.log("-> KV_REST_API_TOKEN existe?", envKeys.includes('KV_REST_API_TOKEN'));
-  console.log("--- Fim do Diagnóstico ---");
-  // ===================== FIM DO CÓDIGO DE DIAGNÓSTICO =====================
-
-  const clientId = process.env.CLIENT_ID;
-  const clientSecret = process.env.CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    return res.status(500).json({ error: 'Server configuration error: Missing Spotify credentials.' });
-  }
-
-  const params = new URLSearchParams();
-  params.append('grant_type', 'client_credentials');
-
+  if (req.method !== 'POST') { return res.status(405).json({ error: 'Method Not Allowed' }); }
   try {
-    const response = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
-      },
-      body: params,
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) { return res.status(400).json({ error: 'All fields are required' }); }
+    if (name.trim().length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
+    if (/\s/.test(name)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
+    if (password.length <= 4) { return res.status(400).json({ error: 'Password must be more than 4 characters long.' }); }
+    const kv = createClient({
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error_description || 'Failed to fetch Spotify token');
-    }
-
-    res.status(200).json(data);
-
+    const normalizedName = name.trim().toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
+    const [existingUser, nameTaken] = await Promise.all([ kv.get(`user:${normalizedEmail}`), kv.get(`name:${normalizedName}`) ]);
+    if (existingUser) { return res.status(409).json({ error: 'Email already in use' }); }
+    if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = { 
+      name: name.trim(), 
+      email: normalizedEmail, 
+      password: hashedPassword, 
+      following: [], 
+      badges: ["veteran"]
+    };
+    await kv.set(`user:${normalizedEmail}`, user);
+    await kv.set(`name:${normalizedName}`, 1);
+    const token = jwt.sign({ email: normalizedEmail }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token });
   } catch (error) {
-    console.error('Error in getToken.js:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Register API Error:', error);
+    return res.status(500).json({ error: 'A server-side error occurred during registration.' });
   }
 }

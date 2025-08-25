@@ -23,65 +23,51 @@ async function authenticate(req, env) {
 export default async function handler(req, res) {
   try {
     const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = process.env;
-
     if (!KV_REST_API_URL || !KV_REST_API_TOKEN || !JWT_SECRET) {
       console.error('Erro de Configuração: Uma ou mais variáveis de ambiente essenciais não foram encontradas.');
       return res.status(500).json({ error: 'Server configuration error.' });
     }
-
     const user = await authenticate(req, process.env);
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-
     const kv = createClient({
       url: process.env.KV_REST_API_URL,
       token: process.env.KV_REST_API_TOKEN,
     });
-
     if (req.method === 'GET') {
       const { password, ...userData } = user;
       res.status(200).json(userData);
-
     } else if (req.method === 'PUT') {
       const updatedData = req.body;
-      
       if (updatedData.name) {
         const newName = updatedData.name.trim();
         if (newName.length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
         if (/\s/.test(newName)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
-        
         const normalizedNewName = newName.toLowerCase();
-        // CÓDIGO CORRIGIDO AQUI para ser mais seguro
         const normalizedOldName = (user.name || '').trim().toLowerCase();
-
         if (normalizedNewName !== normalizedOldName) {
           const nameTaken = await kv.get(`name:${normalizedNewName}`);
           if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
-          
           const multi = kv.multi();
-          if (normalizedOldName) { // Só deleta o nome antigo se ele existir
+          if (normalizedOldName) {
             multi.del(`name:${normalizedOldName}`);
           }
           multi.set(`name:${normalizedNewName}`, 1);
           user.name = newName;
           multi.set(`user:${user.email}`, user);
           await multi.exec();
-          
         } else {
           user.name = newName;
           await kv.set(`user:${user.email}`, user);
         }
       }
-
       if (Array.isArray(updatedData.following)) {
         user.following = updatedData.following;
         await kv.set(`user:${user.email}`, user);
       }
-      
       const { password, ...userData } = user;
       res.status(200).json(userData);
-
     } else {
       res.status(405).json({ error: 'Method Not Allowed' });
     }

@@ -83,9 +83,72 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .dropdown-item:hover { background-color: var(--card-bg); }
 .dropdown-item i { color: var(--gray-text); width: 20px; }
 
-/* ... (O resto do CSS permanece o mesmo) ... */
+/* CONTEÚDO PRINCIPAL */
+.section-title-main { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: 1.8rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 12px; margin-top: 16px; }
+.music-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 24px; margin-bottom: 32px; }
+.horizontal-music-grid { display: flex; overflow-x: auto; grid-template-columns: none; gap: 16px; padding-bottom: 20px; }
+.horizontal-music-grid .music-card { flex-shrink: 0; width: 160px; }
+.music-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; transition: all 0.2s ease-in-out; opacity: 0; animation: slideUpFadeIn 0.5s ease-out forwards; }
+@keyframes slideUpFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.music-card-content { cursor: pointer; }
+.music-card:hover { background: var(--card-hover-bg); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-color: var(--gray-text); }
+.music-card .music-img { width: 100%; padding-bottom: 100%; position: relative; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+.music-card .music-img img { position: absolute; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease-out; }
+.music-card:hover .music-img img { transform: scale(1.05); }
+.music-title { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; margin-bottom: 4px; }
+.music-artist { font-size: 0.85rem; color: var(--gray-text); text-transform: capitalize; }
+.search-message, .loading-container { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
+.loading-container .spinner { margin: 0 auto 15px; }
 
-/* RESPONSIVIDADE CORRIGIDA */
+/* ... (O resto do CSS permanece o mesmo) ... */
+.content-section { display: none; } .content-section.active { display: block; }
+#following-stats { color: var(--light-gray-text); margin-bottom: 20px; font-weight: 500; }
+.details-header { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-bottom: 32px; text-align: center; }
+@media (min-width: 600px) { .details-header { flex-direction: row; text-align: left; } }
+.details-img img { width: 200px; height: 200px; object-fit: cover; box-shadow: 0 4px 25px rgba(0,0,0,0.2); flex-shrink: 0; }
+.details-img.band-img img { border-radius: 50%; }
+.details-img.album-art img { border-radius: 8px; }
+.details-info h2 { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: clamp(2rem, 5vw, 3.5rem); }
+.details-info .meta-info { font-weight: 500; color: var(--light-gray-text); margin-top: 4px; text-transform: capitalize; }
+.details-info .album-meta { font-size: 0.9rem; color: var(--gray-text); margin-top: 8px; }
+.artist-origin { display: flex; align-items: center; gap: 8px; color: var(--light-gray-text); font-weight: 500; margin-top: 10px; }
+.artist-origin i { color: var(--primary-color); }
+.back-btn { background: var(--card-hover-bg); border: none; color: var(--white-text); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; margin-bottom: 16px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease-in-out; }
+.back-btn:hover { background: var(--primary-color); color: var(--darker-bg); transform: scale(1.1); }
+.follow-btn { border: 2px solid var(--primary-color); background: transparent; color: var(--primary-color); padding: 8px 20px; border-radius: 50px; cursor: pointer; font-weight: 700; margin-top: 20px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.follow-btn:hover { background: var(--primary-color); color: #121212; }
+.follow-btn.following { background: var(--primary-color); color: #121212; border-color: var(--primary-color); }
+.follow-btn.following:hover { filter: brightness(1.2); }
+.clickable-artist { cursor: pointer; transition: color 0.2s; }
+.clickable-artist:hover { color: var(--white-text); text-decoration: underline; }
+.badge-tooltip { position: absolute; background: var(--card-hover-bg); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 220px; z-index: 3000; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, transform 0.2s, visibility 0.2s; }
+.badge-tooltip.active { opacity: 1; visibility: visible; transform: translateY(0); }
+.badge-tooltip h3 { color: var(--primary-color); font-size: 1rem; margin-bottom: 5px; }
+.badge-tooltip p { color: var(--light-gray-text); font-size: 0.85rem; line-height: 1.5; }
+.badge-tooltip::after { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border-width: 6px; border-style: solid; border-color: transparent transparent var(--card-hover-bg) transparent; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s; }
+.modal-overlay.active { display: flex; }
+.modal-content { background: var(--card-hover-bg); border: 1px solid var(--border-color); padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); text-align: center; position: relative; }
+.close-modal-btn { position: absolute; top: 10px; right: 15px; background: none; border: none; font-size: 2rem; color: var(--gray-text); cursor: pointer; line-height: 1; padding: 0; transition: color 0.2s; }
+.close-modal-btn:hover { color: var(--white-text); }
+.modal-content h2 { color: var(--white-text); margin-bottom: 15px; }
+.modal-content .password-wrapper { position: relative; margin-bottom: 15px; }
+.modal-content input { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--gray-text); background: var(--card-bg); color: var(--white-text); font-size: 1rem; margin-bottom: 15px; }
+.modal-content .password-wrapper input { margin-bottom: 0; padding-right: 45px; }
+.password-toggle { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: var(--gray-text); cursor: pointer; transition: color 0.2s; }
+.password-toggle:hover { color: var(--white-text); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.modal-actions button { padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: 700; transition: background-color 0.2s; }
+.btn-primary { background-color: var(--primary-color); color: #121212; }
+.btn-primary:hover { filter: brightness(1.2); }
+.btn-primary:disabled { filter: brightness(0.6); cursor: not-allowed; }
+.btn-secondary { background-color: var(--gray-text); color: var(--darker-bg); }
+.btn-secondary:hover { filter: brightness(0.8); }
+.modal-switch { margin-top: 20px; font-size: 0.9rem; }
+.modal-switch a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
+.modal-error { min-height: 20px; font-size: 0.9em; font-weight: 500; text-align: left; margin-bottom: 10px; color: #ff4757; }
+
+/* RESPONSIVIDADE */
 @media (max-width: 950px) {
     .sidebar { display: none; } 
     .main-container { flex-direction: column; }
