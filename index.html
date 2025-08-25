@@ -46,17 +46,19 @@
                     </div>
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span>Change Name</span></div>
+                        <!-- NOVO ITEM DE MENU -->
+                        <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span>Change Picture</span></div>
                         <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div>
                     </div>
                 </div>
             </div>
 
             <div class="main-content">
+                <!-- SEÇÃO HOME MODIFICADA -->
                 <div id="inicio" class="content-section active">
-                    <h2 class="section-title-main">Featured Artists</h2>
-                    <div class="music-grid horizontal-music-grid" id="home-artists-grid"></div>
-                    <h2 class="section-title-main">New Releases</h2>
-                    <div class="music-grid horizontal-music-grid" id="home-albums-grid"></div>
+                    <div id="home-container">
+                        <!-- Conteúdo dinâmico será injetado aqui pelo JS -->
+                    </div>
                 </div>
                 <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
@@ -68,6 +70,27 @@
     <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p></div></div>
     <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
     <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="closeNameBtn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
+    
+    <!-- NOVO MODAL PARA MUDAR AVATAR -->
+    <div id="avatarChangeModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn">&times;</button>
+            <h2>Change Profile Picture</h2>
+            <p class="modal-error"></p>
+            <div id="avatarPreview" class="avatar-preview">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+            <div class="modal-actions-grid">
+                <button class="btn-secondary" id="uploadAvatarBtn"><i class="fas fa-upload"></i> Upload Image</button>
+                <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> Remove</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="saveAvatarBtn">Save & Close</button>
+            </div>
+            <p class="modal-info">For best results, use a square image. Max 2MB.</p>
+        </div>
+    </div>
     
     <div id="badgeTooltip" class="badge-tooltip">
         <h3 id="badgeTooltipTitle"></h3>

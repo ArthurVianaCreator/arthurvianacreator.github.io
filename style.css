@@ -11,7 +11,7 @@
     --card-bg: #202020; 
     --card-hover-bg: #282828; 
     --border-color: #282828;
-    /* --- FONTE ATUALIZADA --- */
+    --danger-color: #e53935;
     --elegant-font: 'Lora', serif;
     --body-font: 'Poppins', sans-serif;
 }
@@ -58,7 +58,8 @@ body.light-theme .sidebar .nav-item:hover { color: var(--white-text); }
 .user-profile-area { display: flex; align-items: center; gap: 15px; position: relative; }
 .user-profile { display: flex; align-items: center; gap: 8px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 50px; padding: 4px 12px 4px 4px; cursor: pointer; transition: all 0.2s ease-in-out; }
 .user-profile:hover { background-color: var(--card-hover-bg); transform: scale(1.03); }
-.user-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--elegant-font); font-size: 1.2rem; font-weight: bold; color: #fff; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--elegant-font); font-size: 1.2rem; font-weight: bold; color: #fff; overflow: hidden; }
+.user-avatar .profile-picture { width: 100%; height: 100%; object-fit: cover; }
 .user-info { display: flex; flex-direction: column; align-items: flex-start; }
 .user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
 .user-badges { display: flex; align-items: center; gap: 5px; height: 16px; margin-top: 2px; }
@@ -145,15 +146,30 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .btn-primary:disabled { filter: brightness(0.6); cursor: not-allowed; }
 .btn-secondary { background-color: var(--gray-text); color: var(--darker-bg); }
 .btn-secondary:hover { filter: brightness(0.8); }
+.btn-danger { background-color: var(--danger-color); color: white; }
+.btn-danger:hover { filter: brightness(1.2); }
 .modal-switch { margin-top: 20px; font-size: 0.9rem; }
 .modal-switch a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
 .modal-error { min-height: 20px; font-size: 0.9em; font-weight: 500; text-align: left; margin-bottom: 10px; color: #ff4757; }
 
+/* --- NOVOS ESTILOS PARA O MODAL DE AVATAR --- */
+.avatar-preview { width: 150px; height: 150px; border-radius: 50%; background-color: var(--card-bg); border: 3px dashed var(--gray-text); margin: 15px auto; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.avatar-preview i { font-size: 5rem; color: var(--gray-text); }
+.avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.modal-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+.modal-actions-grid button { width: 100%; padding: 10px; border-radius: 5px; border: none; cursor: pointer; font-weight: 700; transition: filter 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.modal-info { font-size: 0.8rem; color: var(--gray-text); margin-top: 15px; }
+
+
 /* RESPONSIVIDADE */
 @media (max-width: 950px) {
+    /* --- ALTERAÇÕES PARA HEADER NÃO-FIXO --- */
+    body { height: auto; overflow-y: auto; }
+    .main-container { flex-direction: column; height: auto; }
+    .content-wrapper { overflow: visible; }
+    .main-content { overflow-y: visible; }
+    
     .sidebar { display: none; } 
-    .main-container { flex-direction: column; }
-    .content-wrapper { width: 100%; }
     .top-bar { flex-wrap: wrap; justify-content: space-between; padding: 12px 16px; }
     .mobile-header { display: flex; align-items: center; gap: 15px; } 
     .mobile-header .logo h1 { font-family: var(--elegant-font); font-size: 2.2rem; }
@@ -170,19 +186,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 }
 
 /* --- ESTILO DA BARRA DE ROLAGEM CUSTOMIZADA --- */
-::-webkit-scrollbar {
-  width: 12px;
-}
-::-webkit-scrollbar-track {
-  background: var(--dark-bg);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background-color: var(--card-bg);
-  border-radius: 10px;
-  border: 3px solid var(--dark-bg);
-}
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--primary-color);
-  border-color: var(--dark-bg);
-}
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: var(--dark-bg); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 10px; border: 3px solid var(--dark-bg); }
+::-webkit-scrollbar-thumb:hover { background-color: var(--primary-color); border-color: var(--dark-bg); }

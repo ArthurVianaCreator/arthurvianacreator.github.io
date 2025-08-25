@@ -1,58 +1,70 @@
-# Lyrica - Enciclopédia Musical Interativa
+Lyrica - Enciclopédia Musical Interativa
 
-## Descrição
+Descrição
+O Lyrica é uma enciclopédia musical interativa criada por Arthur Viana. A plataforma funciona como um espaço para explorar e organizar informações sobre artistas, álbuns e lançamentos, combinando um catálogo musical com recursos de rede social.
 
-O Lyrica é um site enciclopédia musical interativo criado por Arthur Viana. Ele funciona como uma plataforma para explorar e organizar informações sobre artistas, álbuns e lançamentos musicais, misturando a ideia de um catálogo enciclopédico com recursos de rede social.
+Objetivo do Projeto
+Criar uma enciclopédia musical moderna e funcional, onde os usuários possam descobrir, seguir e acompanhar artistas e álbuns em um único lugar, unindo organização e interação comunitária.
 
----
+Funcionalidades Principais
+Navegação Simples
 
-## Objetivo do Projeto
+Interface Responsiva: Possui uma barra lateral em desktops para acesso rápido, que se adapta a um menu superior em dispositivos móveis.
 
-Criar uma enciclopédia musical moderna e interativa, onde os usuários podem descobrir, seguir e acompanhar artistas e álbuns em um só lugar — unindo organização enciclopédica e experiência de comunidade musical.
+Exploração de Conteúdo
 
----
+Artistas em Destaque: Uma seção com artistas populares e influentes.
 
-## Funcionalidades Principais
+Novos Lançamentos: Área dedicada para acompanhar os últimos álbuns e singles.
 
-### Navegação Simples
-- **Interface Responsiva:** Barra lateral em desktops para fácil acesso ao Home e Following, que se adapta para um menu superior em dispositivos mobile.
+Busca Inteligente: Ferramenta de pesquisa para encontrar artistas e álbuns.
 
-### Exploração de Conteúdo
-- **Artistas em Destaque:** Uma seção curada com artistas populares e influentes.
-- **Novos Lançamentos:** Mantenha-se atualizado com os últimos álbuns e singles do mundo da música.
-- **Busca Inteligente:** Encontre facilmente qualquer artista ou álbum que desejar.
-- **Páginas de Detalhes:** Mergulhe em páginas dedicadas para cada artista e álbum, com informações, discografia e player integrado.
+Páginas de Detalhes: Perfis completos para artistas e álbuns, com discografia e player de música integrado.
 
-### Interação do Usuário
-- **Contas de Usuário:** Crie uma conta e faça login de forma simples através de um modal.
-- **Seguir Artistas:** Crie sua biblioteca musical pessoal seguindo seus artistas favoritos.
-- **Gerenciamento de Perfil:** Altere seu nome de usuário e gerencie sua conta através de um menu dropdown.
+Interação do Usuário
 
-### Personalização
-- **Temas Visuais:** Personalize a aparência do site com um seletor de tema claro/escuro.
+Contas de Usuário: Sistema de criação de conta e login simplificado.
 
----
+Seguir Artistas: Permite criar uma biblioteca personalizada seguindo artistas de interesse.
 
-## Modelo de Monetização
+Gerenciamento de Perfil: Opções para alterar o nome de usuário e gerenciar a conta.
 
-O Lyrica opera com um modelo "Freemium", oferecendo funcionalidades essenciais gratuitamente e recursos avançados na versão Premium.
+Personalização
 
-### Usuário Gratuito
-- Acesso a todas as funções básicas de exploração e interação.
-- Limite de **50 artistas** para seguir.
-- Anúncios e banners na interface.
+Temas Visuais: Seletor de tema claro ou escuro para personalizar a aparência do site.
 
-### Versão Premium
-- **Limite Estendido:** Aumenta o limite de artistas seguidos para **150**.
-- **Perfil Destacado:** Recebe o título e a insígnia de **"Apoiante do Lyrica"**.
-- Experiência livre de anúncios.
+Modelo de Monetização
 
----
+O Lyrica utiliza um modelo "Freemium", com funcionalidades essenciais gratuitas e recursos avançados na versão Premium.
 
-## Insígnias (Badges)
+Plano Gratuito
 
-As insígnias são conquistas visuais que aparecem no perfil do usuário para celebrar seu status e engajamento na comunidade.
+Acesso às funções básicas de exploração e interação.
 
--   **👑 Administrador do Lyrica:** Reservado aos criadores e gestores do projeto.
--   **💖 Apoiante do Lyrica:** Concedida a todos os usuários da versão Premium.
--   **🛡️ Veterano:** Desbloqueada por membros da versão beta.
+Limite de 50 artistas para seguir.
+
+Exibição de anúncios na interface.
+
+Plano Premium
+
+Aumento do limite de artistas seguidos para 150.
+
+Título e insígnia de "Apoiante do Lyrica" no perfil.
+
+Experiência de uso livre de anúncios.
+
+Insígnias (Badges)
+
+Insígnias são identificadores visuais que aparecem no perfil do usuário para destacar seu status e engajamento na plataforma.
+
+Administrador do Lyrica: Reservada aos criadores e gestores do projeto. Ícone de lupa (amarelo).
+
+Apoiante do Lyrica: Concedida aos usuários do plano Premium. Ícone de coração (vermelho).
+
+Veterano: Para membros que participaram da versão beta. Ícone com o texto “BETA” (azul).
+
+Descobridor: Ícone de bússola (verde).
+
+Colecionador: Ícone de disco de vinil (roxo).
+
+Explorador: Ícone de mapa estilizado (laranja).

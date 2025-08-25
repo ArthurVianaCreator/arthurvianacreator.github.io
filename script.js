@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getSpotifyNewReleases: () => api.manager._spotifyRequest(`browse/new-releases?limit=12`),
         getSpotifySeveralArtists: (ids) => api.manager._spotifyRequest(`artists?ids=${ids.join(',')}`),
+        // --- NOVA FUNÇÃO ---
+        getSpotifyPlaylist: (id) => api.manager._spotifyRequest(`playlists/${id}?fields=tracks.items(track(album,name))&limit=12`),
         getWikipediaInfo: async (artistName) => {
             try {
                 const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(artistName + " artist")}&srlimit=1&format=json&origin=*`;
@@ -89,24 +91,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         async register(name, email, password) { const data = await api.manager.register(name, email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
         isFollowing: (id) => state.currentUser?.following.some(a => a.id === id),
-        
-        // --- FUNÇÃO MODIFICADA ---
         async toggleFollow(artist) {
             if (!state.currentUser || !artist) return;
             const artistData = { id: artist.id, name: artist.name, images: artist.images, genres: artist.genres };
             const followingList = state.currentUser.following || [];
             const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
-
             let updatedFollowingList;
-
             if (isCurrentlyFollowing) {
-                // Se está deixando de seguir, não há verificação de limite.
                 updatedFollowingList = followingList.filter(a => a.id !== artist.id);
             } else {
-                // Se está tentando seguir, verifica o limite primeiro.
                 const limit = getFollowLimit(state.currentUser);
                 if (followingList.length >= limit) {
-                    // Lança um erro com uma mensagem que será exibida ao usuário.
                     if (limit === 50) {
                         throw new Error(`You've reached your follow limit of ${limit} artists. Upgrade to Premium for a higher limit!`);
                     }
@@ -114,9 +109,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
                 updatedFollowingList = [...followingList, artistData];
             }
-            
             state.currentUser = await api.manager.updateUser({ following: updatedFollowingList });
-            // Retorna o novo status de "seguindo"
             return !isCurrentlyFollowing;
         }
     };
@@ -125,25 +118,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), mainContent: document.querySelector('.main-content'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
-            loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'),
+            loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
             followedArtistsGrid: document.getElementById('followed-artists-grid'), searchResultsContainer: document.getElementById('searchResultsContainer'),
-            homeAlbumsGrid: document.getElementById('home-albums-grid'), homeArtistsGrid: document.getElementById('home-artists-grid'),
+            homeContainer: document.getElementById('home-container'),
             followingStats: document.getElementById('following-stats'), themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip')
         },
+        // --- FUNÇÃO MODIFICADA ---
         updateForAuthState() {
             const u = state.currentUser;
             this.dom.loginPromptBtn.style.display = u ? 'none' : 'block';
             this.dom.userProfile.style.display = u ? 'flex' : 'none';
             if (u) {
-                const avatarColors = ['#e53935', '#1e88e5', '#43a047', '#f4511e', '#5e35b1', '#00acc1', '#d81b60'];
-                let hash = 0;
-                for (let i = 0; i < u.name.length; i++) {
-                    hash = u.name.charCodeAt(i) + ((hash << 5) - hash);
+                // Lógica para carregar a foto do perfil ou mostrar as iniciais
+                const savedAvatar = localStorage.getItem(`userAvatar_${u.email}`);
+                if (savedAvatar) {
+                    this.dom.userAvatar.innerHTML = `<img src="${savedAvatar}" alt="User Avatar" class="profile-picture">`;
+                } else {
+                    const avatarColors = ['#e53935', '#1e88e5', '#43a047', '#f4511e', '#5e35b1', '#00acc1', '#d81b60'];
+                    let hash = 0;
+                    for (let i = 0; i < u.name.length; i++) { hash = u.name.charCodeAt(i) + ((hash << 5) - hash); }
+                    const colorIndex = Math.abs(hash % avatarColors.length);
+                    this.dom.userAvatar.style.backgroundColor = avatarColors[colorIndex];
+                    this.dom.userAvatar.innerHTML = u.name.charAt(0).toUpperCase();
                 }
-                const colorIndex = Math.abs(hash % avatarColors.length);
-                this.dom.userAvatar.style.backgroundColor = avatarColors[colorIndex];
-                this.dom.userAvatar.innerHTML = u.name.charAt(0).toUpperCase();
-
+                
                 const badgeMap = {
                     admin: { src: 'img/Admn.png', title: 'Administrator', description: 'Reserved for Lyrica creators and managers.' },
                     supporter: { src: 'img/Apoiad.png', title: 'Lyrica Supporter', description: 'Granted to all Premium version users.' },
@@ -152,7 +150,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 let badgesHTML = '';
                 if (u.badges && u.badges.length > 0) {
                     badgesHTML += '<div class="user-badges">';
-                    // Usar um Set para garantir que cada insígnia apareça apenas uma vez
                     const uniqueBadges = [...new Set(u.badges)];
                     uniqueBadges.forEach(badgeKey => {
                         if (badgeMap[badgeKey]) {
@@ -191,17 +188,73 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
     
     const formatDuration = (ms) => { const minutes = Math.floor(ms / 60000); const seconds = ((ms % 60000) / 1000).toFixed(0); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; };
+    
+    // --- FUNÇÃO MODIFICADA ---
     async function renderHomePage() {
-        ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.renderLoader('');
-        ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.renderLoader('');
-        const featuredArtistIds = [ '6olE6TJLqED3rqDCT0FyPh', '04gDigrS5kc9YWfZHwBETP', '7jy3rLJdDQY21OgRLCZK48', '3WrFJ7ztbogyGnTHbHJFl2', '1dfeR4HaWDbWqFHLkxsg1d', '36QJpDe2go2KgaRleHCDls', '22bE4uQ6baNwSHPVcDxLCe', '06HL4z0CvFAxyc27GXpf02' ];
-        const [artistsData, newReleases] = await Promise.all([ 
-            api.manager.getSpotifySeveralArtists(featuredArtistIds).catch(e => { console.error(e); return null; }), 
-            api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; }) 
-        ]);
-        ui.manager.populateGrid(artistsData?.artists || [], ui.manager.dom.homeArtistsGrid);
-        ui.manager.populateGrid(newReleases?.albums?.items || [], ui.manager.dom.homeAlbumsGrid);
+        const homeContainer = ui.manager.dom.homeContainer;
+        homeContainer.innerHTML = ui.manager.renderLoader('Loading recommendations...');
+
+        const shuffleArray = (array) => array.sort(() => 0.5 - Math.random());
+
+        const homeSections = [
+            {
+                title: 'Featured Artists',
+                fetcher: async () => {
+                    const artistIds = ['6olE6TJLqED3rqDCT0FyPh', '04gDigrS5kc9YWfZHwBETP', '7jy3rLJdDQY21OgRLCZK48', '3WrFJ7ztbogyGnTHbHJFl2', '1dfeR4HaWDbWqFHLkxsg1d', '36QJpDe2go2KgaRleHCDls', '22bE4uQ6baNwSHPVcDxLCe', '06HL4z0CvFAxyc27GXpf02'];
+                    const data = await api.manager.getSpotifySeveralArtists(artistIds);
+                    return data?.artists || [];
+                }
+            },
+            {
+                title: 'New Releases',
+                fetcher: async () => {
+                    const data = await api.manager.getSpotifyNewReleases();
+                    return data?.albums?.items || [];
+                }
+            },
+            {
+                title: 'Global Top 50',
+                fetcher: async () => {
+                    const data = await api.manager.getSpotifyPlaylist('37i9dQZEVXbMDoHDwVN2tF');
+                    const albums = data?.tracks?.items?.map(item => item.track?.album).filter(Boolean) || [];
+                    // Remove duplicates
+                    return [...new Map(albums.map(item => [item['id'], item])).values()];
+                }
+            },
+            {
+                title: 'Rock Classics',
+                fetcher: async () => {
+                    const data = await api.manager.getSpotifyPlaylist('37i9dQZF1DWXRqgorJj26U');
+                    const albums = data?.tracks?.items?.map(item => item.track?.album).filter(Boolean) || [];
+                    return [...new Map(albums.map(item => [item['id'], item])).values()];
+                }
+            }
+        ];
+
+        const selectedSections = shuffleArray(homeSections).slice(0, 2);
+        let finalHTML = '';
+
+        for (const section of selectedSections) {
+            finalHTML += `<h2 class="section-title-main">${section.title}</h2>`;
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'music-grid horizontal-music-grid';
+            gridContainer.innerHTML = ui.manager.renderLoader('');
+            finalHTML += gridContainer.outerHTML;
+        }
+        homeContainer.innerHTML = finalHTML;
+
+        const gridElements = homeContainer.querySelectorAll('.horizontal-music-grid');
+        for (let i = 0; i < selectedSections.length; i++) {
+            try {
+                const items = await selectedSections[i].fetcher();
+                ui.manager.populateGrid(items, gridElements[i]);
+            } catch (e) {
+                console.error(`Failed to load section: ${selectedSections[i].title}`, e);
+                gridElements[i].innerHTML = `<p class="search-message">Could not load this section.</p>`;
+            }
+        }
     }
+
     async function renderArtistView(artistId, artistName) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
@@ -229,11 +282,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
     }
     
-    // --- FUNÇÃO MODIFICADA ---
     function renderFollowingPage() { 
         if (!state.currentUser) return;
         const followingCount = state.currentUser.following.length;
-        // O limite agora é dinâmico, baseado no cargo do usuário
         const limit = getFollowLimit(state.currentUser);
         ui.manager.dom.followingStats.innerHTML = `You are following <strong>${followingCount}</strong> out of <strong>${limit}</strong> artists.`;
         const artistsToRender = state.currentUser.following.map(a => ({...a, type: 'artist'}));
@@ -273,6 +324,34 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Save'; }
     }
     
+    // --- NOVA FUNÇÃO ---
+    function handleAvatarChange() {
+        const fileInput = document.getElementById('avatarFileInput');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Validar tipo de arquivo
+        if (!file.type.startsWith('image/')) {
+            ui.manager.showModalError(ui.manager.dom.avatarChangeModal, 'Please select an image file (e.g., JPG, PNG).');
+            return;
+        }
+
+        // Validar tamanho do arquivo (ex: 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            ui.manager.showModalError(ui.manager.dom.avatarChangeModal, 'File is too large. Maximum size is 2MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            const preview = document.getElementById('avatarPreview');
+            preview.innerHTML = `<img src="${e.target.result}" alt="Avatar Preview">`;
+            preview.dataset.newAvatar = e.target.result; // Armazena temporariamente
+        };
+        reader.readAsDataURL(file);
+        ui.manager.clearModalMessages(ui.manager.dom.avatarChangeModal);
+    }
+    
     function setupEventListeners() {
         document.body.addEventListener('mouseover', e => {
             const badgeIcon = e.target.closest('.badge-icon');
@@ -285,14 +364,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                     veteran: { title: 'Beta Member', description: 'Unlocked by members of the beta version.' }
                 };
                 const badgeData = badgeMap[badgeKey];
-
                 if (badgeData) {
                     document.getElementById('badgeTooltipTitle').textContent = badgeData.title;
                     document.getElementById('badgeTooltipDesc').textContent = badgeData.description;
-                    
                     const badgeRect = badgeIcon.getBoundingClientRect();
                     tooltip.classList.add('active');
-                    
                     tooltip.style.left = `${badgeRect.left + (badgeRect.width / 2) - (tooltip.offsetWidth / 2)}px`;
                     tooltip.style.top = `${badgeRect.bottom + 8}px`;
                 }
@@ -312,7 +388,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const clickableArtist = e.target.closest('.clickable-artist');
             if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
             
-            // --- BLOCO MODIFICADO PARA CAPTURAR ERROS ---
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) { 
                 try {
@@ -322,7 +397,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                     followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
                     followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
                 } catch (error) {
-                    // Exibe o erro de limite para o usuário.
                     console.error("Follow/Unfollow failed:", error);
                     alert(error.message);
                 }
@@ -334,9 +408,37 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
             if (e.target.closest('#loginPromptBtn')) return ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) return ui.manager.openModal(ui.manager.dom.nameChangeModal);
+            
+            // --- NOVOS EVENTOS PARA O MODAL DE AVATAR ---
+            if (e.target.closest('#changeAvatarBtn')) {
+                const preview = document.getElementById('avatarPreview');
+                const savedAvatar = localStorage.getItem(`userAvatar_${state.currentUser.email}`);
+                if (savedAvatar) {
+                    preview.innerHTML = `<img src="${savedAvatar}" alt="Current Avatar">`;
+                } else {
+                    preview.innerHTML = `<i class="fas fa-user-circle"></i>`;
+                }
+                delete preview.dataset.newAvatar;
+                ui.manager.openModal(ui.manager.dom.avatarChangeModal);
+            }
+            if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
+            if (e.target.closest('#removeAvatarBtn')) {
+                localStorage.removeItem(`userAvatar_${state.currentUser.email}`);
+                ui.manager.updateForAuthState();
+                ui.manager.closeAllModals();
+            }
+            if (e.target.closest('#saveAvatarBtn')) {
+                const preview = document.getElementById('avatarPreview');
+                if (preview.dataset.newAvatar) {
+                    localStorage.setItem(`userAvatar_${state.currentUser.email}`, preview.dataset.newAvatar);
+                    ui.manager.updateForAuthState();
+                }
+                ui.manager.closeAllModals();
+            }
+            
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
             if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
-            if (e.target.closest('#closeNameBtn') || e.target.closest('.close-modal-btn')) return ui.manager.closeAllModals();
+            if (e.target.closest('.close-modal-btn')) return ui.manager.closeAllModals();
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (!e.target.closest('#userProfile')) ui.manager.dom.userDropdown.classList.remove('active');
         });
@@ -350,14 +452,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
+        document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
         
         document.querySelectorAll('.nav-item').forEach(item => {
             item.addEventListener('click', () => {
                 const target = item.dataset.target;
                 if (target === 'seguindo') {
-                    if (!state.currentUser) {
-                        return ui.manager.openModal(ui.manager.dom.loginModal);
-                    }
+                    if (!state.currentUser) { return ui.manager.openModal(ui.manager.dom.loginModal); }
                     renderFollowingPage();
                 }
                 ui.manager.switchContent(target);
