@@ -3,6 +3,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const state = { currentUser: null, spotifyAppToken: null };
     const api = {}, auth = {}, ui = {};
 
+    // ===================================================================================
+    // API MANAGER
+    // ===================================================================================
     api.manager = {
         async _request(endpoint, method = 'GET', body = null) {
             const headers = { 'Content-Type': 'application/json' };
@@ -123,19 +126,31 @@ document.addEventListener('DOMContentLoaded', async function() {
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
             }
         },
-        switchContent(id) { /* ... (sem alterações) ... */ },
-        renderMusicCard(item) { /* ... (sem alterações) ... */ },
-        populateGrid(items, container) { /* ... (sem alterações) ... */ },
-        renderLoader(message) { /* ... (sem alterações) ... */ },
-        applyTheme(theme) { /* ... (sem alterações) ... */ },
-        openModal(modal) { /* ... (sem alterações) ... */ },
-        closeAllModals() { /* ... (sem alterações) ... */ },
-        showModalError(m, msg) { /* ... (sem alterações) ... */ },
-        clearModalMessages(m) { /* ... (sem alterações) ... */ }
+        switchContent(id) { 
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id)); 
+            this.dom.mainContent.scrollTop = 0; 
+        },
+        renderMusicCard(item) {
+            const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
+            const sub = item.type === 'artist' ? (item.genres?.[0] || 'Artist') : (item.artists.map(a => a.name).join(', '));
+            return `<div class="music-card"><div class="music-card-content" data-type="${item.type}" data-id="${item.id}" data-name="${encodeURIComponent(item.name)}"><div class="music-img"><img src="${img}" alt="${item.name}"></div><div class="music-title">${item.name}</div><div class="music-artist">${sub}</div></div></div>`;
+        },
+        populateGrid(items, container) { if (!items || items.length === 0) { container.innerHTML = '<p class="search-message">Nothing to show here.</p>'; return; } container.innerHTML = items.filter(item => item).map(this.renderMusicCard).join(''); },
+        renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
+        applyTheme(theme) {
+            if (theme === 'light') { document.body.classList.add('light-theme'); } else { document.body.classList.remove('light-theme'); }
+            localStorage.setItem('lyricaTheme', theme);
+        },
+        openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
+        closeAllModals() { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); },
+        showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
+        clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; }
     };
     
-    // ... (O resto do código é idêntico à versão anterior e está completo abaixo para sua conveniência) ...
     const formatDuration = (ms) => { const minutes = Math.floor(ms / 60000); const seconds = ((ms % 60000) / 1000).toFixed(0); return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`; };
+    
     async function renderHomePage() {
         ui.manager.dom.homeArtistsGrid.innerHTML = ui.manager.renderLoader('');
         ui.manager.dom.homeAlbumsGrid.innerHTML = ui.manager.renderLoader('');
@@ -144,9 +159,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             api.manager.getSpotifySeveralArtists(featuredArtistIds).catch(e => { console.error(e); return null; }), 
             api.manager.getSpotifyNewReleases().catch(e => { console.error(e); return null; }) 
         ]);
-        ui.manager.populateGrid(artistsData?.artists, ui.manager.dom.homeArtistsGrid);
-        ui.manager.populateGrid(newReleases?.albums?.items, ui.manager.dom.homeAlbumsGrid);
+        ui.manager.populateGrid(artistsData?.artists || [], ui.manager.dom.homeArtistsGrid);
+        ui.manager.populateGrid(newReleases?.albums?.items || [], ui.manager.dom.homeAlbumsGrid);
     }
+
     async function renderArtistView(artistId, artistName) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
@@ -163,6 +179,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const originHTML = wikiInfo?.origin ? `<p class="artist-origin"><i class="fas fa-map-marker-alt"></i> ${wikiInfo.origin}</p>` : '';
         ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${artist.genres.join(', ')}</p>${originHTML}${followBtnHTML}</div></div><div class="artist-layout"><div class="artist-main-content">${wikiInfo?.summary ? `<h3>About ${artist.name}</h3><p class="bio">${wikiInfo.summary}</p>` : ''}${spotifyEmbedHTML}<h3>Discography</h3>${discographyHTML}</div></div>`;
     }
+
     async function renderAlbumView(albumId) {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Album...');
@@ -173,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const tracksHTML = album.tracks.items.map(track => `<div class="track-item"><div class="track-number">${track.track_number}</div><div class="track-info"><div class="track-title">${track.name}</div><div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div></div><div class="track-duration">${formatDuration(track.duration_ms)}</div></div>`).join('');
         ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
     }
+
     function renderFollowingPage() { 
         if (!state.currentUser) return;
         const followingCount = state.currentUser.following.length;
@@ -181,6 +199,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const artistsToRender = state.currentUser.following.map(a => ({...a, type: 'artist'}));
         ui.manager.populateGrid(artistsToRender, ui.manager.dom.followedArtistsGrid); 
     }
+
     async function handleLoginSubmit(e) {
         const btn = e.target; const modal = ui.manager.dom.loginModal;
         ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
@@ -189,6 +208,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
         } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Login'; }
     }
+
     async function handleRegisterSubmit(e) {
         const btn = e.target; const modal = ui.manager.dom.registerModal;
         ui.manager.clearModalMessages(modal); const name = modal.querySelector('#registerName').value; const email = modal.querySelector('#registerEmail').value; const password = modal.querySelector('#registerPassword').value;
@@ -201,6 +221,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
         } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Create Account'; }
     }
+
     async function handleNameChangeSubmit(e) {
         const btn = e.target; const modal = ui.manager.dom.nameChangeModal;
         const newName = modal.querySelector('#newNameInput').value;
@@ -213,6 +234,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.updateForAuthState(); ui.manager.closeAllModals();
         } catch (error) { ui.manager.showModalError(modal, error.message); } finally { btn.disabled = false; btn.textContent = 'Save'; }
     }
+    
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
@@ -316,6 +338,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }, 500);
         });
     }
+
     async function init() {
         try {
             await api.manager.fetchSpotifyAppToken();
