@@ -278,6 +278,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         reader.readAsDataURL(file);
     }
     
+    // --- LÓGICA DE EVENTOS RECONSTRUÍDA E CORRIGIDA ---
     function setupEventListeners() {
         document.body.addEventListener('mouseover', e => {
             const badgeIcon = e.target.closest('.badge-icon');
@@ -310,6 +311,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (cardContent.dataset.type === 'artist') {
                     renderArtistView(cardContent.dataset.id, decodeURIComponent(cardContent.dataset.name));
                 }
+                // Adicionar lógica para álbuns aqui se necessário
                 return;
             }
 
@@ -332,7 +334,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            // Toggle de Senha
+            // Toggle de Senha (CORRIGIDO)
             const passToggle = e.target.closest('.password-toggle');
             if (passToggle) {
                 const input = passToggle.previousElementSibling;
@@ -342,7 +344,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            // Navegação entre Modais
+            // Navegação entre Modais (CORRIGIDO)
             if (e.target.closest('#switchToRegister')) {
                 ui.manager.closeAllModals();
                 ui.manager.openModal(ui.manager.dom.registerModal);
