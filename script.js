@@ -2,6 +2,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     const state = { currentUser: null, spotifyAppToken: null };
     const api = {}, auth = {}, ui = {};
 
+    // --- FUNÇÃO AUXILIAR PARA DETERMINAR O LIMITE DE SEGUIR ---
+    const getFollowLimit = (user) => {
+        if (!user || !Array.isArray(user.badges)) return 50; // Limite padrão
+        if (user.badges.includes('admin')) return 1000;
+        if (user.badges.includes('supporter')) return 150;
+        return 50; // Limite para usuários gratuitos
+    };
+
     api.manager = {
         async _request(endpoint, method = 'GET', body = null) {
             const headers = { 'Content-Type': 'application/json' };
@@ -81,13 +89,34 @@ document.addEventListener('DOMContentLoaded', async function() {
         async register(name, email, password) { const data = await api.manager.register(name, email, password); localStorage.setItem('authToken', data.token); state.currentUser = await api.manager.fetchUser(); },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
         isFollowing: (id) => state.currentUser?.following.some(a => a.id === id),
+        
+        // --- FUNÇÃO MODIFICADA ---
         async toggleFollow(artist) {
             if (!state.currentUser || !artist) return;
             const artistData = { id: artist.id, name: artist.name, images: artist.images, genres: artist.genres };
             const followingList = state.currentUser.following || [];
             const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
-            let updatedFollowingList = isCurrentlyFollowing ? followingList.filter(a => a.id !== artist.id) : [...followingList, artistData];
+
+            let updatedFollowingList;
+
+            if (isCurrentlyFollowing) {
+                // Se está deixando de seguir, não há verificação de limite.
+                updatedFollowingList = followingList.filter(a => a.id !== artist.id);
+            } else {
+                // Se está tentando seguir, verifica o limite primeiro.
+                const limit = getFollowLimit(state.currentUser);
+                if (followingList.length >= limit) {
+                    // Lança um erro com uma mensagem que será exibida ao usuário.
+                    if (limit === 50) {
+                        throw new Error(`You've reached your follow limit of ${limit} artists. Upgrade to Premium for a higher limit!`);
+                    }
+                    throw new Error(`You've reached your follow limit of ${limit} artists.`);
+                }
+                updatedFollowingList = [...followingList, artistData];
+            }
+            
             state.currentUser = await api.manager.updateUser({ following: updatedFollowingList });
+            // Retorna o novo status de "seguindo"
             return !isCurrentlyFollowing;
         }
     };
@@ -123,7 +152,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 let badgesHTML = '';
                 if (u.badges && u.badges.length > 0) {
                     badgesHTML += '<div class="user-badges">';
-                    u.badges.forEach(badgeKey => {
+                    // Usar um Set para garantir que cada insígnia apareça apenas uma vez
+                    const uniqueBadges = [...new Set(u.badges)];
+                    uniqueBadges.forEach(badgeKey => {
                         if (badgeMap[badgeKey]) {
                             const badge = badgeMap[badgeKey];
                             badgesHTML += `<img src="${badge.src}" alt="${badge.title}" title="${badge.title}" class="badge-icon" data-badge-key="${badgeKey}">`;
@@ -197,14 +228,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         const tracksHTML = album.tracks.items.map(track => `<div class="track-item"><div class="track-number">${track.track_number}</div><div class="track-info"><div class="track-title">${track.name}</div><div class="track-artists">${track.artists.map(a => a.name).join(', ')}</div></div><div class="track-duration">${formatDuration(track.duration_ms)}</div></div>`).join('');
         ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img album-art"><img src="${album.images[0]?.url}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${artistsHTML}</p><p class="album-meta">${album.release_date.substring(0, 4)} &bull; ${album.total_tracks} songs</p></div></div>${spotifyEmbedHTML}<h3 class="section-title-main tracks-title">Tracks</h3><div class="track-list">${tracksHTML}</div>`;
     }
+    
+    // --- FUNÇÃO MODIFICADA ---
     function renderFollowingPage() { 
         if (!state.currentUser) return;
         const followingCount = state.currentUser.following.length;
-        const limit = 50;
+        // O limite agora é dinâmico, baseado no cargo do usuário
+        const limit = getFollowLimit(state.currentUser);
         ui.manager.dom.followingStats.innerHTML = `You are following <strong>${followingCount}</strong> out of <strong>${limit}</strong> artists.`;
         const artistsToRender = state.currentUser.following.map(a => ({...a, type: 'artist'}));
         ui.manager.populateGrid(artistsToRender, ui.manager.dom.followedArtistsGrid); 
     }
+    
     async function handleLoginSubmit(e) {
         const btn = e.target; const modal = ui.manager.dom.loginModal;
         ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = 'Logging in...';
@@ -239,7 +274,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function setupEventListeners() {
-        // --- EVENTOS DE HOVER PARA AS INSÍGNIAS ---
         document.body.addEventListener('mouseover', e => {
             const badgeIcon = e.target.closest('.badge-icon');
             if (badgeIcon) {
@@ -257,28 +291,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                     document.getElementById('badgeTooltipDesc').textContent = badgeData.description;
                     
                     const badgeRect = badgeIcon.getBoundingClientRect();
-                    tooltip.classList.add('active'); // Mostra o tooltip para calcular suas dimensões
+                    tooltip.classList.add('active');
                     
-                    // Posiciona o tooltip centralizado abaixo do ícone
                     tooltip.style.left = `${badgeRect.left + (badgeRect.width / 2) - (tooltip.offsetWidth / 2)}px`;
-                    tooltip.style.top = `${badgeRect.bottom + 8}px`; // Um pouco mais perto que antes
+                    tooltip.style.top = `${badgeRect.bottom + 8}px`;
                 }
             }
         });
 
         document.body.addEventListener('mouseout', e => {
-            const badgeIcon = e.target.closest('.badge-icon');
-            if (badgeIcon) {
+            if (e.target.closest('.badge-icon')) {
                 ui.manager.dom.badgeTooltip.classList.remove('active');
             }
         });
-        // --- FIM DOS EVENTOS DE HOVER ---
 
         document.body.addEventListener('click', async e => {
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) { const { type, id, name } = cardContent.dataset; if (type === 'artist') return renderArtistView(id, decodeURIComponent(name)); if (type === 'album') return renderAlbumView(id); }
+            
             const clickableArtist = e.target.closest('.clickable-artist');
             if (clickableArtist) { const { artistId, artistName } = clickableArtist.dataset; return renderArtistView(artistId, decodeURIComponent(artistName)); }
+            
+            // --- BLOCO MODIFICADO PARA CAPTURAR ERROS ---
             const followBtn = e.target.closest('.follow-btn');
             if (followBtn) { 
                 try {
@@ -287,9 +321,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                     followBtn.classList.toggle('following', isFollowing); 
                     followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
                     followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
-                } catch (error) { console.error("Follow/Unfollow failed:", error); alert(error.message); }
+                } catch (error) {
+                    // Exibe o erro de limite para o usuário.
+                    console.error("Follow/Unfollow failed:", error);
+                    alert(error.message);
+                }
                 return; 
             }
+
             const passToggle = e.target.closest('.password-toggle');
             if (passToggle) { const input = passToggle.previousElementSibling; const isPassword = input.type === 'password'; input.type = isPassword ? 'text' : 'password'; passToggle.className = `fas ${isPassword ? 'fa-eye-slash' : 'fa-eye'} password-toggle`; return; }
             if (e.target.closest('.back-btn')) return ui.manager.switchContent(ui.manager.dom.searchInput.value ? 'buscar' : 'inicio');
