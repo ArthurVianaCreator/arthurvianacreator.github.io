@@ -2,7 +2,7 @@
 
 /* ===== TEMA ESCURO (PADRÃO) ===== */
 :root { 
-    --primary-color: #FFC107; /* Amarelo como cor principal */
+    --primary-color: #FFC107;
     --dark-bg: #181818; 
     --darker-bg: #121212; 
     --gray-text: #8c8c8c; 
@@ -15,7 +15,7 @@
 
 /* ===== TEMA CLARO ===== */
 body.light-theme {
-    --primary-color: #E6A200; /* Um amarelo mais forte para o tema claro */
+    --primary-color: #E6A200;
     --dark-bg: #f5f5f5;
     --darker-bg: #ffffff;
     --gray-text: #5f5f5f;
@@ -32,7 +32,7 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .spinner { width: 50px; height: 50px; border: 5px solid #8c8c8c; border-top-color: #FFC107; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== LAYOUT PRINCIPAL ===== */
+/* LAYOUT PRINCIPAL */
 .main-container { display: flex; height: 100vh; }
 .sidebar { width: 240px; background: var(--darker-bg); border-right: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; transition: background-color 0.3s, border-color 0.3s; }
 .content-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -43,7 +43,7 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 .main-content::-webkit-scrollbar-track { background: var(--darker-bg); }
 .main-content::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 20px; }
 
-/* ===== SIDEBAR ===== */
+/* SIDEBAR */
 .sidebar .logo h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--primary-color); letter-spacing: 2px; }
 .sidebar .main-nav { display: flex; flex-direction: column; gap: 10px; margin-top: 40px; }
 .sidebar .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-radius: 8px; font-weight: 700; color: var(--light-gray-text); cursor: pointer; transition: color 0.2s, background-color 0.2s; }
@@ -53,18 +53,15 @@ body { font-family: 'Poppins', sans-serif; background: var(--darker-bg); color: 
 body.light-theme .sidebar .nav-item.active { color: var(--darker-bg); }
 body.light-theme .sidebar .nav-item:hover { color: var(--white-text); }
 
-/* ===== TOP BAR ===== */
+/* TOP BAR */
 .search-bar { flex-grow: 1; max-width: 400px; }
 .user-profile-area { flex-shrink: 0; }
 .mobile-header, .main-nav-mobile { display: none; }
 .content-section { display: none; }
 .content-section.active { display: block; animation: fadeIn 0.5s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
 .control-btn { background: none; border: none; color: var(--gray-text); cursor: pointer; padding: 5px; transition: color 0.2s, transform 0.2s; font-size: 1.5rem; }
 .control-btn:hover { color: var(--primary-color); transform: scale(1.1); }
-
-/* Botão de Tema */
 #themeToggleBtn .fa-sun { display: none; }
 #themeToggleBtn .fa-moon { display: block; }
 body.light-theme #themeToggleBtn .fa-sun { display: block; }
@@ -78,13 +75,26 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .btn-login { background-color: var(--primary-color); color: #121212; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: filter 0.2s; }
 .btn-login:hover { filter: brightness(1.2); }
 
-/* Perfil do Usuário e Avatar */
-.user-profile { display: flex; align-items: center; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 50px; padding: 4px; padding-right: 12px; cursor: pointer; transition: background-color 0.2s; }
+/* Perfil do Usuário Corrigido */
+.user-profile { 
+    display: flex; 
+    align-items: center; /* ESTA É A CORREÇÃO PRINCIPAL */
+    gap: 8px; /* Controla o espaçamento entre avatar, nome e seta */
+    background: var(--card-bg); 
+    border: 1px solid var(--border-color); 
+    border-radius: 50px; 
+    padding: 4px 12px 4px 4px; 
+    cursor: pointer; 
+    transition: background-color 0.2s; 
+}
 .user-profile:hover { background-color: var(--card-hover-bg); }
-.user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; margin-right: 8px; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
 .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.user-profile span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
-.user-profile i.fa-chevron-down { margin-left: 8px; color: var(--gray-text); }
+.user-info { display: flex; flex-direction: column; align-items: flex-start; }
+.user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
+.user-badges { display: flex; align-items: center; gap: 4px; height: 12px; margin-top: 2px; }
+.badge-icon { width: 12px; height: 12px; }
+.user-profile i.fa-chevron-down { color: var(--gray-text); font-size: 0.8rem; }
 
 .user-dropdown { position: absolute; top: 60px; right: 0; background: var(--card-hover-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 180px; overflow: hidden; z-index: 10; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; }
 .user-dropdown.active { opacity: 1; visibility: visible; transform: translateY(0); }
@@ -152,16 +162,21 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     .sidebar { display: none; }
     .main-container { flex-direction: column; }
     .content-wrapper { width: 100%; }
-    .top-bar { justify-content: space-between; padding: 12px 16px; }
+    .top-bar { flex-wrap: wrap; justify-content: space-between; padding: 12px 16px; }
     .mobile-header { display: flex; align-items: center; gap: 15px; }
     .mobile-header .logo h1 { font-size: 2.2rem; }
     .main-nav-mobile { display: flex; gap: 15px; }
     .main-nav-mobile .nav-item { font-size: 1rem; font-weight: bold; padding: 5px 0; color: var(--gray-text); border-bottom: 3px solid transparent; }
     .main-nav-mobile .nav-item.active { color: var(--white-text); border-bottom-color: var(--primary-color); }
-    .search-bar { display: none; }
+    .search-bar { 
+        display: flex;
+        order: 3;
+        width: 100%;
+        margin-top: 10px;
+        max-width: none;
+    }
 }
 @media (max-width: 500px) {
-    .user-profile span#userName, .user-profile i.fa-chevron-down { display: none; }
     .user-profile-area { gap: 8px; }
     .user-dropdown { right: 0; }
     .main-nav-mobile { gap: 10px; }
