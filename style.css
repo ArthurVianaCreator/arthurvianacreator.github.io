@@ -13,6 +13,7 @@
     --card-hover-bg: #282828; 
     --border-color: #282828;
     --danger-color: #e53935;
+    --success-color: #43a047;
     --elegant-font: 'Montserrat', sans-serif;
     --body-font: 'Roboto', sans-serif;
 }
@@ -89,7 +90,7 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 body.light-theme #themeToggleBtn .fa-sun { display: block; }
 body.light-theme #themeToggleBtn .fa-moon { display: none; }
 
-/* PROFILE PAGE HEADER */
+/* PROFILE PAGE & TABS */
 .profile-header-main { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 0; margin-bottom: 30px; }
 .profile-header-main > * { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
 .profile-header-main .profile-avatar-large { animation-delay: 0.1s; }
@@ -100,7 +101,48 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .profile-info-main h2 { font-family: var(--elegant-font); font-size: clamp(2rem, 5vw, 3rem); color: var(--white-text); margin-bottom: 5px; }
 .profile-info-main .user-badges { justify-content: center; margin-bottom: 10px; }
 .profile-info-main .user-badges .badge-icon { width: 24px; height: 24px; }
-.profile-info-main .following-stats { font-size: 1rem; color: var(--gray-text); }
+.friend-status-container { margin-top: 15px; }
+
+/* REVISED TAB STYLE TO MATCH IMAGE */
+.profile-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+.tab-link {
+    background: #e0e0e0;
+    border: 1px solid #bdbdbd;
+    color: #212121;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: var(--body-font);
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+body:not(.light-theme) .tab-link {
+    background: #333;
+    border-color: #555;
+    color: #f1f1f1;
+}
+.tab-link.active {
+    font-weight: 700;
+}
+body:not(.light-theme) .tab-link.active {
+    background: #f1f1f1;
+    color: #121212;
+    border-color: #f1f1f1;
+}
+body.light-theme .tab-link.active {
+    background: #212121;
+    color: #f1f1f1;
+    border-color: #212121;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeInUp 0.5s ease-out forwards; }
+
 
 /* ARTIST/ALBUM DETAIL PAGE */
 .back-btn { position: absolute; top: 15px; left: 15px; background: var(--card-hover-bg); color: var(--light-gray-text); border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s ease-in-out; z-index: 10; }
@@ -111,7 +153,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .details-header .details-img img { width: 100%; height: 100%; object-fit: cover; }
 .details-header .details-info h2 { font-family: var(--elegant-font); font-size: clamp(2.2rem, 6vw, 2.8rem); color: var(--white-text); margin: 0; }
 .details-header .details-info .meta-info { font-size: 1rem; color: var(--gray-text); text-transform: capitalize; margin: 5px 0 15px; }
-.details-info .artist-bio { font-size: 0.95rem; color: var(--light-gray-text); line-height: 1.6; max-width: 600px; margin: 0 auto 20px; text-align: justify; }
+.details-info .artist-bio { font-size: 0.95rem; color: var(--light-gray-text); line-height: 1.6; max-width: 800px; margin: 0 auto 20px; text-align: left; }
 .details-info .artist-link { cursor: pointer; transition: color 0.2s; }
 .details-info .artist-link:hover { color: var(--primary-color); text-decoration: underline; }
 .details-info .follow-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 30px; border-radius: 50px; border: none; background: linear-gradient(45deg, var(--primary-color), #ffd54f); color: #121212; font-size: 1rem; font-weight: bold; font-family: var(--body-font); cursor: pointer; transition: all 0.3s ease; margin-top: 20px; box-shadow: 0 4px 15px var(--primary-glow); }
@@ -132,6 +174,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 /* GENERAL CONTENT & CARDS */
 .section-title-main { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: 1.6rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 12px; margin-top: 16px; }
 .music-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 24px; margin-bottom: 32px; }
+.user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 24px; margin-bottom: 32px; }
 .horizontal-music-grid { display: flex; overflow-x: auto; grid-template-columns: none; gap: 16px; padding-bottom: 20px; }
 .horizontal-music-grid .music-card { flex-shrink: 0; width: 160px; }
 .music-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; transition: all 0.2s ease-in-out; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
@@ -144,6 +187,29 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .music-artist { font-size: 0.85rem; color: var(--gray-text); text-transform: capitalize; }
 .search-message, .loading-container { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
 .loading-container .spinner { margin: 0 auto 15px; }
+
+/* USER CARD */
+.user-card { text-align: center; cursor: pointer; transition: transform 0.2s; }
+.user-card:hover { transform: translateY(-5px); }
+.user-card-avatar { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid var(--card-bg); display: flex; align-items: center; justify-content: center; }
+.user-card-avatar .profile-picture, .user-card-placeholder { width: 100%; height: 100%; object-fit: cover; }
+.user-card-placeholder { font-size: 3rem; font-family: var(--elegant-font); font-weight: bold; color: white; }
+.user-card-name { font-weight: 700; color: var(--white-text); }
+
+
+/* FRIENDS PAGE & ACTIONS */
+.friend-requests-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+.friend-request-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.friend-request-item .user-link { font-weight: bold; cursor: pointer; color: var(--primary-color); text-decoration: none; }
+.friend-request-item .user-link:hover { text-decoration: underline; }
+.friend-request-actions { display: flex; gap: 10px; }
+.btn-friend-action { background: transparent; border: 1px solid var(--gray-text); color: var(--light-gray-text); padding: 8px 12px; border-radius: 5px; cursor: pointer; transition: all 0.2s; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+.btn-friend-action:hover { color: var(--white-text); border-color: var(--white-text); }
+.btn-friend-action.accept { border-color: var(--success-color); color: var(--success-color); }
+.btn-friend-action.accept:hover { background: var(--success-color); color: #fff; }
+.btn-friend-action.reject, .btn-friend-action.remove { border-color: var(--danger-color); color: var(--danger-color); }
+.btn-friend-action.reject:hover, .btn-friend-action.remove:hover { background: var(--danger-color); color: #fff; }
+.btn-friend-action:disabled { filter: grayscale(0.8); cursor: not-allowed; }
 
 /* MODALS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s; }

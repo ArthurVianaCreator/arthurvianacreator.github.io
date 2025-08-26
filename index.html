@@ -20,6 +20,7 @@
             <div class="logo"><h1>Lyrica</h1></div>
             <nav class="main-nav">
                 <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Home</span></div>
+                <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span>Friends</span></div>
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span>Profile</span></div>
             </nav>
         </div>
@@ -30,11 +31,12 @@
                     <div class="logo"><h1>L</h1></div>
                      <nav class="main-nav-mobile">
                         <div class="nav-item active" data-target="inicio">Home</div>
+                        <div class="nav-item" data-target="social">Friends</div>
                         <div class="nav-item" data-target="profile" id="profileNavItemMobile">Profile</div>
                     </nav>
                 </div>
                 <div class="search-bar">
-                    <i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search...">
+                    <i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search for artists, albums, or users...">
                 </div>
                 <div class="user-profile-area">
                     <button class="control-btn" id="themeToggleBtn">
@@ -63,6 +65,9 @@
                 </div>
                 <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
+                <div id="social" class="content-section">
+                    <!-- Social/Friends content will be injected here -->
+                </div>
                 <div id="profile" class="content-section">
                     <!-- Profile content will be injected here -->
                 </div>

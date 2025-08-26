@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateUser: (d) => api.manager._request('user', 'PUT', d),
         manageFriend: (targetName, action) => api.manager._request('friends', 'POST', { targetName, action }),
         fetchPublicProfile: (name) => api.manager._request(`user-profile?name=${encodeURIComponent(name)}`),
+        searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
@@ -131,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             homeContainer: document.getElementById('home-container'),
             themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
             profileContainer: document.getElementById('profile'),
+            socialContainer: document.getElementById('social'),
         },
         updateForAuthState() {
             const u = state.currentUser;
@@ -157,9 +159,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
             }
-            if(document.getElementById('profile').classList.contains('active')) {
-                renderProfilePage();
-            }
+            if(document.getElementById('profile').classList.contains('active')) { renderProfilePage(); }
+            if(document.getElementById('social').classList.contains('active')) { renderSocialPage(); }
         },
         getAvatarColor(name) {
             const avatarColors = ['#e53935', '#1e88e5', '#43a047', '#f4511e', '#5e35b1', '#00acc1', '#d81b60'];
@@ -245,10 +246,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
         try {
-            const [artist, albumsData, bioData] = await Promise.all([
-                api.manager.getSpotifyArtist(artistId),
+            const artist = await api.manager.getSpotifyArtist(artistId);
+            const [albumsData, bioData] = await Promise.all([
                 api.manager.getSpotifyArtistAlbums(artistId),
-                api.manager.getArtistBio(artistId) // Placeholder, artist name would be better
+                api.manager.getArtistBio(artist.name) 
             ]);
             
             const isFollowing = state.currentUser ? auth.manager.isFollowing(artistId) : false;
@@ -346,10 +347,33 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${badgeMap[badgeKey].title}" class="badge-icon" data-badge-key="${badgeKey}">`;
             });
         }
+        
+        ui.manager.dom.profileContainer.innerHTML = `
+            <div class="profile-header-main">
+                <div class="profile-avatar-large">${avatarHTML}</div>
+                <div class="profile-info-main">
+                    <h2>${u.name}</h2>
+                    <div class="user-badges">${badgesHTML}</div>
+                </div>
+            </div>
+            <h2 class="section-title-main">Artists You Follow</h2>
+            <div class="music-grid" id="followed-artists-grid"></div>`;
+        
+        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), "You haven't followed any artists yet. Use the search to find and follow your favorites!");
+    }
 
+    function renderSocialPage() {
+        if (!state.currentUser) {
+            ui.manager.switchContent('inicio');
+            ui.manager.openModal(ui.manager.dom.loginModal);
+            return;
+        }
+        ui.manager.switchContent('social');
+        const u = state.currentUser;
+        
         let friendRequestsHTML = '';
         if (u.friendRequestsReceived && u.friendRequestsReceived.length > 0) {
-            friendRequestsHTML = `<h3 class="section-title-main">Friend Requests</h3><div class="friend-requests-list">` +
+            friendRequestsHTML = `<h2 class="section-title-main">Friend Requests</h2><div class="friend-requests-list">` +
             u.friendRequestsReceived.map(name => `
                 <div class="friend-request-item">
                     <span><strong class="user-link" data-username="${name}">${name}</strong> wants to be your friend.</span>
@@ -361,26 +385,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             `).join('') + `</div>`;
         }
 
-        ui.manager.dom.profileContainer.innerHTML = `
-            <div class="profile-header-main">
-                <div class="profile-avatar-large">${avatarHTML}</div>
-                <div class="profile-info-main">
-                    <h2>${u.name}</h2>
-                    <div class="user-badges">${badgesHTML}</div>
-                </div>
-            </div>
+        ui.manager.dom.socialContainer.innerHTML = `
             ${friendRequestsHTML}
-            <div class="profile-tabs">
-                <button class="tab-link active" data-tab="artists">Following (${u.following?.length || 0})</button>
-                <button class="tab-link" data-tab="friends">Friends (${u.friends?.length || 0})</button>
-            </div>
-            <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
-            <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
-        
-        ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), "You haven't followed any artists yet. Use the search to find and follow your favorites!");
-        ui.manager.populateGrid(document.querySelector('#friends .user-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), "You haven't added any friends yet. Use the search to find other users!");
-    }
+            <h2 class="section-title-main">Your Friends</h2>
+            <div class="user-grid" id="friends-grid"></div>
+        `;
 
+        ui.manager.populateGrid(document.getElementById('friends-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), "You haven't added any friends yet. Use the search to find other users!");
+    }
+    
     async function renderPublicProfileView(userName) {
         if (state.currentUser && userName === state.currentUser.name) {
             return renderProfilePage();
@@ -562,17 +575,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             const { user } = await api.manager.manageFriend(targetName, action);
             state.currentUser = user;
             
-            // Check if we are viewing the target's public profile and refresh it
-            const profileHeader = document.querySelector('.profile-info-main h2');
-            if (profileHeader && profileHeader.textContent === targetName) {
-                renderPublicProfileView(targetName);
+            if (document.getElementById('social').classList.contains('active')) {
+                renderSocialPage();
             } else {
-                // Otherwise, we are on our own profile, so refresh that
-                renderProfilePage();
+                const profileHeader = document.querySelector('.profile-info-main h2');
+                if (profileHeader && profileHeader.textContent === targetName) {
+                    renderPublicProfileView(targetName);
+                }
             }
         } catch (error) {
             alert(`Error: ${error.message}`);
-            btn.disabled = false; // Re-enable on error
+            btn.disabled = false;
         }
     }
     
@@ -656,6 +669,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     state.artistContextId = null;
                     return renderArtistView(artistIdToReturnTo);
                 }
+                const cameFromProfile = document.getElementById('profile').contains(e.target);
+                if (cameFromProfile && state.lastView === 'social') {
+                     return renderSocialPage();
+                }
                 return ui.manager.switchContent(state.lastView);
             }
 
@@ -696,11 +713,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
-            if (target === 'profile') {
-                renderProfilePage();
-            } else {
-                renderHomePage(); // Default to home for other nav items for now
-            }
+            if (target === 'profile') { renderProfilePage(); } 
+            else if (target === 'social') { renderSocialPage(); }
+            else { renderHomePage(); }
         }));
 
         document.getElementById('logoutBtn').addEventListener('click', () => { 
@@ -723,12 +738,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 try {
                      const [spotifyResults, userResults] = await Promise.all([
                         api.manager.searchSpotify(query, 'artist,album', 6),
-                        api.manager.fetchPublicProfile(query).then(res => [res]).catch(() => [])
+                        api.manager.searchUsers(query)
                     ]);
-
                     let html = '';
-                    if (userResults.length > 0 && userResults[0].name) {
-                        html += `<h2 class="section-title-main">Users</h2><div class="user-grid">${userResults.map(u => ui.manager.renderUserCard(u)).join('')}</div>`;
+                    if (userResults.length > 0) {
+                        html += `<h2 class="section-title-main">Users</h2><div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
                     }
                     if (spotifyResults.artists?.items.length) {
                         html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
