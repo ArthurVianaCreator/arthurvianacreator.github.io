@@ -49,6 +49,7 @@ export default async function handler(req, res) {
           if (normalizedOldName) {
             multi.del(`name:${normalizedOldName}`);
           }
+          // CORREÇÃO: Salva o email do usuário, não o número 1.
           multi.set(`name:${normalizedNewName}`, user.email);
           user.name = newName;
           await multi.exec();
@@ -59,27 +60,6 @@ export default async function handler(req, res) {
       }
       
       if (Array.isArray(updatedData.following)) {
-        const oldFollowingIds = new Set((user.following || []).map(a => a.id));
-        const newFollowingIds = new Set(updatedData.following.map(a => a.id));
-        
-        const multi = kv.multi();
-
-        for (const artistId of oldFollowingIds) {
-            if (!newFollowingIds.has(artistId)) {
-                multi.zincrby('artist_popularity', -1, artistId);
-            }
-        }
-
-        for (const artistId of newFollowingIds) {
-            if (!oldFollowingIds.has(artistId)) {
-                multi.zincrby('artist_popularity', 1, artistId);
-            }
-        }
-        
-        if (multi.commands.length > 0) {
-            await multi.exec();
-        }
-
         user.following = updatedData.following;
         userWasUpdated = true;
       }
