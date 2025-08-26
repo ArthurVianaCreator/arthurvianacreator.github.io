@@ -177,12 +177,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 n.classList.toggle('active', n.dataset.target === id);
             });
         },
-        renderMusicCard(item) {
+        renderMusicCard(item, index = 0) {
             const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
             const sub = item.type === 'artist' 
                 ? (item.genres?.[0] || 'Artist') 
                 : (item.artists?.map(a => a.name).join(', ') || 'Album');
-            return `<div class="music-card">
+            return `<div class="music-card" style="animation-delay: ${index * 50}ms">
                         <div class="music-card-content" data-type="${item.type}" data-id="${item.id}">
                             <div class="music-img"><img src="${img}" alt="${item.name}"></div>
                             <div class="music-title">${item.name}</div>
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         populateGrid(container, items, emptyMessage = 'Nothing to show here.') { 
             if(!container) return;
             container.innerHTML = items && items.length > 0 
-                ? items.map(this.renderMusicCard).join('') 
+                ? items.map((item, index) => this.renderMusicCard(item, index)).join('') 
                 : `<p class="search-message">${emptyMessage}</p>`; 
         },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.homeContainer.innerHTML = ui.manager.renderLoader('Loading...');
         try {
             const popularData = await api.manager.getPopularArtists();
-            const gridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map(ui.manager.renderMusicCard).join('') : '<p class="search-message">Could not load this section.</p>';
+            const gridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('') : '<p class="search-message">Could not load this section.</p>';
             ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">Top 9 Popular Lyrica Artists</h2><div class="music-grid horizontal-music-grid">${gridHTML}</div>`;
         } catch (e) {
             ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">Top 9 Popular Lyrica Artists</h2><p class="search-message">Could not load this section.</p>`;
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 : `<button class="follow-btn" disabled>Log in to Follow</button>`;
             
             const discographyHTML = albumsData?.items?.length > 0
-                ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map(album => ui.manager.renderMusicCard({ ...album, type: 'album' })).join('')}</div>`
+                ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map((album, index) => ui.manager.renderMusicCard({ ...album, type: 'album' }, index)).join('')}</div>`
                 : '<p class="search-message">No albums found for this artist.</p>';
 
             ui.manager.dom.detailsView.innerHTML = `
