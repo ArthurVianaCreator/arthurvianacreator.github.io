@@ -30,7 +30,6 @@ export default async function handler(req, res) {
     }
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     if (req.method === 'GET') {
-      // Return user data MINUS password and IP for security
       const { password, ip, ...userData } = user;
       res.status(200).json(userData);
     } else if (req.method === 'PUT') {
@@ -68,12 +67,17 @@ export default async function handler(req, res) {
         user.badges = updatedData.badges;
         userWasUpdated = true;
       }
+      
+      // Handle avatar update (accepts base64 string or null for removal)
+      if (typeof updatedData.avatar !== 'undefined') {
+        user.avatar = updatedData.avatar;
+        userWasUpdated = true;
+      }
 
       if (userWasUpdated) {
           await kv.set(`user:${user.email}`, user);
       }
       
-      // Return updated user data MINUS password and IP
       const { password, ip, ...userData } = user;
       res.status(200).json(userData);
     } else {

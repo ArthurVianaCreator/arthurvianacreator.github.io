@@ -1,70 +1,63 @@
-Lyrica - Enciclopédia Musical Interativa
+Lyrica - Interactive Music Encyclopedia
 
-Descrição
-O Lyrica é uma enciclopédia musical interativa criada por Arthur Viana. A plataforma funciona como um espaço para explorar e organizar informações sobre artistas, álbuns e lançamentos, combinando um catálogo musical com recursos de rede social.
+Description
+Lyrica is an interactive music encyclopedia created by Arthur Viana. The platform functions as a space to explore and organize information about artists, albums, and releases, combining a music catalog with social networking features.
 
-Objetivo do Projeto
-Criar uma enciclopédia musical moderna e funcional, onde os usuários possam descobrir, seguir e acompanhar artistas e álbuns em um único lugar, unindo organização e interação comunitária.
+Project Goal
+To create a modern and functional music encyclopedia where users can discover, follow, and keep track of artists and albums in one place, uniting organization and community interaction.
 
-Funcionalidades Principais
-Navegação Simples
+Main Features
+Simple Navigation
 
-Interface Responsiva: Possui uma barra lateral em desktops para acesso rápido, que se adapta a um menu superior em dispositivos móveis.
+Responsive Interface: Features a sidebar on desktops for quick access, which adapts to a top menu on mobile devices.
 
-Exploração de Conteúdo
+Content Exploration
 
-Artistas em Destaque: Uma seção com artistas populares e influentes.
+Featured Artists: A section with popular and influential artists.
 
-Novos Lançamentos: Área dedicada para acompanhar os últimos álbuns e singles.
+New Releases: A dedicated area to follow the latest albums and singles.
 
-Busca Inteligente: Ferramenta de pesquisa para encontrar artistas e álbuns.
+Intelligent Search: A search tool to find artists and albums.
 
-Páginas de Detalhes: Perfis completos para artistas e álbuns, com discografia e player de música integrado.
+Detail Pages: Complete profiles for artists and albums, with a discography and an integrated music player.
 
-Interação do Usuário
+User Interaction
 
-Contas de Usuário: Sistema de criação de conta e login simplificado.
+User Accounts: Simplified account creation and login system.
 
-Seguir Artistas: Permite criar uma biblioteca personalizada seguindo artistas de interesse.
+Follow Artists: Allows creating a personalized library by following artists of interest.
 
-Gerenciamento de Perfil: Opções para alterar o nome de usuário e gerenciar a conta.
+Profile Management: Options to change the username and manage the account.
 
-Personalização
+Personalization
 
-Temas Visuais: Seletor de tema claro ou escuro para personalizar a aparência do site.
+Visual Themes: A light or dark theme selector to customize the site's appearance.
 
-Modelo de Monetização
+Monetization Model
+Lyrica uses a "Freemium" model, with essential features available for free and advanced features in the Premium version.
 
-O Lyrica utiliza um modelo "Freemium", com funcionalidades essenciais gratuitas e recursos avançados na versão Premium.
+Free Plan
 
-Plano Gratuito
+Access to basic exploration and interaction functions.
 
-Acesso às funções básicas de exploração e interação.
+Limit of 50 artists to follow.
 
-Limite de 50 artistas para seguir.
+Display of ads in the interface.
 
-Exibição de anúncios na interface.
+Premium Plan
 
-Plano Premium
+Increased follow limit for artists to 150.
 
-Aumento do limite de artistas seguidos para 150.
+"Lyrica Supporter" title and badge on the profile.
 
-Título e insígnia de "Apoiante do Lyrica" no perfil.
+Ad-free user experience.
 
-Experiência de uso livre de anúncios.
+Badges
+Badges are visual identifiers that appear on the user's profile to highlight their status and engagement on the platform.
 
-Insígnias (Badges)
-
-Insígnias são identificadores visuais que aparecem no perfil do usuário para destacar seu status e engajamento na plataforma.
-
-Administrador do Lyrica: Reservada aos criadores e gestores do projeto. Ícone de lupa (amarelo).
-
-Apoiante do Lyrica: Concedida aos usuários do plano Premium. Ícone de coração (vermelho).
-
-Veterano: Para membros que participaram da versão beta. Ícone com o texto “BETA” (azul).
-
-Descobridor: Ícone de bússola (verde).
-
-Colecionador: Ícone de disco de vinil (roxo).
-
-Explorador: Ícone de mapa estilizado (laranja).
+Lyrica Administrator: Reserved for the creators and managers of the project. (img/Admin.png)
+Lyrica Supporter: Granted to users of the Premium plan. (img/Supporter.png)
+Veteran: For members who participated in the beta version. (img/BetaMember.png)
+Discoverer: Awarded for discovering new and emerging artists. (img/Discoverer.png)
+Collector: For users with a large collection of followed artists. (img/Collector.png)
+Explorer: Recognizes users who delve deep into artist discographies. (img/Explorer.png)

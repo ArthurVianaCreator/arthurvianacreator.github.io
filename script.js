@@ -3,9 +3,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     const api = {}, auth = {}, ui = {};
 
     const badgeMap = {
-        admin: { src: 'img/Admn.png', title: 'Administrator', description: 'Reserved for Lyrica creators and managers.' },
-        supporter: { src: 'img/Apoiad.png', title: 'Lyrica Supporter', description: 'Granted to all Premium version users.' },
-        veteran: { src: 'img/Vetern.png', title: 'Beta Member', description: 'Unlocked by members of the beta version.' }
+        admin: { src: 'img/Admin.png', title: 'Lyrica Administrator', description: 'Reserved for the creators and managers of the project.' },
+        supporter: { src: 'img/Supporter.png', title: 'Lyrica Supporter', description: 'Granted to users of the Premium plan.' },
+        veteran: { src: 'img/BetaMember.png', title: 'Veteran', description: 'For members who participated in the beta version.' },
+        discoverer: { src: 'img/Discoverer.png', title: 'Discoverer', description: 'Awarded for discovering new and emerging artists.' },
+        collector: { src: 'img/Collector.png', title: 'Collector', description: 'For users with a large collection of followed artists.' },
+        explorer: { src: 'img/Explorer.png', title: 'Explorer', description: 'Recognizes users who delve deep into artist discographies.' }
     };
 
     const getFollowLimit = (user) => {
@@ -131,11 +134,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.dom.loginPromptBtn.style.display = u ? 'none' : 'block';
             this.dom.userProfile.style.display = u ? 'flex' : 'none';
             if (u) {
-                const savedAvatar = localStorage.getItem(`userAvatar_${u.email}`);
                 this.dom.userAvatar.innerHTML = '';
-                if (savedAvatar && savedAvatar !== "null") {
+                if (u.avatar) {
                     this.dom.userAvatar.style.backgroundColor = 'transparent';
-                    this.dom.userAvatar.innerHTML = `<img src="${savedAvatar}" alt="User Avatar" class="profile-picture">`;
+                    this.dom.userAvatar.innerHTML = `<img src="${u.avatar}" alt="User Avatar" class="profile-picture">`;
                 } else {
                     this.dom.userAvatar.style.backgroundColor = this.getAvatarColor(u.name);
                     this.dom.userAvatar.textContent = u.name.charAt(0).toUpperCase();
@@ -151,6 +153,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                     badgesHTML += '</div>';
                 }
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
+            }
+            if(document.getElementById('profile').classList.contains('active')) {
+                renderProfilePage();
             }
         },
         getAvatarColor(name) {
@@ -224,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function renderArtistView(artistId) {
-        state.artistContextId = null; // Clear context when landing on an artist page.
+        state.artistContextId = null; 
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
         try {
@@ -264,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             const album = await api.manager.getSpotifyAlbum(albumId);
             if (album.artists && album.artists[0]) {
-                state.artistContextId = album.artists[0].id; // Set context from album's artist
+                state.artistContextId = album.artists[0].id; 
             }
             const tracksHTML = album.tracks.items.map((track, index) => 
                 `<li>
@@ -308,9 +313,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         ui.manager.switchContent('profile');
         const u = state.currentUser;
-        const savedAvatar = localStorage.getItem(`userAvatar_${u.email}`);
-        let avatarHTML = (savedAvatar && savedAvatar !== "null") 
-            ? `<img src="${savedAvatar}" alt="User Avatar" class="profile-picture">` 
+        let avatarHTML = u.avatar 
+            ? `<img src="${u.avatar}" alt="User Avatar" class="profile-picture">` 
             : `<div class="profile-avatar-large-placeholder">${u.name.charAt(0).toUpperCase()}</div>`;
         
         let badgesHTML = '';
@@ -345,11 +349,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             await auth.manager.login(modal.querySelector('#loginEmail').value, modal.querySelector('#loginPassword').value);
             ui.manager.closeAllModals(); 
             ui.manager.updateForAuthState(); 
-            if (document.getElementById('profile').classList.contains('active')) {
-                renderProfilePage();
-            } else {
-                renderHomePage();
-            }
+            renderHomePage();
         } catch (error) { 
             ui.manager.showModalError(modal, error.message); 
         } finally { 
@@ -397,6 +397,41 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
+    async function handleAvatarSave() {
+        if (!state.cropper || !state.cropper.getCroppedCanvas()) {
+            ui.manager.closeAllModals();
+            return;
+        }
+        const modal = ui.manager.dom.avatarChangeModal;
+        const btn = modal.querySelector('#saveAvatarBtn');
+        btn.disabled = true; btn.textContent = 'Saving...';
+        try {
+            const avatarBase64 = state.cropper.getCroppedCanvas({ width: 256, height: 256 }).toDataURL('image/png');
+            state.currentUser = await api.manager.updateUser({ avatar: avatarBase64 });
+            ui.manager.updateForAuthState();
+            ui.manager.closeAllModals();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save & Close';
+        }
+    }
+
+    async function handleAvatarRemove() {
+        const modal = ui.manager.dom.avatarChangeModal;
+        const btn = modal.querySelector('#removeAvatarBtn');
+        btn.disabled = true;
+        try {
+            state.currentUser = await api.manager.updateUser({ avatar: null });
+            ui.manager.updateForAuthState();
+            ui.manager.closeAllModals();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     function initCropper(imageElement) {
         if (state.cropper) state.cropper.destroy();
         state.cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, background: false, autoCropArea: 1, responsive: true, checkOrientation: false });
@@ -497,27 +532,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#changeNameBtn')) ui.manager.openModal(ui.manager.dom.nameChangeModal);
             if (e.target.closest('#changeAvatarBtn')) {
                 const previewImage = document.getElementById('avatarPreviewImage');
-                const savedAvatar = localStorage.getItem(`userAvatar_${state.currentUser.email}`);
-                previewImage.src = savedAvatar || "";
-                previewImage.style.opacity = savedAvatar ? 1 : 0;
+                const userAvatar = state.currentUser.avatar;
+                previewImage.src = userAvatar || "";
+                previewImage.style.opacity = userAvatar ? 1 : 0;
                 ui.manager.openModal(ui.manager.dom.avatarChangeModal);
-                if (savedAvatar) {
+                if (userAvatar) {
                     previewImage.onload = () => initCropper(previewImage);
                 }
             }
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
-            if (e.target.closest('#removeAvatarBtn')) {
-                localStorage.removeItem(`userAvatar_${state.currentUser.email}`);
-                ui.manager.updateForAuthState(); 
-                ui.manager.closeAllModals();
-            }
-            if (e.target.closest('#saveAvatarBtn')) {
-                if (state.cropper && state.cropper.getCroppedCanvas()) {
-                    localStorage.setItem(`userAvatar_${state.currentUser.email}`, state.cropper.getCroppedCanvas({ width: 256, height: 256 }).toDataURL('image/png'));
-                    ui.manager.updateForAuthState();
-                }
-                ui.manager.closeAllModals();
-            }
+            if (e.target.closest('#removeAvatarBtn')) handleAvatarRemove();
+            if (e.target.closest('#saveAvatarBtn')) handleAvatarSave();
         });
         
         ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));
