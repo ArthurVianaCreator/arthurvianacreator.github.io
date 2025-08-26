@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const state = { currentUser: null, spotifyAppToken: null, cropper: null, lastView: 'inicio', artistContextId: null };
+    const state = { currentUser: null, spotifyAppToken: null, cropper: null, lastView: 'inicio', artistContextId: null, cameraStream: null };
     const api = {}, auth = {}, ui = {};
 
     // 1. Translation System
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             dontHaveAccount: "Don't have an account?", signUp: 'Sign Up', alreadyHaveAccount: 'Already have an account?',
             createAccount: 'Create Account', yourName: 'Your Name', email: 'Email', password: 'Password', changeYourName: 'Change Your Name',
             newName: 'New name', cancel: 'Cancel', save: 'Save', changeProfilePicture: 'Change Profile Picture', uploadImage: 'Upload Image',
-            remove: 'Remove', saveAndClose: 'Save & Close', zoomInfo: 'Use the mouse wheel to zoom.', loading: 'Loading...',
+            remove: 'Remove', saveAndClose: 'Save & Close', zoomInfo: 'Use the mouse wheel to zoom.', loading: 'Loading...', takePhoto: 'Take Photo', capture: 'Capture',
             searchResults: 'Search Results', topArtists: 'Top 9 Popular Lyrica Artists', couldNotLoadSection: 'Could not load this section.',
             loadingArtist: 'Loading Artist...', loadingAlbum: 'Loading Album...', following: 'Following', follow: 'Follow', loginToFollow: 'Log in to Follow',
             biography: 'Biography', discography: 'Discography', noAlbumsFound: 'No albums found for this artist.', noBioAvailable: 'No biography available for this artist.',
@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeDiscovererTitle: 'Discoverer', badgeDiscovererDesc: 'Awarded for discovering new and emerging artists.',
             badgeCollectorTitle: 'Collector', badgeCollectorDesc: 'For users with a large collection of followed artists.',
             badgeExplorerTitle: 'Explorer', badgeExplorerDesc: 'Recognizes users who delve deep into artist discographies.',
-            profileNotice: 'Notice: The artist follow limit is now 50 for all users to ensure platform stability.',
+            noDescription: 'No description provided.', editDescription: 'Edit Description', saveDescription: 'Save Description', cancelEdit: 'Cancel',
+            descriptionCharCount: '{0}/200 characters', followLimitTitle: 'Artist Follow Limit',
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -43,8 +44,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             signUp: 'Cadastre-se', alreadyHaveAccount: 'Já tem uma conta?', createAccount: 'Criar Conta', yourName: 'Seu Nome', email: 'E-mail',
             password: 'Senha', changeYourName: 'Mude seu Nome', newName: 'Novo nome', cancel: 'Cancelar', save: 'Salvar',
             changeProfilePicture: 'Mudar Foto de Perfil', uploadImage: 'Carregar Imagem', remove: 'Remover', saveAndClose: 'Salvar & Fechar',
-            zoomInfo: 'Use a roda do mouse para dar zoom.', loading: 'Carregando...', searchResults: 'Resultados da Pesquisa',
-            topArtists: 'Top 9 Artistas Populares no Lyrica', couldNotLoadSection: 'Não foi possível carregar esta seção.',
+            zoomInfo: 'Use a roda do mouse para dar zoom.', loading: 'Carregando...', takePhoto: 'Tirar Foto', capture: 'Capturar',
+            searchResults: 'Resultados da Pesquisa', topArtists: 'Top 9 Artistas Populares no Lyrica', couldNotLoadSection: 'Não foi possível carregar esta seção.',
             loadingArtist: 'Carregando Artista...', loadingAlbum: 'Carregando Álbum...', following: 'Seguindo', follow: 'Seguir',
             loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discography: 'Discografia',
             noAlbumsFound: 'Nenhum álbum encontrado para este artista.', noBioAvailable: 'Nenhuma biografia disponível para este artista.',
@@ -69,7 +70,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeDiscovererTitle: 'Descobridor', badgeDiscovererDesc: 'Premiado por descobrir artistas novos e emergentes.',
             badgeCollectorTitle: 'Colecionador', badgeCollectorDesc: 'Para usuários com uma grande coleção de artistas seguidos.',
             badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Reconhece usuários que mergulham fundo nas discografias dos artistas.',
-            profileNotice: 'Aviso: O limite para seguir artistas agora é 50 para todos os usuários, visando garantir a estabilidade da plataforma.',
+            noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
+            descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Limite para Seguir Artistas',
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -177,6 +179,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 updatedFollowingList = [...followingList, artistData];
             }
             state.currentUser = await api.manager.updateUser({ following: updatedFollowingList });
+            if (document.getElementById('profile').classList.contains('active')) {
+                renderProfilePage();
+            }
             return !isCurrentlyFollowing;
         }
     };
@@ -247,6 +252,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); localStorage.setItem('lyricaTheme', theme); },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() { 
+            stopCamera();
             document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); 
             if (state.cropper) { state.cropper.destroy(); state.cropper = null; } 
         },
@@ -310,6 +316,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${t(badgeMap[badgeKey].titleKey)}" class="badge-icon" data-badge-key="${badgeKey}">`;
             });
         }
+        const descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
+            <p class="profile-description">${u.description || t('noDescription')}</p>
+            <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
+        </div>`;
+        
+        const followCount = u.following?.length || 0;
+        const followLimit = getFollowLimit(u);
+        const percentage = (followCount / followLimit) * 100;
+        const followTrackerHTML = `
+            <div class="follow-limit-tracker">
+                <h3>${t('followLimitTitle')}</h3>
+                <div class="progress-info">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: ${percentage}%;"></div>
+                    </div>
+                    <span class="limit-text">${followCount} / ${followLimit}</span>
+                </div>
+            </div>`;
+
         ui.manager.dom.profileContainer.innerHTML = `
             <div class="profile-header-main">
                 <div class="profile-avatar-large">${avatarHTML}</div>
@@ -318,10 +343,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="user-badges">${badgesHTML}</div>
                 </div>
             </div>
-            <div class="profile-notice">
-                <i class="fas fa-info-circle"></i>
-                <span>${t('profileNotice')}</span>
-            </div>
+            ${descriptionHTML}
+            ${followTrackerHTML}
             <h2 class="section-title-main">${t('artistsYouFollow')}</h2>
             <div class="music-grid" id="followed-artists-grid"></div>`;
         ui.manager.populateGrid(document.getElementById('followed-artists-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
@@ -360,7 +383,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                 else if (state.currentUser.friendRequestsReceived?.includes(u.name)) friendStatusHTML = `<div class="friend-request-actions public-profile"><span>${t('sentYouRequest')}</span><button class="btn-friend-action accept" data-action="accept" data-target-name="${u.name}"><i class="fas fa-check"></i></button><button class="btn-friend-action reject" data-action="reject" data-target-name="${u.name}"><i class="fas fa-times"></i></button></div>`;
                 else friendStatusHTML = `<button class="btn-friend-action" data-action="request" data-target-name="${u.name}"><i class="fas fa-user-plus"></i> ${t('addFriend')}</button>`;
             }
-            ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="profile-header-main"><div class="profile-avatar-large">${avatarHTML}</div><div class="profile-info-main"><h2>${u.name}</h2><div class="user-badges">${badgesHTML}</div><div class="friend-status-container">${friendStatusHTML}</div></div></div><div class="profile-tabs"><button class="tab-link active" data-tab="artists">${t('followingCount', u.following?.length || 0)}</button><button class="tab-link" data-tab="friends">${t('friendsCount', u.friends?.length || 0)}</button></div><div id="artists" class="tab-content active"><div class="music-grid"></div></div><div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
+            const descriptionHTML = u.description ? `<div class="profile-description-container"><p class="profile-description">${u.description}</p></div>` : '';
+
+            ui.manager.dom.profileContainer.innerHTML = `
+                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                <div class="profile-header-main">
+                    <div class="profile-avatar-large">${avatarHTML}</div>
+                    <div class="profile-info-main">
+                        <h2>${u.name}</h2>
+                        <div class="user-badges">${badgesHTML}</div>
+                        <div class="friend-status-container">${friendStatusHTML}</div>
+                    </div>
+                </div>
+                ${descriptionHTML}
+                <div class="profile-tabs">
+                    <button class="tab-link active" data-tab="artists">${t('followingCount', u.following?.length || 0)}</button>
+                    <button class="tab-link" data-tab="friends">${t('friendsCount', u.friends?.length || 0)}</button>
+                </div>
+                <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
+                <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
             ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
             ui.manager.populateGrid(document.querySelector('#friends .user-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), t('hasNoFriends', u.name));
         } catch(e) {
@@ -441,10 +482,62 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!file.type.startsWith('image/')) return ui.manager.showModalError(modal, t('errorFileInvalid'));
         if (file.size > 2 * 1024 * 1024) return ui.manager.showModalError(modal, t('errorFileTooLarge'));
         const previewImage = document.getElementById('avatarPreviewImage'), reader = new FileReader();
-        reader.onload = e => { previewImage.src = e.target.result; previewImage.style.opacity = 1; initCropper(previewImage); };
+        reader.onload = e => { 
+            document.getElementById('video-container').style.display = 'none';
+            document.querySelector('.avatar-preview-container').style.display = 'flex';
+            previewImage.src = e.target.result; 
+            previewImage.style.opacity = 1; 
+            initCropper(previewImage); 
+        };
         reader.readAsDataURL(file);
     }
     
+    async function startCamera() {
+        const modal = document.getElementById('avatarChangeModal');
+        const videoContainer = document.getElementById('video-container');
+        const video = document.getElementById('videoStream');
+        const previewContainer = document.querySelector('.avatar-preview-container');
+        try {
+            if (state.cameraStream) stopCamera();
+            state.cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            video.srcObject = state.cameraStream;
+            videoContainer.style.display = 'block';
+            previewContainer.style.display = 'none';
+            modal.querySelector('#avatar-actions').style.display = 'none';
+            modal.querySelector('#capture-actions').style.display = 'block';
+        } catch (err) {
+            ui.manager.showModalError(modal, `Camera error: ${err.name}`);
+            stopCamera();
+        }
+    }
+
+    function stopCamera() {
+        if (state.cameraStream) {
+            state.cameraStream.getTracks().forEach(track => track.stop());
+            state.cameraStream = null;
+        }
+        const modal = document.getElementById('avatarChangeModal');
+        modal.querySelector('#video-container').style.display = 'none';
+        modal.querySelector('.avatar-preview-container').style.display = 'flex';
+        modal.querySelector('#avatar-actions').style.display = 'block';
+        modal.querySelector('#capture-actions').style.display = 'none';
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('videoStream');
+        const previewImage = document.getElementById('avatarPreviewImage');
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        stopCamera();
+        
+        previewImage.src = canvas.toDataURL('image/png');
+        previewImage.style.opacity = 1;
+        initCropper(previewImage);
+    }
+
     async function handleFriendAction(e) {
         const btn = e.target.closest('.btn-friend-action');
         if (!btn || btn.disabled) return;
@@ -465,11 +558,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
             if (badgeIcon) {
-                // CORREÇÃO: Impede a inspeção de insígnias na barra superior para evitar
-                // conflito com o menu de perfil, tanto no PC quanto no mobile.
-                if (badgeIcon.closest('.user-profile-area')) {
-                    return; 
-                }
+                if (badgeIcon.closest('.user-profile-area')) return; 
 
                 const tooltip = ui.manager.dom.badgeTooltip, badgeKey = badgeIcon.dataset.badgeKey, badgeInfo = badgeMap[badgeKey];
                 if (!badgeInfo) return;
@@ -484,11 +573,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const tooltipRect = tooltip.getBoundingClientRect();
                 let left = badgeRect.left + (badgeRect.width / 2) - (tooltipRect.width / 2);
                 let top = badgeRect.bottom + 8;
-
                 if (left < 8) left = 8;
                 if (left + tooltipRect.width > window.innerWidth - 8) left = window.innerWidth - tooltipRect.width - 8;
                 if (top + tooltipRect.height > window.innerHeight - 8) top = badgeRect.top - tooltipRect.height - 8;
-
                 tooltip.style.left = `${left}px`;
                 tooltip.style.top = `${top}px`;
             } else if (!e.target.closest('.badge-tooltip')) {
@@ -523,6 +610,38 @@ document.addEventListener('DOMContentLoaded', async function() {
                     followBtn.querySelector('span').textContent = isFollowing ? t('following') : t('follow');
                     followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
                 } catch (error) { alert(error.message); }
+            }
+
+            const editDescBtn = e.target.closest('.edit-description-btn');
+            if (editDescBtn) {
+                const container = document.getElementById('profile-description-container');
+                const currentDesc = state.currentUser.description || '';
+                const editorHTML = `
+                    <div class="description-editor">
+                        <textarea id="description-textarea" maxlength="200" placeholder="${t('noDescription')}">${currentDesc}</textarea>
+                        <div class="char-counter" id="char-counter">${t('descriptionCharCount', currentDesc.length)}</div>
+                        <div class="editor-actions">
+                            <button class="btn-secondary cancel-desc-btn">${t('cancelEdit')}</button>
+                            <button class="btn-primary save-desc-btn">${t('saveDescription')}</button>
+                        </div>
+                    </div>`;
+                container.innerHTML = editorHTML;
+                document.getElementById('description-textarea').addEventListener('input', e => {
+                    document.getElementById('char-counter').textContent = t('descriptionCharCount', e.target.value.length);
+                });
+            }
+
+            if (e.target.closest('.cancel-desc-btn')) renderProfilePage();
+            
+            if (e.target.closest('.save-desc-btn')) {
+                const newDesc = document.getElementById('description-textarea').value.trim();
+                try {
+                    state.currentUser = await api.manager.updateUser({ description: newDesc });
+                    renderProfilePage();
+                } catch (err) {
+                    alert('Failed to save description.');
+                    renderProfilePage();
+                }
             }
 
             handleFriendAction(e);
@@ -568,6 +687,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (userAvatar) previewImage.onload = () => initCropper(previewImage);
             }
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
+            if (e.target.closest('#takePhotoBtn')) startCamera();
+            if (e.target.closest('#captureBtn')) capturePhoto();
             if (e.target.closest('#removeAvatarBtn')) handleAvatarRemove();
             if (e.target.closest('#saveAvatarBtn')) handleAvatarSave();
         });

@@ -85,16 +85,27 @@
             <button class="close-modal-btn">&times;</button>
             <h2 data-translate-key="changeProfilePicture">Change Profile Picture</h2>
             <p class="modal-error"></p>
+            <div id="video-container" style="display: none;">
+                <video id="videoStream" autoplay playsinline></video>
+            </div>
             <div class="avatar-preview-container">
                 <img id="avatarPreviewImage" src="" alt="Avatar Preview">
             </div>
             <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
-            <div class="modal-actions-grid">
-                <button class="btn-secondary" id="uploadAvatarBtn"><i class="fas fa-upload"></i> <span data-translate-key="uploadImage">Upload Image</span></button>
-                <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> <span data-translate-key="remove">Remove</span></button>
+            <div id="avatar-actions">
+                <div class="modal-actions-grid">
+                    <button class="btn-secondary" id="uploadAvatarBtn"><i class="fas fa-upload"></i> <span data-translate-key="uploadImage">Upload Image</span></button>
+                    <button class="btn-secondary" id="takePhotoBtn"><i class="fas fa-camera-retro"></i> <span data-translate-key="takePhoto">Take Photo</span></button>
+                    <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> <span data-translate-key="remove">Remove</span></button>
+                </div>
+                <div class="modal-actions">
+                     <button class="btn-primary" id="saveAvatarBtn"><i class="fas fa-save"></i> <span data-translate-key="saveAndClose">Save & Close</span></button>
+                </div>
             </div>
-            <div class="modal-actions">
-                 <button class="btn-primary" id="saveAvatarBtn" data-translate-key="saveAndClose">Save & Close</button>
+            <div id="capture-actions" style="display: none;">
+                <div class="modal-actions">
+                    <button class="btn-primary" id="captureBtn"><i class="fas fa-camera"></i> <span data-translate-key="capture">Capture</span></button>
+                </div>
             </div>
             <p class="modal-info" data-translate-key="zoomInfo">Use the mouse wheel to zoom.</p>
         </div>
