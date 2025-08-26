@@ -26,25 +26,19 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
   try {
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
-    const userKeys = [];
-    for await (const key of kv.scanIterator({ match: 'user:*' })) {
-        userKeys.push(key);
+    
+    // --- INÍCIO DA LÓGICA CORRIGIDA E EFICIENTE ---
+    // Busca os 9 IDs de artistas com maior pontuação (rev: true para ordem decrescente)
+    const top9ArtistIds = await kv.zrange('artist_popularity', 0, 8, { rev: true });
+
+    if (!top9ArtistIds || top9ArtistIds.length === 0) {
+        return res.status(200).json({ artists: [] });
     }
-    if (userKeys.length === 0) return res.status(200).json({ artists: [] });
-    const allUsers = await kv.mget(...userKeys);
-    const artistFollowCounts = {};
-    allUsers.forEach(user => {
-        if (user && Array.isArray(user.following)) {
-            user.following.forEach(artist => {
-                if (artist && artist.id) artistFollowCounts[artist.id] = (artistFollowCounts[artist.id] || 0) + 1;
-            });
-        }
-    });
-    const sortedArtistIds = Object.keys(artistFollowCounts).sort((a, b) => artistFollowCounts[b] - artistFollowCounts[a]);
-    const top9ArtistIds = sortedArtistIds.slice(0, 9);
-    if (top9ArtistIds.length === 0) return res.status(200).json({ artists: [] });
+
     const popularArtistsData = await getSpotifySeveralArtists(top9ArtistIds, process.env);
     res.status(200).json(popularArtistsData);
+    // --- FIM DA LÓGICA CORRIGIDA E EFICIENTE ---
+
   } catch (error) {
     console.error('Popular Artists API Error:', error);
     return res.status(500).json({ error: 'A server-side error occurred.' });
