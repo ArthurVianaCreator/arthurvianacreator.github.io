@@ -15,23 +15,24 @@ export default async function handler(req, res) {
   try {
     const { name, email, password } = req.body;
     
-    // Validações de campos obrigatórios
+    // Required field validations
     if (!name || !email || !password) { 
       return res.status(400).json({ error: 'All fields are required' }); 
     }
     
-    // --- NOVA VALIDAÇÃO DE E-MAIL NO SERVIDOR ---
+    // --- NEW EMAIL VALIDATION ON SERVER ---
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({ error: 'Invalid email format' });
     }
     
-    // Outras validações
+    // Other validations
     if (name.trim().length <= 4) { 
       return res.status(400).json({ error: 'Name must be more than 4 characters long' }); 
     }
-    if (/\s/.test(name)) { 
-      return res.status(400).json({ error: 'Name cannot contain spaces' }); 
+    // Updated name validation to match client-side rules
+    if (!/^[a-zA-Z0-9_-]+$/.test(name)) { 
+      return res.status(400).json({ error: 'Name can only contain letters, numbers, hyphens, and underscores.' }); 
     }
     if (password.length <= 4) { 
       return res.status(400).json({ error: 'Password must be more than 4 characters long.' }); 
