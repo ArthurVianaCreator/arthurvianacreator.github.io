@@ -116,12 +116,24 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     border-radius: 0 8px 8px 0;
 }
 .profile-description-container:hover .edit-description-btn { opacity: 1; }
-.edit-description-btn { position: absolute; top: 0; right: 0; background: none; border: none; color: var(--gray-text); cursor: pointer; font-size: 1rem; opacity: 0.5; transition: all 0.2s; }
+.edit-description-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--gray-text); cursor: pointer; font-size: 1rem; opacity: 0.5; transition: all 0.2s; }
 .edit-description-btn:hover { color: var(--primary-color); transform: scale(1.1); }
-.description-editor { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-.description-editor textarea { width: 100%; min-height: 80px; resize: vertical; }
-.description-editor .char-counter { font-size: 0.8rem; color: var(--gray-text); text-align: right; }
-.description-editor .editor-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.description-editor { background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+.description-editor textarea { 
+    width: 100%; 
+    min-height: 80px; 
+    resize: vertical;
+    background-color: var(--dark-bg);
+    color: var(--white-text);
+    border: 1px solid var(--gray-text);
+    border-radius: 5px;
+    padding: 10px;
+    font-family: var(--body-font);
+    font-size: 1rem;
+}
+.description-editor textarea:focus { border-color: var(--primary-color); box-shadow: 0 0 8px var(--primary-glow); outline: none; }
+.description-editor .char-counter { font-size: 0.8rem; color: var(--gray-text); text-align: right; margin-top: 5px; }
+.description-editor .editor-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
 /* Follow Limit Tracker */
 .follow-limit-tracker { max-width: 600px; margin: 0 auto 30px; padding: 15px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; }
@@ -176,7 +188,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 24px; margin-bottom: 32px; }
 .horizontal-music-grid { display: flex; overflow-x: auto; grid-template-columns: none; gap: 16px; padding-bottom: 20px; }
 .horizontal-music-grid .music-card { flex-shrink: 0; width: 160px; }
-.music-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; transition: all 0.2s ease-in-out; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+.music-card { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); padding: 16px; border-radius: 8px; transition: all 0.2s ease-in-out; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
 .music-card-content { cursor: pointer; }
 .music-card:hover { background: var(--card-hover-bg); transform: translateY(-5px); box-shadow: 0 8px 25px var(--primary-glow); border-color: var(--gray-text); }
 .music-card .music-img { width: 100%; padding-bottom: 100%; position: relative; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
@@ -186,6 +198,27 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .music-artist { font-size: 0.85rem; color: var(--gray-text); text-transform: capitalize; }
 .search-message, .loading-container { padding: 20px; text-align: center; color: var(--gray-text); grid-column: 1 / -1; }
 .loading-container .spinner { margin: 0 auto 15px; }
+
+/* RANKING BADGE */
+.ranking-badge {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: #121212;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--elegant-font);
+    font-weight: 700;
+    font-size: 1rem;
+    z-index: 2;
+    border: 2px solid var(--dark-bg);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+}
 
 /* USER CARD */
 .user-card { text-align: center; cursor: pointer; transition: transform 0.2s; }

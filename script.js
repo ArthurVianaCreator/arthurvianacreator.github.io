@@ -235,10 +235,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             if(targetSection) targetSection.classList.add('active'); 
             document.querySelectorAll('.main-nav .nav-item, .main-nav-mobile .nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id));
         },
-        renderMusicCard(item, index = 0) {
+        renderMusicCard(item, index = 0, ranking = null) {
             const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
             const sub = item.type === 'artist' ? (item.genres?.[0] || t('artists')) : (item.artists?.map(a => a.name).join(', ') || t('albums'));
-            return `<div class="music-card" style="animation-delay: ${index * 50}ms"><div class="music-card-content" data-type="${item.type}" data-id="${item.id}"><div class="music-img"><img src="${img}" alt="${item.name}"></div><div class="music-title">${item.name}</div><div class="music-artist">${sub}</div></div></div>`;
+            const rankingHTML = ranking ? `<div class="ranking-badge">${ranking}</div>` : '';
+            return `<div class="music-card" style="animation-delay: ${index * 50}ms">
+                        ${rankingHTML}
+                        <div class="music-card-content" data-type="${item.type}" data-id="${item.id}">
+                            <div class="music-img"><img src="${img}" alt="${item.name}"></div>
+                            <div class="music-title">${item.name}</div>
+                            <div class="music-artist">${sub}</div>
+                        </div>
+                    </div>`;
         },
         renderUserCard(user, index = 0) {
             let avatarHTML = user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
@@ -265,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.homeContainer.innerHTML = ui.manager.renderLoader(t('loading'));
         try {
             const popularData = await api.manager.getPopularArtists();
-            const gridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('') : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
+            const gridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('') : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
             ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${gridHTML}</div>`;
         } catch (e) {
             ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
