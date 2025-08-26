@@ -27,8 +27,39 @@ export default async function handler(req, res) {
   try {
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     
-    // --- INÍCIO DA LÓGICA CORRIGIDA E EFICIENTE ---
-    // Busca os 9 IDs de artistas com maior pontuação (rev: true para ordem decrescente)
+    const migrationFlag = await kv.get('popularity_migrated');
+
+    if (!migrationFlag) {
+        const userKeys = [];
+        for await (const key of kv.scanIterator({ match: 'user:*' })) {
+            userKeys.push(key);
+        }
+        
+        if (userKeys.length > 0) {
+            const allUsers = await kv.mget(...userKeys);
+            const artistFollowCounts = {};
+            allUsers.forEach(user => {
+                if (user && Array.isArray(user.following)) {
+                    user.following.forEach(artist => {
+                        if (artist && artist.id) {
+                            artistFollowCounts[artist.id] = (artistFollowCounts[artist.id] || 0) + 1;
+                        }
+                    });
+                }
+            });
+
+            if (Object.keys(artistFollowCounts).length > 0) {
+                const multi = kv.multi();
+                for (const artistId in artistFollowCounts) {
+                    multi.zadd('artist_popularity', { score: artistFollowCounts[artistId], member: artistId });
+                }
+                await multi.exec();
+            }
+        }
+        
+        await kv.set('popularity_migrated', 'true');
+    }
+
     const top9ArtistIds = await kv.zrange('artist_popularity', 0, 8, { rev: true });
 
     if (!top9ArtistIds || top9ArtistIds.length === 0) {
@@ -37,7 +68,6 @@ export default async function handler(req, res) {
 
     const popularArtistsData = await getSpotifySeveralArtists(top9ArtistIds, process.env);
     res.status(200).json(popularArtistsData);
-    // --- FIM DA LÓGICA CORRIGIDA E EFICIENTE ---
 
   } catch (error) {
     console.error('Popular Artists API Error:', error);

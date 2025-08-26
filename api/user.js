@@ -59,31 +59,26 @@ export default async function handler(req, res) {
       }
       
       if (Array.isArray(updatedData.following)) {
-        // --- INÍCIO DA LÓGICA CORRIGIDA ---
         const oldFollowingIds = new Set((user.following || []).map(a => a.id));
         const newFollowingIds = new Set(updatedData.following.map(a => a.id));
         
         const multi = kv.multi();
 
-        // Artistas que o usuário deixou de seguir: decrementar popularidade
         for (const artistId of oldFollowingIds) {
             if (!newFollowingIds.has(artistId)) {
                 multi.zincrby('artist_popularity', -1, artistId);
             }
         }
 
-        // Artistas que o usuário começou a seguir: incrementar popularidade
         for (const artistId of newFollowingIds) {
             if (!oldFollowingIds.has(artistId)) {
                 multi.zincrby('artist_popularity', 1, artistId);
             }
         }
         
-        // Apenas executa se houveram mudanças
         if (multi.commands.length > 0) {
             await multi.exec();
         }
-        // --- FIM DA LÓGICA CORRIGIDA ---
 
         user.following = updatedData.following;
         userWasUpdated = true;
