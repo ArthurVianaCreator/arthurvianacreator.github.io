@@ -12,9 +12,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     const getFollowLimit = (user) => {
-        if (!user || !Array.isArray(user.badges)) return 50;
-        if (user.badges.includes('admin')) return 1000;
-        if (user.badges.includes('supporter')) return 150;
+        // AVISO: O limite de seguir foi padronizado para 50 para todos os usuários.
         return 50;
     };
 
@@ -355,6 +353,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <h2>${u.name}</h2>
                     <div class="user-badges">${badgesHTML}</div>
                 </div>
+            </div>
+            <div class="profile-notice">
+                <i class="fas fa-info-circle"></i>
+                <span>Aviso: O limite para seguir artistas agora é 50 para todos os usuários, visando garantir a estabilidade da plataforma.</span>
             </div>
             <h2 class="section-title-main">Artists You Follow</h2>
             <div class="music-grid" id="followed-artists-grid"></div>`;

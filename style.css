@@ -103,6 +103,29 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .profile-info-main .user-badges .badge-icon { width: 24px; height: 24px; }
 .friend-status-container { margin-top: 15px; }
 
+/* Profile Notice */
+.profile-notice {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 0 auto 30px auto;
+    max-width: 800px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--light-gray-text);
+    font-size: 0.9rem;
+}
+
+.profile-notice i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
 /* REVISED TAB STYLE TO MATCH IMAGE */
 .profile-tabs {
     display: flex;
@@ -270,6 +293,7 @@ body.light-theme .tab-link.active {
 @media (max-width: 600px) {
     .profile-header-main, .details-header { padding: 10px 0; }
     .profile-avatar-large, .details-header .details-img { width: 150px; height: 150px; }
+    .profile-notice { flex-direction: column; text-align: center; }
 }
 @media (max-width: 500px) {
     .user-profile-area { gap: 8px; }

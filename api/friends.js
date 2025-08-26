@@ -30,27 +30,30 @@ export default async function handler(req, res) {
   }
 
   const { action, targetName } = req.body;
-  if (!action || !targetName) {
-    return res.status(400).json({ error: 'Action and targetName are required.' });
+  
+  // CORREÇÃO: Adicionada validação robusta para os dados de entrada.
+  if (!action || typeof action !== 'string' || !targetName || typeof targetName !== 'string') {
+    return res.status(400).json({ error: 'Action and targetName are required and must be strings.' });
   }
 
   const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
   const normalizedTargetName = targetName.toLowerCase();
-  const targetEmailKey = await kv.get(`name:${normalizedTargetName}`);
+  
+  // Busca o email associado ao nome de usuário normalizado.
+  const targetUserEmail = await kv.get(`name:${normalizedTargetName}`);
 
-  // O registro `name:` guarda o email, não o objeto de usuário
-  if (!targetEmailKey || typeof targetEmailKey !== 'string') {
+  if (!targetUserEmail || typeof targetUserEmail !== 'string') {
       return res.status(404).json({ error: 'Target user not found.' });
   }
   
-  const targetUserKey = `user:${targetEmailKey}`;
+  const targetUserKey = `user:${targetUserEmail}`;
   const targetUser = await kv.get(targetUserKey);
 
   if (!targetUser) {
     return res.status(404).json({ error: 'Target user data not found.' });
   }
   
-  // Assegura que todos os arrays necessários existam em ambos os usuários
+  // Assegura que todos os arrays necessários existam em ambos os usuários.
   const fields = ['friends', 'friendRequestsSent', 'friendRequestsReceived'];
   [currentUser, targetUser].forEach(user => {
     fields.forEach(field => {
@@ -63,7 +66,6 @@ export default async function handler(req, res) {
   try {
     switch (action) {
       case 'request':
-        // Adicionar lógica para não enviar solicitação para si mesmo ou se já são amigos
         if (currentUser.email === targetUser.email) return res.status(400).json({ error: 'You cannot send a friend request to yourself.' });
         if (currentUser.friends.includes(targetUser.name)) return res.status(400).json({ error: 'You are already friends.' });
         if (currentUser.friendRequestsSent.includes(targetUser.name)) return res.status(400).json({ error: 'Friend request already sent.' });
@@ -93,9 +95,11 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid action.' });
     }
 
+    // Salva as alterações em ambos os usuários no banco de dados.
     await kv.set(currentUser.key, currentUser);
     await kv.set(targetUserKey, targetUser);
     
+    // Retorna os dados atualizados do usuário atual, sem informações sensíveis.
     const { password, ip, ...safeUserData } = currentUser;
     res.status(200).json({ message: 'Action successful.', user: safeUserData });
 

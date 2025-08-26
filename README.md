@@ -46,11 +46,11 @@ Display of ads in the interface.
 
 Premium Plan
 
-Increased follow limit for artists to 150.
-
 "Lyrica Supporter" title and badge on the profile.
 
 Ad-free user experience.
+
+*Note: The artist follow limit is currently 50 for all users to ensure platform stability.*
 
 Badges
 Badges are visual identifiers that appear on the user's profile to highlight their status and engagement on the platform.
