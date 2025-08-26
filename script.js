@@ -728,58 +728,48 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.searchInput.addEventListener('input', e => {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
-            if (!query) { 
+            if (!query) {
                 if (document.getElementById('buscar').classList.contains('active')) {
-                   renderHomePage();
+                    renderHomePage();
                 }
-                return; 
+                return;
             }
             ui.manager.switchContent('buscar');
             ui.manager.dom.searchResultsContainer.innerHTML = ui.manager.renderLoader('Searching...');
             searchTimeout = setTimeout(async () => {
                 try {
-                     const [spotifyResults, userResults] = await Promise.all([
+                    const [spotifyResults, userResults] = await Promise.all([
                         api.manager.searchSpotify(query, 'artist,album', 10),
                         api.manager.searchUsers(query)
                     ]);
-                    
-                    let usersHTML = '', artistsHTML = '', albumsHTML = '';
-
-                    if (userResults.length > 0) {
-                        usersHTML = `<div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
+        
+                    let html = '';
+        
+                    // Section for Users
+                    if (userResults && userResults.length > 0) {
+                        html += `<h2 class="section-title-main">Users</h2><div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
                     }
-                    if (spotifyResults.artists?.items.length) {
-                        artistsHTML = `<h3 class="section-title-main">Artists</h3><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+        
+                    // Section for Artists
+                    if (spotifyResults.artists?.items.length > 0) {
+                        html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
                     }
-                    if (spotifyResults.albums?.items.length) {
-                        albumsHTML = `<h3 class="section-title-main">Albums</h3><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+        
+                    // Section for Albums
+                    if (spotifyResults.albums?.items.length > 0) {
+                        html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
                     }
-
-                    const hasMusicResults = artistsHTML || albumsHTML;
-                    const hasUserResults = usersHTML;
-
-                    if (!hasMusicResults && !hasUserResults) {
+        
+                    // If no results at all
+                    if (!html) {
                         ui.manager.dom.searchResultsContainer.innerHTML = '<p class="search-message">No results found for your search.</p>';
-                        return;
+                    } else {
+                        ui.manager.dom.searchResultsContainer.innerHTML = html;
                     }
-
-                    // Nova estrutura com abas
-                    ui.manager.dom.searchResultsContainer.innerHTML = `
-                        <div class="profile-tabs search-tabs">
-                            <button class="tab-link active" data-tab="search-all">All</button>
-                            ${hasMusicResults ? `<button class="tab-link" data-tab="search-music">Music</button>` : ''}
-                            ${hasUserResults ? `<button class="tab-link" data-tab="search-users">Users</button>` : ''}
-                        </div>
-                        <div id="search-all" class="tab-content active">
-                            ${hasUserResults ? `<h3 class="section-title-main">Users</h3>${usersHTML}` : ''}
-                            ${hasMusicResults ? artistsHTML + albumsHTML : ''}
-                        </div>
-                        ${hasMusicResults ? `<div id="search-music" class="tab-content">${artistsHTML}${albumsHTML}</div>` : ''}
-                        ${hasUserResults ? `<div id="search-users" class="tab-content">${usersHTML}</div>` : ''}
-                    `;
-                } catch (error) { 
+        
+                } catch (error) {
                     console.error("Search Error:", error);
-                    ui.manager.dom.searchResultsContainer.innerHTML = `<p class="search-message">Search failed. Please try again.</p>`; 
+                    ui.manager.dom.searchResultsContainer.innerHTML = `<p class="search-message">Search failed. Please try again.</p>`;
                 }
             }, 500);
         });
