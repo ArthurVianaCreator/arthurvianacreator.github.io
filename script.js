@@ -455,17 +455,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     function setupEventListeners() {
-        document.body.addEventListener('mouseover', e => {
+        document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
             if (badgeIcon) {
                 const tooltip = ui.manager.dom.badgeTooltip;
                 const badgeKey = badgeIcon.dataset.badgeKey;
                 const badgeInfo = badgeMap[badgeKey];
                 if (!badgeInfo) return;
+
+                // Toggle logic: If the same badge is clicked again, hide it.
+                if (tooltip.classList.contains('active') && tooltip.dataset.currentBadge === badgeKey) {
+                    tooltip.classList.remove('active');
+                    return;
+                }
+
                 const badgeRect = badgeIcon.getBoundingClientRect();
                 document.getElementById('badgeTooltipTitle').textContent = badgeInfo.title;
                 document.getElementById('badgeTooltipDesc').textContent = badgeInfo.description;
                 tooltip.classList.add('active');
+                tooltip.dataset.currentBadge = badgeKey; // Remember which badge is active
                 
                 const tooltipRect = tooltip.getBoundingClientRect();
                 let left = badgeRect.left + (badgeRect.width / 2) - (tooltipRect.width / 2);
@@ -477,13 +485,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 tooltip.style.left = `${left}px`;
                 tooltip.style.top = `${top}px`;
+            } else {
+                // If the click is not on a badge, hide the tooltip
+                ui.manager.dom.badgeTooltip.classList.remove('active');
+                delete ui.manager.dom.badgeTooltip.dataset.currentBadge;
             }
-        });
-        document.body.addEventListener('mouseout', e => { 
-            if (e.target.closest('.badge-icon')) ui.manager.dom.badgeTooltip.classList.remove('active'); 
-        });
 
-        document.body.addEventListener('click', async e => {
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (!e.target.closest('.user-dropdown')) ui.manager.dom.userDropdown.classList.remove('active');
 
