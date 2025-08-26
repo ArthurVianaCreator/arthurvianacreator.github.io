@@ -15,22 +15,17 @@ export default async function handler(req, res) {
   try {
     const { name, email, password } = req.body;
     
-    // Required field validations
+    // Validações...
     if (!name || !email || !password) { 
       return res.status(400).json({ error: 'All fields are required' }); 
     }
-    
-    // --- NEW EMAIL VALIDATION ON SERVER ---
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         return res.status(400).json({ error: 'Invalid email format' });
     }
-    
-    // Other validations
     if (name.trim().length <= 4) { 
       return res.status(400).json({ error: 'Name must be more than 4 characters long' }); 
     }
-    // Updated name validation to match client-side rules
     if (!/^[a-zA-Z0-9_-]+$/.test(name)) { 
       return res.status(400).json({ error: 'Name can only contain letters, numbers, hyphens, and underscores.' }); 
     }
@@ -51,13 +46,14 @@ export default async function handler(req, res) {
     if (nameTaken) { return res.status(409).json({ error: 'Name already taken' }); }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Captura o endereço de IP do usuário
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
 
     const user = { 
       name: name.trim(), 
       email: normalizedEmail, 
       password: hashedPassword,
-      ip: ip,
+      ip: ip, // Salva o IP no objeto do usuário
       following: [], 
       badges: ["veteran"]
     };
