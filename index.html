@@ -19,9 +19,9 @@
         <div class="sidebar">
             <div class="logo"><h1>Lyrica</h1></div>
             <nav class="main-nav">
-                <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span>Home</span></div>
-                <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span>Friends</span></div>
-                <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span>Profile</span></div>
+                <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span data-translate-key="home">Home</span></div>
+                <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span data-translate-key="friends">Friends</span></div>
+                <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
         </div>
 
@@ -30,29 +30,29 @@
                 <div class="mobile-header">
                     <div class="logo"><h1>L</h1></div>
                      <nav class="main-nav-mobile">
-                        <div class="nav-item active" data-target="inicio">Home</div>
-                        <div class="nav-item" data-target="social">Friends</div>
-                        <div class="nav-item" data-target="profile" id="profileNavItemMobile">Profile</div>
+                        <div class="nav-item active" data-target="inicio" data-translate-key="home">Home</div>
+                        <div class="nav-item" data-target="social" data-translate-key="friends">Friends</div>
+                        <div class="nav-item" data-target="profile" id="profileNavItemMobile" data-translate-key="profile">Profile</div>
                     </nav>
                 </div>
                 <div class="search-bar">
-                    <i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search for artists, albums, or users...">
+                    <i class="fas fa-search"></i><input type="text" id="searchInput" data-translate-placeholder-key="searchInputPlaceholder" placeholder="Search for artists, albums, or users...">
                 </div>
                 <div class="user-profile-area">
                     <button class="control-btn" id="themeToggleBtn">
                         <i class="fas fa-sun"></i>
                         <i class="fas fa-moon"></i>
                     </button>
-                    <button class="btn-login" id="loginPromptBtn">Login</button>
+                    <button class="btn-login" id="loginPromptBtn" data-translate-key="login">Login</button>
                     <div class="user-profile" id="userProfile" style="display: none;">
                         <div class="user-avatar" id="userAvatar"></div>
                         <div id="userInfo" class="user-info"></div>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="user-dropdown" id="userDropdown">
-                        <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span>Change Name</span></div>
-                        <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span>Change Picture</span></div>
-                        <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span>Log Out</span></div>
+                        <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span data-translate-key="changeName">Change Name</span></div>
+                        <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span data-translate-key="changePicture">Change Picture</span></div>
+                        <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span data-translate-key="logout">Log Out</span></div>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                         <!-- Home Page content will be injected here -->
                     </div>
                 </div>
-                <div id="buscar" class="content-section"><h2 class="section-title-main">Search Results</h2><div id="searchResultsContainer"></div></div>
+                <div id="buscar" class="content-section"><h2 class="section-title-main" data-translate-key="searchResults">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
                 <div id="social" class="content-section">
                     <!-- Social/Friends content will be injected here -->
@@ -75,28 +75,28 @@
         </div>
     </div>
     
-    <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn">Login</button></div><p class="modal-switch">Don't have an account? <a href="#" id="switchToRegister">Sign Up</a></p></div></div>
-    <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2>Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" placeholder="Your Name"><input type="email" id="registerEmail" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn">Create Account</button></div><p class="modal-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p></div></div>
+    <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2 data-translate-key="login">Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" data-translate-placeholder-key="email" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" data-translate-placeholder-key="password" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn" data-translate-key="login">Login</button></div><p class="modal-switch"><span data-translate-key="dontHaveAccount">Don't have an account?</span> <a href="#" id="switchToRegister" data-translate-key="signUp">Sign Up</a></p></div></div>
+    <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2 data-translate-key="signUp">Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" data-translate-placeholder-key="yourName" placeholder="Your Name"><input type="email" id="registerEmail" data-translate-placeholder-key="email" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" data-translate-placeholder-key="password" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn" data-translate-key="createAccount">Create Account</button></div><p class="modal-switch"><span data-translate-key="alreadyHaveAccount">Already have an account?</span> <a href="#" id="switchToLogin" data-translate-key="login">Login</a></p></div></div>
     
-    <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2>Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" placeholder="New name"><div class="modal-actions"><button class="btn-secondary close-modal-btn">Cancel</button><button class="btn-primary" id="saveNameBtn">Save</button></div></div></div>
+    <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><h2 data-translate-key="changeYourName">Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" data-translate-placeholder-key="newName" placeholder="New name"><div class="modal-actions"><button class="btn-secondary close-modal-btn" data-translate-key="cancel">Cancel</button><button class="btn-primary" id="saveNameBtn" data-translate-key="save">Save</button></div></div></div>
     
     <div id="avatarChangeModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal-btn">&times;</button>
-            <h2>Change Profile Picture</h2>
+            <h2 data-translate-key="changeProfilePicture">Change Profile Picture</h2>
             <p class="modal-error"></p>
             <div class="avatar-preview-container">
                 <img id="avatarPreviewImage" src="" alt="Avatar Preview">
             </div>
             <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
             <div class="modal-actions-grid">
-                <button class="btn-secondary" id="uploadAvatarBtn"><i class="fas fa-upload"></i> Upload Image</button>
-                <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> Remove</button>
+                <button class="btn-secondary" id="uploadAvatarBtn"><i class="fas fa-upload"></i> <span data-translate-key="uploadImage">Upload Image</span></button>
+                <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> <span data-translate-key="remove">Remove</span></button>
             </div>
             <div class="modal-actions">
-                 <button class="btn-primary" id="saveAvatarBtn">Save & Close</button>
+                 <button class="btn-primary" id="saveAvatarBtn" data-translate-key="saveAndClose">Save & Close</button>
             </div>
-            <p class="modal-info">Use the mouse wheel to zoom.</p>
+            <p class="modal-info" data-translate-key="zoomInfo">Use the mouse wheel to zoom.</p>
         </div>
     </div>
     
