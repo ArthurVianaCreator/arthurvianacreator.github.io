@@ -729,7 +729,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim();
             if (!query) { 
-                renderHomePage();
+                if (document.getElementById('buscar').classList.contains('active')) {
+                   renderHomePage();
+                }
                 return; 
             }
             ui.manager.switchContent('buscar');
@@ -737,21 +739,46 @@ document.addEventListener('DOMContentLoaded', async function() {
             searchTimeout = setTimeout(async () => {
                 try {
                      const [spotifyResults, userResults] = await Promise.all([
-                        api.manager.searchSpotify(query, 'artist,album', 6),
+                        api.manager.searchSpotify(query, 'artist,album', 10),
                         api.manager.searchUsers(query)
                     ]);
-                    let html = '';
+                    
+                    let usersHTML = '', artistsHTML = '', albumsHTML = '';
+
                     if (userResults.length > 0) {
-                        html += `<h2 class="section-title-main">Users</h2><div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
+                        usersHTML = `<div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
                     }
                     if (spotifyResults.artists?.items.length) {
-                        html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                        artistsHTML = `<h3 class="section-title-main">Artists</h3><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
                     }
                     if (spotifyResults.albums?.items.length) {
-                        html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                        albumsHTML = `<h3 class="section-title-main">Albums</h3><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
                     }
-                    ui.manager.dom.searchResultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
+
+                    const hasMusicResults = artistsHTML || albumsHTML;
+                    const hasUserResults = usersHTML;
+
+                    if (!hasMusicResults && !hasUserResults) {
+                        ui.manager.dom.searchResultsContainer.innerHTML = '<p class="search-message">No results found for your search.</p>';
+                        return;
+                    }
+
+                    // Nova estrutura com abas
+                    ui.manager.dom.searchResultsContainer.innerHTML = `
+                        <div class="profile-tabs search-tabs">
+                            <button class="tab-link active" data-tab="search-all">All</button>
+                            ${hasMusicResults ? `<button class="tab-link" data-tab="search-music">Music</button>` : ''}
+                            ${hasUserResults ? `<button class="tab-link" data-tab="search-users">Users</button>` : ''}
+                        </div>
+                        <div id="search-all" class="tab-content active">
+                            ${hasUserResults ? `<h3 class="section-title-main">Users</h3>${usersHTML}` : ''}
+                            ${hasMusicResults ? artistsHTML + albumsHTML : ''}
+                        </div>
+                        ${hasMusicResults ? `<div id="search-music" class="tab-content">${artistsHTML}${albumsHTML}</div>` : ''}
+                        ${hasUserResults ? `<div id="search-users" class="tab-content">${usersHTML}</div>` : ''}
+                    `;
                 } catch (error) { 
+                    console.error("Search Error:", error);
                     ui.manager.dom.searchResultsContainer.innerHTML = `<p class="search-message">Search failed. Please try again.</p>`; 
                 }
             }, 500);

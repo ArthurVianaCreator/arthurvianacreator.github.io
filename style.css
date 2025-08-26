@@ -282,3 +282,40 @@ body.light-theme .tab-link.active {
 ::-webkit-scrollbar-track { background: var(--dark-bg); }
 ::-webkit-scrollbar-thumb { background-color: var(--card-hover-bg); border-radius: 10px; border: 3px solid var(--dark-bg); }
 ::-webkit-scrollbar-thumb:hover { background-color: var(--primary-color); }
+
+/* SEARCH TABS STYLING */
+.search-tabs {
+    justify-content: flex-start; /* Alinha as abas à esquerda */
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 24px;
+    gap: 20px;
+}
+
+.search-tabs .tab-link {
+    background: none;
+    border: none;
+    color: var(--gray-text);
+    padding: 10px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+}
+
+body:not(.light-theme) .search-tabs .tab-link {
+    background: none;
+    border-color: transparent;
+    color: var(--gray-text);
+}
+
+.search-tabs .tab-link.active {
+    color: var(--white-text);
+    border-bottom-color: var(--primary-color);
+}
+
+body:not(.light-theme) .search-tabs .tab-link.active,
+body.light-theme .search-tabs .tab-link.active {
+    background: none;
+    color: var(--white-text);
+    border-bottom-color: var(--primary-color);
+}
