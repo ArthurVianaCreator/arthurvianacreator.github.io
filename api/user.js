@@ -49,7 +49,8 @@ export default async function handler(req, res) {
           if (normalizedOldName) {
             multi.del(`name:${normalizedOldName}`);
           }
-          multi.set(`name:${normalizedNewName}`, 1);
+          // CORREÇÃO: Salva o email do usuário, não o número 1.
+          multi.set(`name:${normalizedNewName}`, user.email);
           user.name = newName;
           await multi.exec();
         } else {
@@ -68,7 +69,6 @@ export default async function handler(req, res) {
         userWasUpdated = true;
       }
       
-      // Handle avatar update (accepts base64 string or null for removal)
       if (typeof updatedData.avatar !== 'undefined') {
         user.avatar = updatedData.avatar;
         userWasUpdated = true;

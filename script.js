@@ -59,7 +59,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
         fetchUser: () => api.manager._request('user', 'GET'),
         updateUser: (d) => api.manager._request('user', 'PUT', d),
-        searchSpotify: (q, t) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=12`),
+        manageFriend: (targetName, action) => api.manager._request('friends', 'POST', { targetName, action }),
+        fetchPublicProfile: (name) => api.manager._request(`user-profile?name=${encodeURIComponent(name)}`),
+        getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
+        searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
@@ -190,10 +193,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </div>
                     </div>`;
         },
-        populateGrid(container, items, emptyMessage = 'Nothing to show here.') { 
+        renderUserCard(user, index = 0) {
+            let avatarHTML = user.avatar 
+                ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` 
+                : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
+            return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}">
+                        <div class="user-card-avatar">${avatarHTML}</div>
+                        <div class="user-card-name">${user.name}</div>
+                    </div>`;
+        },
+        populateGrid(container, items, renderFunc, emptyMessage = 'Nothing to show here.') { 
             if(!container) return;
             container.innerHTML = items && items.length > 0 
-                ? items.map((item, index) => this.renderMusicCard(item, index)).join('') 
+                ? items.map((item, index) => renderFunc(item, index)).join('') 
                 : `<p class="search-message">${emptyMessage}</p>`; 
         },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
@@ -233,10 +245,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
         try {
-            const [artist, albumsData] = await Promise.all([
+            const [artist, albumsData, bioData] = await Promise.all([
                 api.manager.getSpotifyArtist(artistId),
-                api.manager.getSpotifyArtistAlbums(artistId)
+                api.manager.getSpotifyArtistAlbums(artistId),
+                api.manager.getArtistBio(artistId) // Placeholder, artist name would be better
             ]);
+            
             const isFollowing = state.currentUser ? auth.manager.isFollowing(artistId) : false;
             const followBtnHTML = state.currentUser 
                 ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? 'Following' : 'Follow'}</span></button>` 
@@ -245,6 +259,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             const discographyHTML = albumsData?.items?.length > 0
                 ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map((album, index) => ui.manager.renderMusicCard({ ...album, type: 'album' }, index)).join('')}</div>`
                 : '<p class="search-message">No albums found for this artist.</p>';
+            
+            let metaInfo = artist.genres.join(', ');
+            if (bioData.origin) {
+                metaInfo += ` &bull; ${bioData.origin}`;
+            }
 
             ui.manager.dom.detailsView.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
@@ -252,9 +271,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="details-img band-img"><img src="${artist.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${artist.name}"></div>
                     <div class="details-info">
                         <h2>${artist.name}</h2>
-                        <p class="meta-info">${artist.genres.join(', ')}</p>
+                        <p class="meta-info">${metaInfo}</p>
                         ${followBtnHTML}
                     </div>
+                </div>
+                <div class="artist-bio-container">
+                    <h3 class="section-title-main">Biography</h3>
+                    <p class="artist-bio">${bioData.bio}</p>
                 </div>
                 <h3 class="section-title-main">Discography</h3>
                 ${discographyHTML}`;
@@ -315,7 +338,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const u = state.currentUser;
         let avatarHTML = u.avatar 
             ? `<img src="${u.avatar}" alt="User Avatar" class="profile-picture">` 
-            : `<div class="profile-avatar-large-placeholder">${u.name.charAt(0).toUpperCase()}</div>`;
+            : `<div class="profile-avatar-large-placeholder" style="background-color:${ui.manager.getAvatarColor(u.name)}">${u.name.charAt(0).toUpperCase()}</div>`;
         
         let badgesHTML = '';
         if (u.badges && u.badges.length > 0) {
@@ -323,23 +346,97 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${badgeMap[badgeKey].title}" class="badge-icon" data-badge-key="${badgeKey}">`;
             });
         }
+
+        let friendRequestsHTML = '';
+        if (u.friendRequestsReceived && u.friendRequestsReceived.length > 0) {
+            friendRequestsHTML = `<h3 class="section-title-main">Friend Requests</h3><div class="friend-requests-list">` +
+            u.friendRequestsReceived.map(name => `
+                <div class="friend-request-item">
+                    <span><strong class="user-link" data-username="${name}">${name}</strong> wants to be your friend.</span>
+                    <div class="friend-request-actions">
+                        <button class="btn-friend-action accept" data-action="accept" data-target-name="${name}"><i class="fas fa-check"></i> Accept</button>
+                        <button class="btn-friend-action reject" data-action="reject" data-target-name="${name}"><i class="fas fa-times"></i> Decline</button>
+                    </div>
+                </div>
+            `).join('') + `</div>`;
+        }
+
         ui.manager.dom.profileContainer.innerHTML = `
             <div class="profile-header-main">
                 <div class="profile-avatar-large">${avatarHTML}</div>
                 <div class="profile-info-main">
                     <h2>${u.name}</h2>
                     <div class="user-badges">${badgesHTML}</div>
-                    <p class="following-stats">Following <strong>${u.following?.length || 0}</strong> out of <strong>${getFollowLimit(u)}</strong> artists.</p>
                 </div>
             </div>
-            <h2 class="section-title-main">Artists You Follow</h2>
-            <div class="music-grid" id="followed-artists-grid"></div>`;
+            ${friendRequestsHTML}
+            <div class="profile-tabs">
+                <button class="tab-link active" data-tab="artists">Following (${u.following?.length || 0})</button>
+                <button class="tab-link" data-tab="friends">Friends (${u.friends?.length || 0})</button>
+            </div>
+            <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
+            <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
         
-        ui.manager.populateGrid(
-            document.getElementById('followed-artists-grid'), 
-            u.following?.map(a => ({...a, type: 'artist'})),
-            "You haven't followed any artists yet. Use the search to find and follow your favorites!"
-        );
+        ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), "You haven't followed any artists yet. Use the search to find and follow your favorites!");
+        ui.manager.populateGrid(document.querySelector('#friends .user-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), "You haven't added any friends yet. Use the search to find other users!");
+    }
+
+    async function renderPublicProfileView(userName) {
+        if (state.currentUser && userName === state.currentUser.name) {
+            return renderProfilePage();
+        }
+        ui.manager.switchContent('profile');
+        ui.manager.dom.profileContainer.innerHTML = ui.manager.renderLoader(`Loading ${userName}'s profile...`);
+        try {
+            const u = await api.manager.fetchPublicProfile(userName);
+            let avatarHTML = u.avatar ? `<img src="${u.avatar}" alt="User Avatar" class="profile-picture">` : `<div class="profile-avatar-large-placeholder" style="background-color:${ui.manager.getAvatarColor(u.name)}">${u.name.charAt(0).toUpperCase()}</div>`;
+            
+            let badgesHTML = '';
+            if (u.badges && u.badges.length > 0) {
+                [...new Set(u.badges)].forEach(badgeKey => {
+                    if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${badgeMap[badgeKey].title}" class="badge-icon" data-badge-key="${badgeKey}">`;
+                });
+            }
+
+            let friendStatusHTML = '';
+            if (state.currentUser) {
+                if (state.currentUser.friends?.includes(u.name)) {
+                    friendStatusHTML = `<button class="btn-friend-action remove" data-action="remove" data-target-name="${u.name}"><i class="fas fa-user-minus"></i> Remove Friend</button>`;
+                } else if (state.currentUser.friendRequestsSent?.includes(u.name)) {
+                    friendStatusHTML = `<button class="btn-friend-action" disabled><i class="fas fa-paper-plane"></i> Request Sent</button>`;
+                } else if (state.currentUser.friendRequestsReceived?.includes(u.name)) {
+                    friendStatusHTML = `<div class="friend-request-actions public-profile">
+                        <span>Sent you a request</span>
+                        <button class="btn-friend-action accept" data-action="accept" data-target-name="${u.name}"><i class="fas fa-check"></i></button>
+                        <button class="btn-friend-action reject" data-action="reject" data-target-name="${u.name}"><i class="fas fa-times"></i></button>
+                    </div>`;
+                } else {
+                    friendStatusHTML = `<button class="btn-friend-action" data-action="request" data-target-name="${u.name}"><i class="fas fa-user-plus"></i> Add Friend</button>`;
+                }
+            }
+
+            ui.manager.dom.profileContainer.innerHTML = `
+                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                <div class="profile-header-main">
+                    <div class="profile-avatar-large">${avatarHTML}</div>
+                    <div class="profile-info-main">
+                        <h2>${u.name}</h2>
+                        <div class="user-badges">${badgesHTML}</div>
+                        <div class="friend-status-container">${friendStatusHTML}</div>
+                    </div>
+                </div>
+                <div class="profile-tabs">
+                    <button class="tab-link active" data-tab="artists">Following (${u.following?.length || 0})</button>
+                    <button class="tab-link" data-tab="friends">Friends (${u.friends?.length || 0})</button>
+                </div>
+                <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
+                <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
+
+            ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), `${u.name} isn't following any artists.`);
+            ui.manager.populateGrid(document.querySelector('#friends .user-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), `${u.name} has no friends yet.`);
+        } catch(e) {
+            ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">Could not load profile. ${e.message}</p>`;
+        }
     }
     
     async function handleLoginSubmit(e) {
@@ -454,6 +551,31 @@ document.addEventListener('DOMContentLoaded', async function() {
         reader.readAsDataURL(file);
     }
     
+    async function handleFriendAction(e) {
+        const btn = e.target.closest('.btn-friend-action');
+        if (!btn || btn.disabled) return;
+        
+        const { action, targetName } = btn.dataset;
+        btn.disabled = true;
+        
+        try {
+            const { user } = await api.manager.manageFriend(targetName, action);
+            state.currentUser = user;
+            
+            // Check if we are viewing the target's public profile and refresh it
+            const profileHeader = document.querySelector('.profile-info-main h2');
+            if (profileHeader && profileHeader.textContent === targetName) {
+                renderPublicProfileView(targetName);
+            } else {
+                // Otherwise, we are on our own profile, so refresh that
+                renderProfilePage();
+            }
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            btn.disabled = false; // Re-enable on error
+        }
+    }
+    
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
@@ -463,7 +585,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const badgeInfo = badgeMap[badgeKey];
                 if (!badgeInfo) return;
 
-                // Toggle logic: If the same badge is clicked again, hide it.
                 if (tooltip.classList.contains('active') && tooltip.dataset.currentBadge === badgeKey) {
                     tooltip.classList.remove('active');
                     return;
@@ -473,7 +594,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 document.getElementById('badgeTooltipTitle').textContent = badgeInfo.title;
                 document.getElementById('badgeTooltipDesc').textContent = badgeInfo.description;
                 tooltip.classList.add('active');
-                tooltip.dataset.currentBadge = badgeKey; // Remember which badge is active
+                tooltip.dataset.currentBadge = badgeKey; 
                 
                 const tooltipRect = tooltip.getBoundingClientRect();
                 let left = badgeRect.left + (badgeRect.width / 2) - (tooltipRect.width / 2);
@@ -485,15 +606,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 tooltip.style.left = `${left}px`;
                 tooltip.style.top = `${top}px`;
-            } else {
-                // If the click is not on a badge, hide the tooltip
+            } else if (!e.target.closest('.badge-tooltip')) {
                 ui.manager.dom.badgeTooltip.classList.remove('active');
                 delete ui.manager.dom.badgeTooltip.dataset.currentBadge;
             }
 
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (!e.target.closest('.user-dropdown')) ui.manager.dom.userDropdown.classList.remove('active');
-
+            
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) {
                 const { type, id } = cardContent.dataset;
@@ -502,6 +622,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             const artistLink = e.target.closest('.artist-link');
             if(artistLink) return renderArtistView(artistLink.dataset.id);
+            
+            const userCard = e.target.closest('.user-card[data-username]');
+            if (userCard) return renderPublicProfileView(userCard.dataset.username);
+            
+            const userLink = e.target.closest('.user-link[data-username]');
+            if (userLink) return renderPublicProfileView(userLink.dataset.username);
 
             const followBtn = e.target.closest('.follow-btn:not(:disabled)');
             if (followBtn) { 
@@ -512,6 +638,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                     followBtn.querySelector('span').textContent = isFollowing ? 'Following' : 'Follow';
                     followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
                 } catch (error) { alert(error.message); }
+            }
+
+            handleFriendAction(e);
+
+            const tabLink = e.target.closest('.tab-link');
+            if(tabLink) {
+                document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tabLink.classList.add('active');
+                document.getElementById(tabLink.dataset.tab).classList.add('active');
             }
             
             if (e.target.closest('.back-btn')) {
@@ -563,7 +699,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (target === 'profile') {
                 renderProfilePage();
             } else {
-                ui.manager.switchContent(target);
+                renderHomePage(); // Default to home for other nav items for now
             }
         }));
 
@@ -585,13 +721,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.searchResultsContainer.innerHTML = ui.manager.renderLoader('Searching...');
             searchTimeout = setTimeout(async () => {
                 try {
-                    const results = await api.manager.searchSpotify(query, 'artist,album');
+                     const [spotifyResults, userResults] = await Promise.all([
+                        api.manager.searchSpotify(query, 'artist,album', 6),
+                        api.manager.fetchPublicProfile(query).then(res => [res]).catch(() => [])
+                    ]);
+
                     let html = '';
-                    if (results.artists?.items.length) html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${results.artists.items.map(ui.manager.renderMusicCard).join('')}</div>`;
-                    if (results.albums?.items.length) html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${results.albums.items.map(ui.manager.renderMusicCard).join('')}</div>`;
+                    if (userResults.length > 0 && userResults[0].name) {
+                        html += `<h2 class="section-title-main">Users</h2><div class="user-grid">${userResults.map(u => ui.manager.renderUserCard(u)).join('')}</div>`;
+                    }
+                    if (spotifyResults.artists?.items.length) {
+                        html += `<h2 class="section-title-main">Artists</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                    }
+                    if (spotifyResults.albums?.items.length) {
+                        html += `<h2 class="section-title-main">Albums</h2><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                    }
                     ui.manager.dom.searchResultsContainer.innerHTML = html || '<p class="search-message">No results found.</p>';
                 } catch (error) { 
-                    ui.manager.dom.searchResultsContainer.innerHTML = `<p class="search-message">Search failed. ${error.message}</p>`; 
+                    ui.manager.dom.searchResultsContainer.innerHTML = `<p class="search-message">Search failed. Please try again.</p>`; 
                 }
             }, 500);
         });

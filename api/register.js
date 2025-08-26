@@ -15,7 +15,6 @@ export default async function handler(req, res) {
   try {
     const { name, email, password } = req.body;
     
-    // Validações...
     if (!name || !email || !password) { 
       return res.status(400).json({ error: 'All fields are required' }); 
     }
@@ -46,20 +45,23 @@ export default async function handler(req, res) {
     if (nameTaken) { return res.status(409).json({ error: 'Name already taken' }); }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Captura o endereço de IP do usuário
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || null;
 
     const user = { 
       name: name.trim(), 
       email: normalizedEmail, 
       password: hashedPassword,
-      ip: ip, // Salva o IP no objeto do usuário
+      ip: ip,
       following: [], 
-      badges: ["veteran"]
+      badges: ["veteran"],
+      friends: [],
+      friendRequestsSent: [],
+      friendRequestsReceived: [],
     };
     
     await kv.set(`user:${normalizedEmail}`, user);
-    await kv.set(`name:${normalizedName}`, 1);
+    // Armazena o email associado ao nome para busca posterior
+    await kv.set(`name:${normalizedName}`, normalizedEmail);
 
     const token = jwt.sign({ email: normalizedEmail }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token });
