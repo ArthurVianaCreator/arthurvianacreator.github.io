@@ -74,6 +74,11 @@ export default async function handler(req, res) {
         userWasUpdated = true;
       }
 
+      if (typeof updatedData.description === 'string') {
+        user.description = updatedData.description.trim();
+        userWasUpdated = true;
+      }
+
       if (userWasUpdated) {
           await kv.set(`user:${user.email}`, user);
       }

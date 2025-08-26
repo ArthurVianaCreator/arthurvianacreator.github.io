@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeCollectorTitle: 'Colecionador', badgeCollectorDesc: 'Para usuários com uma grande coleção de artistas seguidos.',
             badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Reconhece usuários que mergulham fundo nas discografias dos artistas.',
             noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
-            descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Limite para Seguir Artistas',
+            descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Artistas seguidos',
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
