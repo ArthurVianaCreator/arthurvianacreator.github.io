@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const state = { currentUser: null, spotifyAppToken: null, cropper: null, lastView: 'inicio' };
+    const state = { currentUser: null, spotifyAppToken: null, cropper: null, lastView: 'inicio', artistContextId: null };
     const api = {}, auth = {}, ui = {};
 
     const badgeMap = {
@@ -160,7 +160,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             return avatarColors[Math.abs(hash % avatarColors.length)];
         },
         switchContent(id) { 
-            state.lastView = document.querySelector('.content-section.active')?.id || 'inicio';
+            const currentActiveId = document.querySelector('.content-section.active')?.id;
+            if (id !== currentActiveId) {
+                state.lastView = currentActiveId || 'inicio';
+            }
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
             const targetSection = document.getElementById(id);
             if(targetSection) targetSection.classList.add('active'); 
@@ -221,6 +224,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function renderArtistView(artistId) {
+        state.artistContextId = null; // Clear context when landing on an artist page.
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Artist...');
         try {
@@ -259,6 +263,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader('Loading Album...');
         try {
             const album = await api.manager.getSpotifyAlbum(albumId);
+            if (album.artists && album.artists[0]) {
+                state.artistContextId = album.artists[0].id; // Set context from album's artist
+            }
             const tracksHTML = album.tracks.items.map((track, index) => 
                 `<li>
                     <span class="track-number">${index + 1}.</span>
@@ -304,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const savedAvatar = localStorage.getItem(`userAvatar_${u.email}`);
         let avatarHTML = (savedAvatar && savedAvatar !== "null") 
             ? `<img src="${savedAvatar}" alt="User Avatar" class="profile-picture">` 
-            : `<div class="profile-avatar-large-placeholder" style="background-color: ${ui.manager.getAvatarColor(u.name)}">${u.name.charAt(0).toUpperCase()}</div>`;
+            : `<div class="profile-avatar-large-placeholder">${u.name.charAt(0).toUpperCase()}</div>`;
         
         let badgesHTML = '';
         if (u.badges && u.badges.length > 0) {
@@ -465,7 +472,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 } catch (error) { alert(error.message); }
             }
             
-            if (e.target.closest('.back-btn')) return ui.manager.switchContent(state.lastView);
+            if (e.target.closest('.back-btn')) {
+                if (document.getElementById('details-view').classList.contains('active') && state.artistContextId) {
+                    const artistIdToReturnTo = state.artistContextId;
+                    state.artistContextId = null;
+                    return renderArtistView(artistIdToReturnTo);
+                }
+                return ui.manager.switchContent(state.lastView);
+            }
+
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
             if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
             if (e.target.closest('.close-modal-btn') || e.target.matches('.modal-overlay')) ui.manager.closeAllModals();
