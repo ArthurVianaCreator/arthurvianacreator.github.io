@@ -38,6 +38,7 @@ export default async function handler(req, res) {
       badges: user.badges || [],
       following: user.following || [],
       friends: user.friends || [],
+      description: user.description || null,
     };
 
     res.status(200).json(publicData);

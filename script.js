@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             passwordLengthError: 'Password must be more than 4 characters long.', errorFollowing: 'Please log in to follow artists.',
             errorFollowLimit: "You've reached your follow limit of {0} artists.", errorFileInvalid: 'Please select a valid image file.',
             errorFileTooLarge: 'File is too large (max 2MB).', searchFailed: 'Search failed. Please try again.', noResultsFound: 'No results found for your search.',
-            users: 'Users', artists: 'Artists', albums: 'Albums',
+            users: 'Users', artists: 'Artists', albums: 'Albums', readMore: 'Read More', readLess: 'Read Less',
             badgeAdminTitle: 'Administrator', badgeAdminDesc: 'Holding the keys to the kingdom, this person helps build and maintain Lyrica.',
             badgeSupporterTitle: 'Supporter', badgeSupporterDesc: "This user is a Supporter! Their support helps keep the lights on at Lyrica. Thank you!",
             badgeVeteranTitle: 'Veteran', badgeVeteranDesc: "Been here since the beginning! This Veteran helped shape Lyrica during its beta phase.",
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             passwordLengthError: 'A senha deve ter mais de 4 caracteres.', errorFollowing: 'Por favor, faça login para seguir artistas.',
             errorFollowLimit: 'Você atingiu seu limite de {0} artistas para seguir.', errorFileInvalid: 'Por favor, selecione um arquivo de imagem válido.',
             errorFileTooLarge: 'O arquivo é muito grande (máx 2MB).', searchFailed: 'A busca falhou. Por favor, tente novamente.',
-            noResultsFound: 'Nenhum resultado encontrado para sua busca.', users: 'Usuários', artists: 'Artistas', albums: 'Álbuns',
+            noResultsFound: 'Nenhum resultado encontrado para sua busca.', users: 'Usuários', artists: 'Artistas', albums: 'Álbuns', readMore: 'Ler mais', readLess: 'Ler menos',
             badgeAdminTitle: 'Administrador', badgeAdminDesc: 'Com as chaves do reino, esta pessoa ajuda a construir e manter o Lyrica.',
             badgeSupporterTitle: 'Apoiador', badgeSupporterDesc: 'Este usuário é um Apoiador! Seu suporte ajuda a manter as luzes acesas no Lyrica. Valeu!',
             badgeVeteranTitle: 'Veterano', badgeVeteranDesc: 'Esteve aqui desde o começo! Este Veterano ajudou a moldar o Lyrica em sua fase beta.',
@@ -301,6 +301,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (bioData.origin) metaInfo += ` &bull; ${bioData.origin}`;
 
             const spotifyPlayerHTML = `<div class="spotify-embed-container artist-player"><iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="450" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
+            
+            const bioLimit = 350;
+            let bioHTML = '';
+            if (bioData.bio) {
+                if (bioData.bio.length > bioLimit) {
+                    const shortBio = bioData.bio.substring(0, bioLimit) + '...';
+                    bioHTML = `<p class="artist-bio" data-full-bio="${encodeURIComponent(bioData.bio)}">${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
+                } else {
+                    bioHTML = `<p class="artist-bio">${bioData.bio}</p>`;
+                }
+            } else {
+                bioHTML = `<p class="artist-bio">${t('noBioAvailable')}</p>`;
+            }
+
 
             let topTracksHTML = '';
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
@@ -331,7 +345,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="artist-content-columns">
                     <div class="column-left">
                         <h3 class="section-title-main">${t('biography')}</h3>
-                        <p class="artist-bio">${bioData.bio || t('noBioAvailable')}</p>
+                        ${bioHTML}
                     </div>
                     <div class="column-right">
                         <h3 class="section-title-main">${t('popularTracks')}</h3>
@@ -824,6 +838,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (e.target.closest('#captureBtn')) capturePhoto();
             if (e.target.closest('#removeAvatarBtn')) handleAvatarRemove();
             if (e.target.closest('#saveAvatarBtn')) handleAvatarSave();
+
+            const expandBtn = e.target.closest('.expand-bio-btn');
+            if (expandBtn) {
+                e.preventDefault();
+                const p = expandBtn.parentElement;
+                const fullBio = decodeURIComponent(p.dataset.fullBio);
+                p.innerHTML = `${fullBio} <a href="#" class="collapse-bio-btn">${t('readLess')}</a>`;
+            }
+
+            const collapseBtn = e.target.closest('.collapse-bio-btn');
+            if (collapseBtn) {
+                e.preventDefault();
+                const p = collapseBtn.parentElement;
+                const fullBio = decodeURIComponent(p.dataset.fullBio);
+                const shortBio = fullBio.substring(0, 350) + '...';
+                p.innerHTML = `${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a>`;
+            }
         });
         
         ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));
