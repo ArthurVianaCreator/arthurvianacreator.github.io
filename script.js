@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const state = { currentUser: null, spotifyAppToken: null, cropper: null, lastView: 'inicio', artistContextId: null, cameraStream: null };
+    const state = { currentUser: null, spotifyAppToken: null, lastView: 'inicio', artistContextId: null, cameraStream: null };
     const api = {}, auth = {}, ui = {};
 
     // 1. Translation System
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         explorer: { src: 'img/Explorer.png', titleKey: 'badgeExplorerTitle', descriptionKey: 'badgeExplorerDesc' }
     };
 
-    const getFollowLimit = (user) => 50;
+    const getFollowLimit = (user) => 100;
 
     api.manager = {
         async _request(endpoint, method = 'GET', body = null) {
@@ -262,7 +262,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         closeAllModals() { 
             stopCamera();
             document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); 
-            if (state.cropper) { state.cropper.destroy(); state.cropper = null; } 
         },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
         clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; }
@@ -458,15 +457,38 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     async function handleAvatarSave() {
-        if (!state.cropper || !state.cropper.getCroppedCanvas()) { ui.manager.closeAllModals(); return; }
-        const modal = ui.manager.dom.avatarChangeModal, btn = modal.querySelector('#saveAvatarBtn');
+        const modal = ui.manager.dom.avatarChangeModal;
+        const previewImage = document.getElementById('avatarPreviewImage');
+        if (!previewImage.src || previewImage.src.endsWith('/')) {
+            ui.manager.closeAllModals();
+            return;
+        }
+
+        const btn = modal.querySelector('#saveAvatarBtn');
         btn.disabled = true; btn.textContent = t('saving');
+
         try {
-            const avatarBase64 = state.cropper.getCroppedCanvas({ width: 256, height: 256 }).toDataURL('image/png');
-            state.currentUser = await api.manager.updateUser({ avatar: avatarBase64 });
-            ui.manager.updateForAuthState(); ui.manager.closeAllModals();
-        } catch (error) { ui.manager.showModalError(modal, error.message); } 
-        finally { btn.disabled = false; btn.textContent = t('saveAndClose'); }
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = async () => {
+                ctx.drawImage(img, 0, 0, 256, 256);
+                const avatarBase64 = canvas.toDataURL('image/png');
+                state.currentUser = await api.manager.updateUser({ avatar: avatarBase64 });
+                ui.manager.updateForAuthState();
+                ui.manager.closeAllModals();
+            };
+            img.onerror = () => {
+                ui.manager.showModalError(modal, "Failed to load image for saving.");
+                btn.disabled = false; btn.textContent = t('saveAndClose');
+            };
+            img.src = previewImage.src;
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+            btn.disabled = false; btn.textContent = t('saveAndClose');
+        }
     }
 
     async function handleAvatarRemove() {
@@ -479,23 +501,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         finally { btn.disabled = false; }
     }
 
-    function initCropper(imageElement) {
-        if (state.cropper) state.cropper.destroy();
-        state.cropper = new Cropper(imageElement, { aspectRatio: 1, viewMode: 1, background: false, autoCropArea: 1, responsive: true, checkOrientation: false });
-    }
-
     function handleAvatarChange(event) {
         const file = event.target.files[0], modal = ui.manager.dom.avatarChangeModal;
+        ui.manager.clearModalMessages(modal);
         if (!file) return;
         if (!file.type.startsWith('image/')) return ui.manager.showModalError(modal, t('errorFileInvalid'));
         if (file.size > 2 * 1024 * 1024) return ui.manager.showModalError(modal, t('errorFileTooLarge'));
-        const previewImage = document.getElementById('avatarPreviewImage'), reader = new FileReader();
-        reader.onload = e => { 
+        
+        const previewImage = document.getElementById('avatarPreviewImage');
+        const reader = new FileReader();
+        
+        reader.onload = e => {
             document.getElementById('video-container').style.display = 'none';
             document.querySelector('.avatar-preview-container').style.display = 'flex';
-            previewImage.src = e.target.result; 
-            previewImage.style.opacity = 1; 
-            initCropper(previewImage); 
+            previewImage.src = e.target.result;
+            previewImage.style.opacity = 1;
         };
         reader.readAsDataURL(file);
     }
@@ -543,7 +563,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         previewImage.src = canvas.toDataURL('image/png');
         previewImage.style.opacity = 1;
-        initCropper(previewImage);
     }
 
     async function handleFriendAction(e) {
@@ -692,7 +711,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 previewImage.src = userAvatar || "";
                 previewImage.style.opacity = userAvatar ? 1 : 0;
                 ui.manager.openModal(ui.manager.dom.avatarChangeModal);
-                if (userAvatar) previewImage.onload = () => initCropper(previewImage);
             }
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
             if (e.target.closest('#takePhotoBtn')) startCamera();
