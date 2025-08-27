@@ -1,50 +1,95 @@
-// pages/api/user-profile.js
-
 import { createClient } from '@vercel/kv';
+import jwt from 'jsonwebtoken';
+
+async function authenticate(req, env) {
+  const { JWT_SECRET, KV_REST_API_URL, KV_REST_API_TOKEN } = env;
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  const token = authHeader.split(' ')[1];
+  try {
+    const { email } = jwt.verify(token, JWT_SECRET);
+    const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
+    return await kv.get(`user:${email}`);
+  } catch (error) {
+    console.error('Authentication Error:', error);
+    return null;
+  }
+}
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  const { KV_REST_API_URL, KV_REST_API_TOKEN, JWT_SECRET } = process.env;
+  if (!KV_REST_API_URL || !KV_REST_API_TOKEN || !JWT_SECRET) {
+    console.error('Server configuration error: Missing environment variables for user management.');
+    return res.status(500).json({ error: 'Server configuration error.' });
   }
-
-  const { name } = req.query;
-  if (!name) {
-    return res.status(400).json({ error: 'User name is required.' });
-  }
-
+  
   try {
-    const { KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
-    const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
-    
-    // 1. Encontrar o email associado ao nome.
-    const normalizedName = name.toLowerCase();
-    const userEmail = await kv.get(`name:${normalizedName}`);
-    
-    if (!userEmail) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-
-    // 2. Buscar o objeto completo do usuário usando o email.
-    const user = await kv.get(`user:${userEmail}`);
-
+    const user = await authenticate(req, process.env);
     if (!user) {
-      return res.status(404).json({ error: 'User data not found.' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
+    const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
+    if (req.method === 'GET') {
+      const { password, ip, ...userData } = user;
+      res.status(200).json(userData);
+    } else if (req.method === 'PUT') {
+      const updatedData = req.body;
+      let userWasUpdated = false;
 
-    // 3. Retornar apenas os dados públicos e seguros.
-    const publicData = {
-      name: user.name,
-      avatar: user.avatar || null,
-      badges: user.badges || [],
-      following: user.following || [],
-      friends: user.friends || [],
-      description: user.description || null, // Adicionado para exibir no perfil público
-    };
+      if (updatedData.name) {
+        const newName = updatedData.name.trim();
+        if (newName.length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
+        if (/\s/.test(newName)) { return res.status(400).json({ error: 'Name cannot contain spaces' }); }
+        const normalizedNewName = newName.toLowerCase();
+        const normalizedOldName = (user.name || '').trim().toLowerCase();
+        if (normalizedNewName !== normalizedOldName) {
+          const nameTaken = await kv.get(`name:${normalizedNewName}`);
+          if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+          const multi = kv.multi();
+          if (normalizedOldName) {
+            multi.del(`name:${normalizedOldName}`);
+          }
+          // CORREÇÃO: Salva o email do usuário, não o número 1.
+          multi.set(`name:${normalizedNewName}`, user.email);
+          user.name = newName;
+          await multi.exec();
+        } else {
+          user.name = newName;
+        }
+        userWasUpdated = true;
+      }
+      
+      if (Array.isArray(updatedData.following)) {
+        user.following = updatedData.following;
+        userWasUpdated = true;
+      }
 
-    res.status(200).json(publicData);
+      if (Array.isArray(updatedData.badges)) {
+        user.badges = updatedData.badges;
+        userWasUpdated = true;
+      }
+      
+      if (typeof updatedData.avatar !== 'undefined') {
+        user.avatar = updatedData.avatar;
+        userWasUpdated = true;
+      }
 
+      if (typeof updatedData.description === 'string') {
+        user.description = updatedData.description.trim();
+        userWasUpdated = true;
+      }
+
+      if (userWasUpdated) {
+          await kv.set(`user:${user.email}`, user);
+      }
+      
+      const { password, ip, ...userData } = user;
+      res.status(200).json(userData);
+    } else {
+      res.status(405).json({ error: 'Method Not Allowed' });
+    }
   } catch (error) {
-    console.error('User Profile API Error:', error);
+    console.error('User API Error:', error);
     return res.status(500).json({ error: 'A server-side error occurred.' });
   }
 }
