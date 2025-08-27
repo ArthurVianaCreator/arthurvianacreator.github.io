@@ -305,8 +305,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             const album = await api.manager.getSpotifyAlbum(albumId);
             if (album.artists && album.artists[0]) state.artistContextId = album.artists[0].id; 
-            const tracksHTML = album.tracks.items.map((track, index) => `<li><span class="track-number">${index + 1}.</span><span class="track-name">${track.name}</span><span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span></li>`).join('');
-            ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header album-details-header"><div class="details-img album-img"><img src="${album.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${album.artists.map(a => `<span class="artist-link" data-id="${a.id}">${a.name}</span>`).join(', ')} &bull; ${new Date(album.release_date).getFullYear()}</p></div></div><div class="album-content-layout"><div class="track-list-container"><h3 class="section-title-main">${t('tracks')}</h3><ol class="track-list">${tracksHTML}</ol></div><div class="spotify-embed-container"><h3 class="section-title-main">${t('listenOnSpotify')}</h3><iframe style="border-radius:12px" src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="540" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div></div>`;
+            ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header album-details-header"><div class="details-img album-img"><img src="${album.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${album.artists.map(a => `<span class="artist-link" data-id="${a.id}">${a.name}</span>`).join(', ')} &bull; ${new Date(album.release_date).getFullYear()}</p></div></div><div class="spotify-embed-container"><iframe style="border-radius:12px" src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="540" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
         } catch (e) {
              ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadAlbum', e.message)}</p>`;
         }
@@ -357,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.populateGrid(document.getElementById('followed-artists-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
     }
 
-    function renderSocialPage() {
+    async function renderSocialPage() {
         if (!state.currentUser) { ui.manager.switchContent('inicio'); ui.manager.openModal(ui.manager.dom.loginModal); return; }
         ui.manager.switchContent('social');
         const u = state.currentUser;
@@ -366,8 +365,22 @@ document.addEventListener('DOMContentLoaded', async function() {
             friendRequestsHTML = `<h2 class="section-title-main">${t('friendRequests')}</h2><div class="friend-requests-list">` +
             u.friendRequestsReceived.map(name => `<div class="friend-request-item"><span><strong class="user-link" data-username="${name}">${name}</strong> ${t('wantsToBeYourFriend', '')}</span><div class="friend-request-actions"><button class="btn-friend-action accept" data-action="accept" data-target-name="${name}"><i class="fas fa-check"></i> ${t('accept')}</button><button class="btn-friend-action reject" data-action="reject" data-target-name="${name}"><i class="fas fa-times"></i> ${t('decline')}</button></div></div>`).join('') + `</div>`;
         }
-        ui.manager.dom.socialContainer.innerHTML = `${friendRequestsHTML}<h2 class="section-title-main">${t('yourFriends')}</h2><div class="user-grid" id="friends-grid"></div>`;
-        ui.manager.populateGrid(document.getElementById('friends-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), t('emptyFriends'));
+        
+        ui.manager.dom.socialContainer.innerHTML = `${friendRequestsHTML}<h2 class="section-title-main">${t('yourFriends')}</h2><div class="user-grid" id="friends-grid">${ui.manager.renderLoader('')}</div>`;
+
+        const friendsGrid = document.getElementById('friends-grid');
+        const friendNames = u.friends || [];
+        if (friendNames.length > 0) {
+            try {
+                const friendPromises = friendNames.map(name => api.manager.fetchPublicProfile(name).catch(e => null));
+                const friendProfiles = (await Promise.all(friendPromises)).filter(p => p);
+                ui.manager.populateGrid(friendsGrid, friendProfiles, (item, index) => ui.manager.renderUserCard(item, index), t('emptyFriends'));
+            } catch (error) {
+                friendsGrid.innerHTML = `<p class="search-message">${t('couldNotLoadSection')}</p>`;
+            }
+        } else {
+            ui.manager.populateGrid(friendsGrid, [], (item, index) => ui.manager.renderUserCard(item, index), t('emptyFriends'));
+        }
     }
     
     async function renderPublicProfileView(userName) {
@@ -410,7 +423,20 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
                 <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
             ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
-            ui.manager.populateGrid(document.querySelector('#friends .user-grid'), u.friends?.map(name => ({name})), (item, index) => ui.manager.renderUserCard(item, index), t('hasNoFriends', u.name));
+            
+            const friendsGrid = document.querySelector('#friends .user-grid');
+            const friendNames = u.friends || [];
+            if (friendNames.length > 0) {
+                 try {
+                    const friendPromises = friendNames.map(name => api.manager.fetchPublicProfile(name).catch(e => null));
+                    const friendProfiles = (await Promise.all(friendPromises)).filter(p => p);
+                    ui.manager.populateGrid(friendsGrid, friendProfiles, (item, index) => ui.manager.renderUserCard(item, index), t('hasNoFriends', u.name));
+                } catch (error) {
+                    friendsGrid.innerHTML = `<p class="search-message">${t('couldNotLoadSection')}</p>`;
+                }
+            } else {
+                ui.manager.populateGrid(friendsGrid, [], (item, index) => ui.manager.renderUserCard(item, index), t('hasNoFriends', u.name));
+            }
         } catch(e) {
             ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadProfile', e.message)}</p>`;
         }
@@ -559,7 +585,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
         
-        // Flip the image horizontally to fix the mirror effect
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
