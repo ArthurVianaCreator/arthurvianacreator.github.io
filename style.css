@@ -190,7 +190,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 
 /* ALBUM PAGE LAYOUT */
 .album-content-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
-.spotify-embed-container { position: sticky; top: 20px; }
+.album-content-layout .spotify-embed-container { position: sticky; top: 20px; }
 
 
 /* TRACK LISTS (ARTIST & ALBUM) */
@@ -345,7 +345,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
     .back-btn { top: 10px; left: 10px; }
     .main-content { padding: 16px; }
     .artist-content-columns, .album-content-layout { grid-template-columns: 1fr; }
-    .spotify-embed-container { position: static; margin-top: 30px; }
+    .album-content-layout .spotify-embed-container { position: static; margin-top: 30px; }
 }
 @media (max-width: 600px) {
     .profile-header-main, .details-header { padding: 10px 0; }
