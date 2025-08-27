@@ -322,9 +322,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${t(badgeMap[badgeKey].titleKey)}" class="badge-icon" data-badge-key="${badgeKey}">`;
             });
         }
-        const descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
-            <p class="profile-description">${u.description || t('noDescription')}</p>
-            <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
+        const descriptionHTML = `<div class="profile-description-container">
+            <div class="profile-description">
+                ${u.description || t('noDescription')}
+                <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
+            </div>
         </div>`;
         
         const followCount = u.following?.length || 0;

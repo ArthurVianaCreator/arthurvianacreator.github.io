@@ -101,15 +101,16 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .profile-header-main .profile-info-main { animation-delay: 0.2s; }
 .profile-avatar-large { width: 200px; height: 200px; border-radius: 50%; overflow: hidden; margin-bottom: 20px; border: 4px solid var(--card-bg); box-shadow: 0 5px 20px var(--primary-glow); flex-shrink: 0; display: flex; align-items: center; justify-content: center; background-color: var(--card-hover-bg); }
 .profile-avatar-large .profile-picture, .profile-avatar-large .profile-avatar-large-placeholder { width: 100%; height: 100%; object-fit: cover; }
-.profile-avatar-large-placeholder { display: flex; align-items: center; justify-content: center; font-family: var(--elegant-font); font-size: 5rem; font-weight: bold; color: var(--white-text); }
+.profile-avatar-large-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-family: var(--elegant-font); font-size: 5rem; font-weight: bold; color: var(--white-text); }
 .profile-info-main h2 { font-family: var(--elegant-font); font-size: clamp(2rem, 5vw, 3rem); color: var(--white-text); margin-bottom: 5px; }
 .profile-info-main .user-badges { justify-content: center; margin-bottom: 10px; }
 .profile-info-main .user-badges .badge-icon { width: 24px; height: 24px; }
 .friend-status-container { margin-top: 15px; }
 
 /* Profile Description */
-.profile-description-container { position: relative; max-width: 600px; margin: 0 auto 30px; padding: 0 20px; text-align: left;}
+.profile-description-container { position: relative; max-width: 600px; margin: 0 auto 30px; }
 .profile-description { 
+    position: relative;
     color: var(--light-gray-text); 
     font-size: 1rem; 
     line-height: 1.6; 
@@ -119,7 +120,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     border-radius: 0 8px 8px 0;
 }
 .profile-description-container:hover .edit-description-btn { opacity: 1; }
-.edit-description-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--gray-text); cursor: pointer; font-size: 1rem; opacity: 0.5; transition: all 0.2s; z-index: 1;}
+.edit-description-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: var(--gray-text); cursor: pointer; font-size: 1rem; opacity: 0.5; transition: all 0.2s; z-index: 1;}
 .edit-description-btn:hover { color: var(--primary-color); transform: scale(1.1); }
 .description-editor { background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
 .description-editor textarea { 
@@ -176,14 +177,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .details-info .follow-btn.following:hover { background-color: var(--card-hover-bg); border-color: var(--light-gray-text); color: var(--white-text); transform: scale(1.05); filter: none; }
 
 /* ALBUM VIEW LAYOUT */
-.album-content-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
-.spotify-embed-container { position: sticky; top: 20px; }
-.track-list { list-style: none; margin-top: -10px; }
-.track-list li { display: flex; align-items: center; padding: 12px 5px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
-.track-list li:last-child { border-bottom: none; }
-.track-list .track-number { color: var(--gray-text); width: 30px; font-size: 0.9em; }
-.track-list .track-name { flex-grow: 1; color: var(--light-gray-text); }
-.track-list .track-duration { color: var(--gray-text); font-size: 0.9em; }
+.spotify-embed-container { margin-top: 30px; }
 
 /* GENERAL CONTENT & CARDS */
 .section-title-main { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: 1.6rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 12px; margin-top: 16px; }
@@ -228,7 +222,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .user-card:hover { transform: translateY(-5px); }
 .user-card-avatar { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid var(--card-bg); display: flex; align-items: center; justify-content: center; }
 .user-card-avatar .profile-picture, .user-card-placeholder { width: 100%; height: 100%; object-fit: cover; }
-.user-card-placeholder { font-size: 3rem; font-family: var(--elegant-font); font-weight: bold; color: var(--white-text); }
+.user-card-placeholder { font-size: 3rem; font-family: var(--elegant-font); font-weight: bold; color: var(--white-text); display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
 /* FRIENDS PAGE & ACTIONS */
 .friend-requests-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
