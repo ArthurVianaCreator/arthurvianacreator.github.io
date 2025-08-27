@@ -29,12 +29,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             errorFollowLimit: "You've reached your follow limit of {0} artists.", errorFileInvalid: 'Please select a valid image file.',
             errorFileTooLarge: 'File is too large (max 2MB).', searchFailed: 'Search failed. Please try again.', noResultsFound: 'No results found for your search.',
             users: 'Users', artists: 'Artists', albums: 'Albums',
-            badgeAdminTitle: 'Lyrica Administrator', badgeAdminDesc: 'Reserved for the creators and managers of the project.',
-            badgeSupporterTitle: 'Lyrica Supporter', badgeSupporterDesc: 'Granted to users of the Premium plan.',
-            badgeVeteranTitle: 'Veteran', badgeVeteranDesc: 'For members who participated in the beta version.',
-            badgeDiscovererTitle: 'Discoverer', badgeDiscovererDesc: 'Awarded for discovering new and emerging artists.',
-            badgeCollectorTitle: 'Collector', badgeCollectorDesc: 'For users with a large collection of followed artists.',
-            badgeExplorerTitle: 'Explorer', badgeExplorerDesc: 'Recognizes users who delve deep into artist discographies.',
+            badgeAdminTitle: 'Administrator', badgeAdminDesc: 'Holding the keys to the kingdom, this person helps build and maintain Lyrica.',
+            badgeSupporterTitle: 'Supporter', badgeSupporterDesc: "This user is a Supporter! Their support helps keep the lights on at Lyrica. Thank you!",
+            badgeVeteranTitle: 'Veteran', badgeVeteranDesc: "Been here since the beginning! This Veteran helped shape Lyrica during its beta phase.",
+            badgeDiscovererTitle: 'Discoverer', badgeDiscovererDesc: "Always ahead of the trends! This Discoverer has a special talent for finding hidden musical gems.",
+            badgeCollectorTitle: 'Collector', badgeCollectorDesc: "A true music encyclopedia! This Collector has a vast and diverse collection of artists.",
+            badgeExplorerTitle: 'Explorer', badgeExplorerDesc: "Not just the hits! This Explorer dives deep into discographies, discovering every track and B-side.",
             noDescription: 'No description provided.', editDescription: 'Edit Description', saveDescription: 'Save Description', cancelEdit: 'Cancel',
             descriptionCharCount: '{0}/200 characters', followLimitTitle: 'Artist Follow Limit',
         },
@@ -64,12 +64,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             errorFollowLimit: 'Você atingiu seu limite de {0} artistas para seguir.', errorFileInvalid: 'Por favor, selecione um arquivo de imagem válido.',
             errorFileTooLarge: 'O arquivo é muito grande (máx 2MB).', searchFailed: 'A busca falhou. Por favor, tente novamente.',
             noResultsFound: 'Nenhum resultado encontrado para sua busca.', users: 'Usuários', artists: 'Artistas', albums: 'Álbuns',
-            badgeAdminTitle: 'Administrador Lyrica', badgeAdminDesc: 'Reservado para os criadores e gerentes do projeto.',
-            badgeSupporterTitle: 'Apoiador Lyrica', badgeSupporterDesc: 'Concedido a usuários do plano Premium.',
-            badgeVeteranTitle: 'Veterano', badgeVeteranDesc: 'Para membros que participaram da versão beta.',
-            badgeDiscovererTitle: 'Descobridor', badgeDiscovererDesc: 'Premiado por descobrir artistas novos e emergentes.',
-            badgeCollectorTitle: 'Colecionador', badgeCollectorDesc: 'Para usuários com uma grande coleção de artistas seguidos.',
-            badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Reconhece usuários que mergulham fundo nas discografias dos artistas.',
+            badgeAdminTitle: 'Administrador', badgeAdminDesc: 'Com as chaves do reino, esta pessoa ajuda a construir e manter o Lyrica.',
+            badgeSupporterTitle: 'Apoiador', badgeSupporterDesc: 'Este usuário é um Apoiador! Seu suporte ajuda a manter as luzes acesas no Lyrica. Valeu!',
+            badgeVeteranTitle: 'Veterano', badgeVeteranDesc: 'Esteve aqui desde o começo! Este Veterano ajudou a moldar o Lyrica em sua fase beta.',
+            badgeDiscovererTitle: 'Descobridor', badgeDiscovererDesc: 'Sempre à frente das tendências! Este Descobridor tem um talento especial para encontrar joias musicais escondidas.',
+            badgeCollectorTitle: 'Colecionador', badgeCollectorDesc: 'Uma verdadeira enciclopédia musical ambulante! Este Colecionador possui uma vasta e diversificada coleção de artistas.',
+            badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Não se contenta com os hits! Este Explorador mergulha fundo nas discografias, descobrindo cada faixa e lado B.',
             noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
             descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Artistas seguidos',
         }
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${t(badgeMap[badgeKey].titleKey)}" class="badge-icon" data-badge-key="${badgeKey}">`;
             });
         }
-        const descriptionHTML = `<div class="profile-description-container">
+        const descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
             <div class="profile-description">
                 ${u.description || t('noDescription')}
                 <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 else if (state.currentUser.friendRequestsReceived?.includes(u.name)) friendStatusHTML = `<div class="friend-request-actions public-profile"><span>${t('sentYouRequest')}</span><button class="btn-friend-action accept" data-action="accept" data-target-name="${u.name}"><i class="fas fa-check"></i></button><button class="btn-friend-action reject" data-action="reject" data-target-name="${u.name}"><i class="fas fa-times"></i></button></div>`;
                 else friendStatusHTML = `<button class="btn-friend-action" data-action="request" data-target-name="${u.name}"><i class="fas fa-user-plus"></i> ${t('addFriend')}</button>`;
             }
-            const descriptionHTML = u.description ? `<div class="profile-description-container"><p class="profile-description">${u.description}</p></div>` : '';
+            const descriptionHTML = u.description ? `<div class="profile-description-container"><div class="profile-description">${u.description}</div></div>` : '';
 
             ui.manager.dom.profileContainer.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
