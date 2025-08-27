@@ -285,7 +285,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingArtist'));
         try {
-            // CORREÇÃO: Busca primeiro o artista para depois usar o nome dele.
             const artist = await api.manager.getSpotifyArtist(artistId);
             
             const [albumsData, bioData, topTracksData] = await Promise.all([
@@ -302,8 +301,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             let metaInfo = artist.genres.join(', ');
             if (bioData.origin) metaInfo += ` &bull; ${bioData.origin}`;
 
-            const spotifyPlayerHTML = `<div class="spotify-embed-container artist-player"><iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="450" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
-            
             const bioLimit = 350;
             let bioHTML = '';
             if (bioData.bio) {
@@ -316,6 +313,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 bioHTML = `<p class="artist-bio">${t('noBioAvailable')}</p>`;
             }
+
 
             let topTracksHTML = '';
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
@@ -342,19 +340,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                         ${followBtnHTML}
                     </div>
                 </div>
-                ${spotifyPlayerHTML}
                 <div class="artist-content-columns">
                     <div class="column-left">
                         <h3 class="section-title-main">${t('biography')}</h3>
                         ${bioHTML}
+                        <h3 class="section-title-main">${t('discography')}</h3>
+                        ${discographyHTML}
                     </div>
                     <div class="column-right">
+                        <div class="spotify-embed-container artist-player">
+                            <iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="450" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                        </div>
                         <h3 class="section-title-main">${t('popularTracks')}</h3>
                         ${topTracksHTML}
                     </div>
-                </div>
-                <h3 class="section-title-main">${t('discography')}</h3>
-                ${discographyHTML}`;
+                </div>`;
         } catch (e) {
             ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadArtist', e.message)}</p>`;
         }
@@ -843,18 +843,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             const expandBtn = e.target.closest('.expand-bio-btn');
             if (expandBtn) {
                 e.preventDefault();
-                const p = expandBtn.parentElement.parentElement;
-                const fullBio = decodeURIComponent(p.dataset.fullBio);
-                p.innerHTML = `<p>${fullBio} <a href="#" class="collapse-bio-btn">${t('readLess')}</a></p>`;
+                const bioContainer = expandBtn.closest('.artist-bio');
+                const fullBio = decodeURIComponent(bioContainer.dataset.fullBio);
+                bioContainer.innerHTML = `<p>${fullBio} <a href="#" class="collapse-bio-btn">${t('readLess')}</a></p>`;
             }
 
             const collapseBtn = e.target.closest('.collapse-bio-btn');
             if (collapseBtn) {
                 e.preventDefault();
-                const p = collapseBtn.parentElement.parentElement;
-                const fullBio = decodeURIComponent(p.dataset.fullBio);
+                const bioContainer = collapseBtn.closest('.artist-bio');
+                const fullBio = decodeURIComponent(bioContainer.dataset.fullBio);
                 const shortBio = fullBio.substring(0, 350) + '...';
-                p.innerHTML = `<p>${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
+                bioContainer.innerHTML = `<p>${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
             }
         });
         
@@ -866,6 +866,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
+
+            if ((target === 'profile' || target === 'social') && !state.currentUser) {
+                e.preventDefault();
+                ui.manager.openModal(ui.manager.dom.loginModal);
+                return;
+            }
+
             if (target === 'profile') renderProfilePage(); 
             else if (target === 'social') renderSocialPage();
             else renderHomePage();
