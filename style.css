@@ -226,7 +226,6 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .user-card-avatar { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; border: 3px solid var(--card-bg); display: flex; align-items: center; justify-content: center; }
 .user-card-avatar .profile-picture, .user-card-placeholder { width: 100%; height: 100%; object-fit: cover; }
 .user-card-placeholder { font-size: 3rem; font-family: var(--elegant-font); font-weight: bold; color: white; }
-.user-card-name { font-weight: 700; color: var(--white-text); }
 
 /* FRIENDS PAGE & ACTIONS */
 .friend-requests-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
@@ -296,8 +295,8 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 /* AVATAR CHANGE MODAL */
 #avatarChangeModal .modal-content { display: flex; flex-direction: column; align-items: center; }
 .avatar-preview-container, #video-container { width: 250px; height: 250px; background-color: var(--card-bg); margin: 15px auto; border: 2px dashed var(--gray-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-#video-container video { width: 100%; height: 100%; object-fit: cover; }
-#avatarPreviewImage { display: block; max-width: 100%; opacity: 0; }
+#video-container video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); /* Fixes the mirrored camera issue */ }
+#avatarPreviewImage { display: block; max-width: 100%; }
 .modal-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 10px; width: 100%; }
 .modal-actions-grid button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .modal-info { font-size: 0.8rem; color: var(--gray-text); margin-top: 10px; }

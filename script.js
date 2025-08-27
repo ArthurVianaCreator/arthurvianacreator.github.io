@@ -445,8 +445,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function handleNameChangeSubmit(e) {
         const btn = e.target, modal = ui.manager.dom.nameChangeModal;
-        const newName = modal.querySelector('#newNameInput').value;
-        if (newName.trim().length <= 4) return ui.manager.showModalError(modal, t('nameLengthError'));
+        const newName = modal.querySelector('#newNameInput').value.trim();
+        if (newName.length <= 4) return ui.manager.showModalError(modal, t('nameLengthError'));
         if (!/^[a-zA-Z0-9_-]+$/.test(newName)) return ui.manager.showModalError(modal, t('nameCharsError'));
         btn.disabled = true; btn.textContent = t('saving');
         try {
@@ -557,7 +557,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        
+        // Flip the image horizontally
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
         stopCamera();
         
@@ -694,7 +699,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
             if (e.target.closest('#switchToLogin')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.loginModal); }
-            if (e.target.closest('.close-modal-btn') || e.target.matches('.modal-overlay')) ui.manager.closeAllModals();
+            if (e.target.closest('.close-modal-btn') || e.target.matches('.modal-overlay') || e.target.closest('#cancelNameChangeBtn')) ui.manager.closeAllModals();
 
             const passToggle = e.target.closest('.password-toggle');
             if (passToggle) {
@@ -704,7 +709,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             
             if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
-            if (e.target.closest('#changeNameBtn')) ui.manager.openModal(ui.manager.dom.nameChangeModal);
+            if (e.target.closest('#changeNameBtn')) {
+                const modal = ui.manager.dom.nameChangeModal;
+                modal.querySelector('#newNameInput').value = state.currentUser?.name || '';
+                ui.manager.openModal(modal);
+            }
             if (e.target.closest('#changeAvatarBtn')) {
                 const previewImage = document.getElementById('avatarPreviewImage');
                 const userAvatar = state.currentUser.avatar;
