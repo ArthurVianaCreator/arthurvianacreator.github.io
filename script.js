@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             searchResults: 'Search Results', topArtists: 'Top 9 Popular Lyrica Artists', couldNotLoadSection: 'Could not load this section.',
             loadingArtist: 'Loading Artist...', loadingAlbum: 'Loading Album...', following: 'Following', follow: 'Follow', loginToFollow: 'Log in to Follow',
             biography: 'Biography', discography: 'Discography', noAlbumsFound: 'No albums found for this artist.', noBioAvailable: 'No biography available for this artist.',
-            couldNotLoadArtist: 'Could not load artist information. {0}', tracks: 'Tracks', listenOnSpotify: 'Listen on Spotify',
+            couldNotLoadArtist: 'Could not load artist information. {0}', popularTracks: 'Popular Tracks', listenOnSpotify: 'Listen on Spotify',
             couldNotLoadAlbum: 'Could not load album information. {0}', artistsYouFollow: 'Artists You Follow',
             emptyFollowedArtists: "You haven't followed any artists yet. Use the search to find and follow your favorites!",
             friendRequests: 'Friend Requests', wantsToBeYourFriend: '{0} wants to be your friend.', accept: 'Accept', decline: 'Decline',
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             loadingArtist: 'Carregando Artista...', loadingAlbum: 'Carregando Álbum...', following: 'Seguindo', follow: 'Seguir',
             loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discography: 'Discografia',
             noAlbumsFound: 'Nenhum álbum encontrado para este artista.', noBioAvailable: 'Nenhuma biografia disponível para este artista.',
-            couldNotLoadArtist: 'Não foi possível carregar as informações do artista. {0}', tracks: 'Faixas', listenOnSpotify: 'Ouça no Spotify',
+            couldNotLoadArtist: 'Não foi possível carregar as informações do artista. {0}', popularTracks: 'Faixas Populares', listenOnSpotify: 'Ouça no Spotify',
             couldNotLoadAlbum: 'Não foi possível carregar as informações do álbum. {0}', artistsYouFollow: 'Artistas que Você Segue',
             emptyFollowedArtists: 'Você ainda não seguiu nenhum artista. Use a busca para encontrar e seguir seus favoritos!',
             friendRequests: 'Pedidos de Amizade', wantsToBeYourFriend: '{0} quer ser seu amigo.', accept: 'Aceitar', decline: 'Recusar',
@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
+        getSpotifyArtistTopTracks: (id) => api.manager._spotifyRequest(`artists/${id}/top-tracks?market=BR`),
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
     };
@@ -280,20 +281,65 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function renderArtistView(artistId) {
-        state.artistContextId = null; 
+        state.artistContextId = null;
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingArtist'));
         try {
-            const artist = await api.manager.getSpotifyArtist(artistId);
-            const [albumsData, bioData] = await Promise.all([api.manager.getSpotifyArtistAlbums(artistId), api.manager.getArtistBio(artist.name)]);
+            const [artist, albumsData, bioData, topTracksData] = await Promise.all([
+                api.manager.getSpotifyArtist(artistId),
+                api.manager.getSpotifyArtistAlbums(artistId),
+                api.manager.getArtistBio(artist.name),
+                api.manager.getSpotifyArtistTopTracks(artistId)
+            ]);
+
             const isFollowing = state.currentUser ? auth.manager.isFollowing(artistId) : false;
-            const followBtnHTML = state.currentUser 
-                ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? t('following') : t('follow')}</span></button>` 
+            const followBtnHTML = state.currentUser
+                ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? t('following') : t('follow')}</span></button>`
                 : `<button class="follow-btn" disabled>${t('loginToFollow')}</button>`;
-            const discographyHTML = albumsData?.items?.length > 0 ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map((album, index) => ui.manager.renderMusicCard({ ...album, type: 'album' }, index)).join('')}</div>` : `<p class="search-message">${t('noAlbumsFound')}</p>`;
+
             let metaInfo = artist.genres.join(', ');
             if (bioData.origin) metaInfo += ` &bull; ${bioData.origin}`;
-            ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header"><div class="details-img band-img"><img src="${artist.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${artist.name}"></div><div class="details-info"><h2>${artist.name}</h2><p class="meta-info">${metaInfo}</p>${followBtnHTML}</div></div><div class="artist-bio-container"><h3 class="section-title-main">${t('biography')}</h3><p class="artist-bio">${bioData.bio || t('noBioAvailable')}</p></div><h3 class="section-title-main">${t('discography')}</h3>${discographyHTML}`;
+
+            const spotifyPlayerHTML = `<div class="spotify-embed-container artist-player"><iframe style="border-radius:12px" src="https://open.spotify.com/embed/artist/${artist.id}?utm_source=generator" width="100%" height="450" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
+
+            let topTracksHTML = '';
+            if (topTracksData.tracks && topTracksData.tracks.length > 0) {
+                const tracks = topTracksData.tracks.map((track, index) => `
+                    <li class="track-item">
+                        <span class="track-number">${index + 1}</span>
+                        <img src="${track.album.images[track.album.images.length - 1]?.url || 'https://via.placeholder.com/40'}" class="track-item-img" alt="${track.album.name}">
+                        <span class="track-name">${track.name}</span>
+                        <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
+                    </li>
+                `).join('');
+                topTracksHTML = `<ol class="top-tracks-list">${tracks}</ol>`;
+            }
+
+            const discographyHTML = albumsData?.items?.length > 0 ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map((album, index) => ui.manager.renderMusicCard({ ...album, type: 'album' }, index)).join('')}</div>` : `<p class="search-message">${t('noAlbumsFound')}</p>`;
+
+            ui.manager.dom.detailsView.innerHTML = `
+                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                <div class="details-header">
+                    <div class="details-img band-img"><img src="${artist.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${artist.name}"></div>
+                    <div class="details-info">
+                        <h2>${artist.name}</h2>
+                        <p class="meta-info">${metaInfo}</p>
+                        ${followBtnHTML}
+                    </div>
+                </div>
+                ${spotifyPlayerHTML}
+                <div class="artist-content-columns">
+                    <div class="column-left">
+                        <h3 class="section-title-main">${t('biography')}</h3>
+                        <p class="artist-bio">${bioData.bio || t('noBioAvailable')}</p>
+                    </div>
+                    <div class="column-right">
+                        <h3 class="section-title-main">${t('popularTracks')}</h3>
+                        ${topTracksHTML}
+                    </div>
+                </div>
+                <h3 class="section-title-main">${t('discography')}</h3>
+                ${discographyHTML}`;
         } catch (e) {
             ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadArtist', e.message)}</p>`;
         }
@@ -304,8 +350,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingAlbum'));
         try {
             const album = await api.manager.getSpotifyAlbum(albumId);
-            if (album.artists && album.artists[0]) state.artistContextId = album.artists[0].id; 
-            ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><div class="details-header album-details-header"><div class="details-img album-img"><img src="${album.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${album.name}"></div><div class="details-info"><h2>${album.name}</h2><p class="meta-info">${album.artists.map(a => `<span class="artist-link" data-id="${a.id}">${a.name}</span>`).join(', ')} &bull; ${new Date(album.release_date).getFullYear()}</p></div></div><div class="spotify-embed-container"><iframe style="border-radius:12px" src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="540" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div>`;
+            if (album.artists && album.artists[0]) state.artistContextId = album.artists[0].id;
+
+            const tracksHTML = album.tracks.items.map((track, index) => `
+                <li class="track-item">
+                    <span class="track-number">${index + 1}</span>
+                    <span class="track-name">${track.name}</span>
+                    <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
+                </li>`).join('');
+
+            ui.manager.dom.detailsView.innerHTML = `
+                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                <div class="details-header album-details-header">
+                    <div class="details-img album-img"><img src="${album.images[0]?.url || 'https://via.placeholder.com/200'}" alt="${album.name}"></div>
+                    <div class="details-info">
+                        <h2>${album.name}</h2>
+                        <p class="meta-info">${album.artists.map(a => `<span class="artist-link" data-id="${a.id}">${a.name}</span>`).join(', ')} &bull; ${new Date(album.release_date).getFullYear()}</p>
+                    </div>
+                </div>
+                <div class="album-content-layout">
+                    <div class="track-list-container">
+                        <h3 class="section-title-main">${t('popularTracks')}</h3>
+                        <ol class="top-tracks-list">${tracksHTML}</ol>
+                    </div>
+                    <div class="spotify-embed-container">
+                        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/album/${album.id}?utm_source=generator" width="100%" height="540" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                    </div>
+                </div>`;
         } catch (e) {
              ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadAlbum', e.message)}</p>`;
         }

@@ -116,7 +116,7 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
     line-height: 1.6; 
     background: var(--card-bg);
     border-left: 4px solid var(--primary-color);
-    padding: 15px 20px;
+    padding: 15px 45px 15px 20px;
     border-radius: 0 8px 8px 0;
 }
 .profile-description-container:hover .edit-description-btn { opacity: 1; }
@@ -176,8 +176,21 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .details-info .follow-btn.following { background: transparent; border: 2px solid var(--gray-text); color: var(--light-gray-text); box-shadow: none; }
 .details-info .follow-btn.following:hover { background-color: var(--card-hover-bg); border-color: var(--light-gray-text); color: var(--white-text); transform: scale(1.05); filter: none; }
 
-/* ALBUM VIEW LAYOUT */
-.spotify-embed-container { margin-top: 30px; }
+/* ARTIST PAGE LAYOUT */
+.spotify-embed-container.artist-player { margin-bottom: 30px; }
+.artist-content-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
+
+/* ALBUM PAGE LAYOUT */
+.album-content-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
+
+/* TRACK LISTS (ARTIST & ALBUM) */
+.top-tracks-list { list-style: none; margin: 0; padding: 0; }
+.track-item { display: flex; align-items: center; padding: 10px 5px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+.track-item:last-child { border-bottom: none; }
+.track-item .track-number { color: var(--gray-text); width: 30px; text-align: center; flex-shrink: 0; font-size: 0.9em; }
+.track-item .track-item-img { width: 40px; height: 40px; margin-right: 15px; border-radius: 4px; }
+.track-item .track-name { flex-grow: 1; color: var(--light-gray-text); }
+.track-item .track-duration { color: var(--gray-text); font-size: 0.9em; }
 
 /* GENERAL CONTENT & CARDS */
 .section-title-main { font-family: var(--elegant-font); font-weight: 700; color: var(--white-text); font-size: 1.6rem; margin-bottom: 20px; border-left: 4px solid var(--primary-color); padding-left: 12px; margin-top: 16px; }
@@ -321,7 +334,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
     .user-profile-area { order: 2; }
     .back-btn { top: 10px; left: 10px; }
     .main-content { padding: 16px; }
-    .album-content-layout { grid-template-columns: 1fr; }
+    .artist-content-columns, .album-content-layout { grid-template-columns: 1fr; }
     .spotify-embed-container { position: static; margin-top: 30px; }
 }
 @media (max-width: 600px) {
