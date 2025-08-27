@@ -254,12 +254,39 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 .password-wrapper input { margin-bottom: 0; padding-right: 45px; }
 .password-toggle { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: var(--gray-text); cursor: pointer; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; width: 100%;}
-.modal-actions button, .modal-actions-grid button { padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: 700; transition: all 0.2s; }
-.btn-primary { background-color: var(--primary-color); color: #121212; }
-.btn-primary:hover { filter: brightness(1.2); transform: scale(1.05); box-shadow: 0 4px 15px var(--primary-glow); }
-.btn-primary:disabled { filter: brightness(0.6); cursor: not-allowed; }
-.btn-secondary { background-color: var(--gray-text); color: var(--darker-bg); }
-.btn-secondary:hover { filter: brightness(0.8); }
+/* Base style for buttons in modals and similar actions */
+.modal-actions button, .modal-actions-grid button, .editor-actions button {
+    padding: 8px 16px;
+    border-radius: 0; /* Cantos retos */
+    cursor: pointer;
+    font-weight: 500; /* Fonte mais fina */
+    transition: all 0.2s;
+    border: 1px solid #000; /* Borda preta como na imagem */
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.2); /* Sombra de texto leve */
+}
+
+/* Primary (Salvar) button */
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #121212; /* Texto preto */
+}
+.btn-primary:hover {
+    filter: brightness(1.1); /* Efeito hover simples */
+}
+.btn-primary:disabled {
+    filter: brightness(0.6);
+    cursor: not-allowed;
+    background-color: var(--gray-text);
+}
+
+/* Secondary (Cancelar) button */
+.btn-secondary {
+    background-color: #616161; /* Cinza da imagem */
+    color: #f0f0f0; /* Texto claro */
+}
+.btn-secondary:hover {
+    background-color: #757575; /* Cinza mais claro no hover */
+}
 .btn-danger { background-color: var(--danger-color); color: white; }
 .btn-danger:hover { filter: brightness(1.2); }
 .modal-switch { margin-top: 20px; font-size: 0.9rem; }
