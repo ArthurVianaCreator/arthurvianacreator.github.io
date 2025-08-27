@@ -285,8 +285,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingArtist'));
         try {
-            const [artist, albumsData, bioData, topTracksData] = await Promise.all([
-                api.manager.getSpotifyArtist(artistId),
+            // CORREÇÃO: Busca primeiro o artista para depois usar o nome dele.
+            const artist = await api.manager.getSpotifyArtist(artistId);
+            
+            const [albumsData, bioData, topTracksData] = await Promise.all([
                 api.manager.getSpotifyArtistAlbums(artistId),
                 api.manager.getArtistBio(artist.name),
                 api.manager.getSpotifyArtistTopTracks(artistId)
@@ -307,14 +309,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (bioData.bio) {
                 if (bioData.bio.length > bioLimit) {
                     const shortBio = bioData.bio.substring(0, bioLimit) + '...';
-                    bioHTML = `<p class="artist-bio" data-full-bio="${encodeURIComponent(bioData.bio)}">${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
+                    bioHTML = `<div class="artist-bio" data-full-bio="${encodeURIComponent(bioData.bio)}"><p>${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p></div>`;
                 } else {
                     bioHTML = `<p class="artist-bio">${bioData.bio}</p>`;
                 }
             } else {
                 bioHTML = `<p class="artist-bio">${t('noBioAvailable')}</p>`;
             }
-
 
             let topTracksHTML = '';
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
@@ -842,18 +843,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             const expandBtn = e.target.closest('.expand-bio-btn');
             if (expandBtn) {
                 e.preventDefault();
-                const p = expandBtn.parentElement;
+                const p = expandBtn.parentElement.parentElement;
                 const fullBio = decodeURIComponent(p.dataset.fullBio);
-                p.innerHTML = `${fullBio} <a href="#" class="collapse-bio-btn">${t('readLess')}</a>`;
+                p.innerHTML = `<p>${fullBio} <a href="#" class="collapse-bio-btn">${t('readLess')}</a></p>`;
             }
 
             const collapseBtn = e.target.closest('.collapse-bio-btn');
             if (collapseBtn) {
                 e.preventDefault();
-                const p = collapseBtn.parentElement;
+                const p = collapseBtn.parentElement.parentElement;
                 const fullBio = decodeURIComponent(p.dataset.fullBio);
                 const shortBio = fullBio.substring(0, 350) + '...';
-                p.innerHTML = `${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a>`;
+                p.innerHTML = `<p>${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
             }
         });
         
