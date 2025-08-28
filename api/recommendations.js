@@ -16,10 +16,21 @@ async function getSpotifyData(endpoint, env) {
     const apiResponse = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
         headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
     });
-    if (!apiResponse.ok) throw new Error(`Spotify API Error: ${apiResponse.statusText}`);
+    // CORREÇÃO: Lança um erro mais detalhado para facilitar a depuração.
+    if (!apiResponse.ok) {
+        const errorBody = await apiResponse.json().catch(() => ({ message: apiResponse.statusText }));
+        throw new Error(`Spotify API Error: ${errorBody.error?.message || apiResponse.statusText}`);
+    }
     
     return apiResponse.json();
 }
+
+// Função de fallback para buscar artistas populares
+async function getPopularArtistsFallback(env) {
+    const popularArtistIds = '4iHNK0tOyZPYnBU7nGAgpQ,1vCWHaC5f2uS3yhpwWbIA6,06HL4z0CvFAxyc27GXpf02,6eUKZXaKkcviH0Ku9w2n3V,04gDigrS5kc9YWfZHwBETP,1Xyo4u8uXC1ZmMpatF05PJ,7dGJo4pcD2V6oG8kP0tJRR';
+    return getSpotifyData(`artists?ids=${popularArtistIds}`, env);
+}
+
 
 export default async function handler(req, res) {
     const { JWT_SECRET } = process.env;
@@ -36,7 +47,7 @@ export default async function handler(req, res) {
 
         if (!user || !user.following || user.following.length === 0) {
             // Se o usuário não segue ninguém, retorna artistas populares como fallback
-            const popularArtists = await getSpotifyData('artists?ids=4iHNK0tOyZPYnBU7nGAgpQ,1vCWHaC5f2uS3yhpwWbIA6,06HL4z0CvFAxyc27GXpf02,6eUKZXaKkcviH0Ku9w2n3V,04gDigrS5kc9YWfZHwBETP,1Xyo4u8uXC1ZmMpatF05PJ,7dGJo4pcD2V6oG8kP0tJRR', process.env);
+            const popularArtists = await getPopularArtistsFallback(process.env);
             return res.status(200).json(popularArtists);
         }
 
@@ -47,6 +58,15 @@ export default async function handler(req, res) {
         const recommendedArtists = recommendations.tracks.map(track => track.artists[0]);
         const uniqueArtistIds = [...new Set(recommendedArtists.map(a => a.id))];
         
+        // --- INÍCIO DA CORREÇÃO ---
+        // ADICIONADO: Verificação para o caso de não haver recomendações.
+        // Se a lista de artistas únicos estiver vazia, usamos o fallback de artistas populares.
+        if (uniqueArtistIds.length === 0) {
+            const popularArtists = await getPopularArtistsFallback(process.env);
+            return res.status(200).json(popularArtists);
+        }
+        // --- FIM DA CORREÇÃO ---
+
         // Busca os detalhes completos dos artistas
         const artistsDetails = await getSpotifyData(`artists?ids=${uniqueArtistIds.join(',')}`, process.env);
         
