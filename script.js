@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             noDescription: 'No description provided.', editDescription: 'Edit Description', saveDescription: 'Save Description', cancelEdit: 'Cancel',
             descriptionCharCount: '{0}/200 characters', followLimitTitle: 'Artist Follow Limit',
             artistsYouMightLike: 'Artists You Might Like', takeBadgeQuiz: 'Take Badge Quiz', badgeQuizTitle: 'Discover Your Music Profile',
-            quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', clearFilters: 'Clear'
+            quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', clearFilters: 'Clear', year: 'Year'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
             descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Artistas seguidos',
             artistsYouMightLike: 'Artistas que você pode gostar', takeBadgeQuiz: 'Responder Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
-            quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', clearFilters: 'Limpar'
+            quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', clearFilters: 'Limpar', year: 'Ano'
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -284,12 +284,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('inicio');
         ui.manager.dom.homeContainer.innerHTML = ui.manager.renderLoader(t('loading'));
         try {
-            const popularData = await api.manager.getPopularArtists();
-            const recommendations = state.currentUser ? await api.manager.getRecommendations() : { artists: [] };
+            const [popularData, recommendations] = await Promise.all([
+                api.manager.getPopularArtists(),
+                state.currentUser ? api.manager.getRecommendations() : Promise.resolve({ artists: [] })
+            ]);
             
             let html = '';
 
-            const popularGridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('') : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
+            const popularGridHTML = popularData.artists && popularData.artists.length > 0 
+                ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('') 
+                : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
             html += `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${popularGridHTML}</div>`;
 
             if (recommendations.artists && recommendations.artists.length > 0) {
@@ -299,6 +303,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             ui.manager.dom.homeContainer.innerHTML = html;
         } catch (e) {
+            console.error("Error rendering homepage:", e);
             ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
         }
     }
@@ -952,7 +957,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         ui.manager.dom.searchInput.addEventListener('input', performSearch);
         ui.manager.dom.genreFilter.addEventListener('change', performSearch);
-        ui.manager.dom.yearFilter.addEventListener('change', performSearch);
+        ui.manager.dom.yearFilter.addEventListener('input', performSearch); // Use input for real-time update
         ui.manager.dom.clearFiltersBtn.addEventListener('click', () => {
             ui.manager.dom.searchInput.value = '';
             ui.manager.dom.genreFilter.value = '';

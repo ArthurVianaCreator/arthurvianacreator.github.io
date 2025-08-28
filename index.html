@@ -47,7 +47,6 @@
                     <div class="search-bar">
                         <i class="fas fa-search"></i>
                         <input type="text" id="searchInput" data-translate-placeholder-key="searchInputPlaceholder" placeholder="Search for artists, albums, or users...">
-                        <div id="autocomplete-results" class="autocomplete-results"></div>
                     </div>
                     <div class="advanced-filters">
                         <select id="genreFilter">
@@ -59,9 +58,10 @@
                             <option value="jazz">Jazz</option>
                             <option value="classical">Classical</option>
                         </select>
-                        <input type="number" id="yearFilter" min="1900" max="2025" placeholder="Year">
+                        <input type="number" id="yearFilter" min="1900" max="2025" data-translate-placeholder-key="year" placeholder="Year">
                         <button id="clearFiltersBtn" data-translate-key="clearFilters">Clear</button>
                     </div>
+                    <div id="autocomplete-results" class="autocomplete-results"></div>
                 </div>
                 <div class="user-profile-area">
                     <button class="control-btn" id="themeToggleBtn">
