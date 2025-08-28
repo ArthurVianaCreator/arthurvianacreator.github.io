@@ -16,7 +16,7 @@ async function getSpotifyData(endpoint, env) {
     const apiResponse = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
         headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
     });
-    // CORREÇÃO: Lança um erro mais detalhado para facilitar a depuração.
+
     if (!apiResponse.ok) {
         const errorBody = await apiResponse.json().catch(() => ({ message: apiResponse.statusText }));
         throw new Error(`Spotify API Error: ${errorBody.error?.message || apiResponse.statusText}`);
@@ -31,10 +31,10 @@ async function getPopularArtistsFallback(env) {
     return getSpotifyData(`artists?ids=${popularArtistIds}`, env);
 }
 
-
 export default async function handler(req, res) {
-    const { JWT_SECRET } = process.env;
+    const { JWT_SECRET, KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -42,37 +42,55 @@ export default async function handler(req, res) {
     
     try {
         const { email } = jwt.verify(token, JWT_SECRET);
-        const kv = createClient({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN });
+        const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
         const user = await kv.get(`user:${email}`);
 
+        // Se o usuário não existe ou não segue ninguém, usa o fallback imediatamente.
         if (!user || !user.following || user.following.length === 0) {
-            // Se o usuário não segue ninguém, retorna artistas populares como fallback
             const popularArtists = await getPopularArtistsFallback(process.env);
             return res.status(200).json(popularArtists);
         }
 
-        const seedArtistIds = user.following.map(a => a.id).sort(() => 0.5 - Math.random()).slice(0, 5);
-        const recommendations = await getSpotifyData(`recommendations?limit=10&seed_artists=${seedArtistIds.join(',')}`, process.env);
+        let artistsDetails;
         
-        // Extrai artistas únicos das faixas recomendadas
-        const recommendedArtists = recommendations.tracks.map(track => track.artists[0]);
-        const uniqueArtistIds = [...new Set(recommendedArtists.map(a => a.id))];
-        
-        // --- INÍCIO DA CORREÇÃO ---
-        // ADICIONADO: Verificação para o caso de não haver recomendações.
-        // Se a lista de artistas únicos estiver vazia, usamos o fallback de artistas populares.
-        if (uniqueArtistIds.length === 0) {
-            const popularArtists = await getPopularArtistsFallback(process.env);
-            return res.status(200).json(popularArtists);
-        }
-        // --- FIM DA CORREÇÃO ---
+        // --- INÍCIO DA CORREÇÃO DE RESILIÊNCIA ---
+        try {
+            // 1. Tenta obter recomendações personalizadas
+            const seedArtistIds = user.following.map(a => a.id).sort(() => 0.5 - Math.random()).slice(0, 5);
+            const recommendations = await getSpotifyData(`recommendations?limit=10&seed_artists=${seedArtistIds.join(',')}`, process.env);
+            
+            // 2. Extrai os IDs de forma segura
+            const validArtistIds = recommendations.tracks.reduce((acc, track) => {
+                if (track && track.artists && track.artists.length > 0 && track.artists[0].id) {
+                    acc.push(track.artists[0].id);
+                }
+                return acc;
+            }, []);
+            
+            const uniqueArtistIds = [...new Set(validArtistIds)];
 
-        // Busca os detalhes completos dos artistas
-        const artistsDetails = await getSpotifyData(`artists?ids=${uniqueArtistIds.join(',')}`, process.env);
+            // 3. Se encontrou artistas, busca os detalhes deles
+            if (uniqueArtistIds.length > 0) {
+                artistsDetails = await getSpotifyData(`artists?ids=${uniqueArtistIds.join(',')}`, process.env);
+            }
+        } catch (error) {
+            console.error("Could not fetch personalized recommendations, using fallback. Error:", error.message);
+            // Se qualquer passo acima falhar, a variável artistsDetails continuará vazia,
+            // e o código prosseguirá para o fallback.
+        }
+        // --- FIM DA CORREÇÃO DE RESILIÊNCIA ---
+
+        // 4. Se as recomendações personalizadas funcionaram, retorna o resultado.
+        if (artistsDetails && artistsDetails.artists && artistsDetails.artists.length > 0) {
+            return res.status(200).json(artistsDetails);
+        }
         
-        res.status(200).json(artistsDetails);
+        // 5. Se não, retorna os artistas populares como fallback.
+        const popularArtists = await getPopularArtistsFallback(process.env);
+        return res.status(200).json(popularArtists);
 
     } catch (error) {
+        // Este catch externo lida com erros maiores, como token inválido ou falha no banco de dados.
         console.error('Recommendations API Error:', error);
         res.status(500).json({ error: 'Failed to fetch recommendations.' });
     }

@@ -37,8 +37,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeExplorerTitle: 'Explorer', badgeExplorerDesc: "Not just the hits! This Explorer dives deep into discographies, discovering every track and B-side.",
             noDescription: 'No description provided.', editDescription: 'Edit Description', saveDescription: 'Save Description', cancelEdit: 'Cancel',
             descriptionCharCount: '{0}/200 characters', followLimitTitle: 'Artist Follow Limit',
-            artistsYouMightLike: 'Artists You Might Like', takeBadgeQuiz: 'Take Badge Quiz', badgeQuizTitle: 'Discover Your Music Profile',
-            quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', clearFilters: 'Clear', year: 'Year'
+            artistsYouMightLike: 'Artists You Might Like', retakeBadgeQuiz: 'Retake Quiz', badgeQuizTitle: 'Discover Your Music Profile',
+            quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', year: 'Year',
+            startQuiz: 'Discover Your Badge', squadTitle: 'Badge Squadron',
+            squadDescription: "What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!"
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -74,8 +76,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Não se contenta com os hits! Este Explorador mergulha fundo nas discografias, descobrindo cada faixa e lado B.',
             noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
             descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Artistas seguidos',
-            artistsYouMightLike: 'Artistas que você pode gostar', takeBadgeQuiz: 'Responder Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
-            quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', clearFilters: 'Limpar', year: 'Ano'
+            artistsYouMightLike: 'Artistas que você pode gostar', retakeBadgeQuiz: 'Refazer Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
+            quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', year: 'Ano',
+            startQuiz: 'Descubra Sua Insígnia', squadTitle: 'Esquadrão das Insígnias',
+            squadDescription: "Que tipo de fã de música você é? O Explorador que mergulha fundo nas discografias? O Descobridor que está sempre encontrando a próxima grande novidade? Ou o Colecionador com uma biblioteca imensa? Responda 10 perguntas rápidas para descobrir e ganhar sua insígnia exclusiva!"
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -199,11 +203,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
             badgeQuizModal: document.getElementById('badgeQuizModal'),
-            searchResultsContainer: document.getElementById('searchResultsContainer'), homeContainer: document.getElementById('home-container'),
+            searchResultsContainer: document.getElementById('searchResultsContainer'),
+            popularArtistsContainer: document.getElementById('popular-artists-container'),
+            recommendationsContainer: document.getElementById('recommendations-container'),
             themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
             profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'),
             autocompleteResults: document.getElementById('autocomplete-results'), genreFilter: document.getElementById('genreFilter'),
-            yearFilter: document.getElementById('yearFilter'), clearFiltersBtn: document.getElementById('clearFiltersBtn')
         },
         updateForAuthState() {
             const u = state.currentUser;
@@ -282,31 +287,40 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     async function renderHomePage() {
         ui.manager.switchContent('inicio');
-        ui.manager.dom.homeContainer.innerHTML = ui.manager.renderLoader(t('loading'));
-        try {
-            const [popularData, recommendations] = await Promise.all([
-                api.manager.getPopularArtists(),
-                state.currentUser ? api.manager.getRecommendations() : Promise.resolve({ artists: [] })
-            ]);
-            
-            let html = '';
+        const { popularArtistsContainer, recommendationsContainer } = ui.manager.dom;
 
-            const popularGridHTML = popularData.artists && popularData.artists.length > 0 
-                ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('') 
+        popularArtistsContainer.innerHTML = ui.manager.renderLoader(t('loading'));
+        recommendationsContainer.innerHTML = state.currentUser ? ui.manager.renderLoader('') : '';
+
+        try {
+            let recommendations = { artists: [] };
+            if (state.currentUser) {
+                try {
+                    recommendations = await api.manager.getRecommendations();
+                } catch (recError) {
+                    console.error("Failed to get personalized recommendations:", recError);
+                }
+            }
+            const popularData = await api.manager.getPopularArtists();
+
+            const popularGridHTML = popularData.artists && popularData.artists.length > 0
+                ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('')
                 : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
-            html += `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${popularGridHTML}</div>`;
+            popularArtistsContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${popularGridHTML}</div>`;
 
             if (recommendations.artists && recommendations.artists.length > 0) {
                 const recommendationsGridHTML = recommendations.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('');
-                html += `<h2 class="section-title-main">${t('artistsYouMightLike')}</h2><div class="music-grid horizontal-music-grid">${recommendationsGridHTML}</div>`;
+                recommendationsContainer.innerHTML = `<h2 class="section-title-main">${t('artistsYouMightLike')}</h2><div class="music-grid horizontal-music-grid">${recommendationsGridHTML}</div>`;
+            } else {
+                recommendationsContainer.innerHTML = '';
             }
-
-            ui.manager.dom.homeContainer.innerHTML = html;
         } catch (e) {
             console.error("Error rendering homepage:", e);
-            ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
+            popularArtistsContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
+            recommendationsContainer.innerHTML = '';
         }
     }
+
 
     async function renderArtistView(artistId) {
         state.artistContextId = null;
@@ -862,8 +876,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 previewImage.style.opacity = userAvatar ? 1 : 0;
                 ui.manager.openModal(ui.manager.dom.avatarChangeModal);
             }
-            if (e.target.closest('#badgeQuizBtn')) {
-                startBadgeQuiz();
+            if (e.target.closest('#badgeQuizBtn') || e.target.closest('#startQuizBtn')) {
+                if (state.currentUser) {
+                    startBadgeQuiz();
+                } else {
+                    ui.manager.openModal(ui.manager.dom.loginModal);
+                }
             }
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
             if (e.target.closest('#takePhotoBtn')) startCamera();
@@ -906,7 +924,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (target === 'profile') renderProfilePage(); 
             else if (target === 'social') renderSocialPage();
-            else renderHomePage();
+            else if (target === 'inicio') renderHomePage();
+            else ui.manager.switchContent(target);
         }));
 
         document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); renderHomePage(); });
@@ -916,9 +935,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             clearTimeout(searchTimeout);
             const query = ui.manager.dom.searchInput.value.trim();
             const genre = ui.manager.dom.genreFilter.value;
-            const year = ui.manager.dom.yearFilter.value;
 
-            if (!query && !genre && !year) {
+            if (!query && !genre) {
                 if (document.getElementById('buscar').classList.contains('active')) renderHomePage();
                 return;
             }
@@ -930,7 +948,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 try {
                     let searchQuery = query;
                     if (genre) searchQuery += ` genre:"${genre}"`;
-                    if (year) searchQuery += ` year:${year}`;
 
                     const [spotifyResults, userResults] = await Promise.all([
                         api.manager.searchSpotify(searchQuery, 'artist,album', 20),
@@ -957,27 +974,20 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         ui.manager.dom.searchInput.addEventListener('input', performSearch);
         ui.manager.dom.genreFilter.addEventListener('change', performSearch);
-        ui.manager.dom.yearFilter.addEventListener('input', performSearch); // Use input for real-time update
-        ui.manager.dom.clearFiltersBtn.addEventListener('click', () => {
-            ui.manager.dom.searchInput.value = '';
-            ui.manager.dom.genreFilter.value = '';
-            ui.manager.dom.yearFilter.value = '';
-            performSearch();
-        });
     }
 
     const quizState = {
         questions: [
-            { text: "Quando ouve música, você geralmente:", options: [ { text: "Procura por novos artistas e bandas.", points: { discoverer: 3 } }, { text: "Ouve álbuns completos dos seus artistas favoritos.", points: { explorer: 3 } }, { text: "Cria grandes playlists com muitos artistas diferentes.", points: { collector: 3 } } ] },
-            { text: "Um amigo pede uma recomendação musical. Você sugere:", options: [ { text: "Um artista desconhecido que ele provavelmente nunca ouviu.", points: { discoverer: 3 } }, { text: "Um álbum específico que conta uma história.", points: { explorer: 3 } }, { text: "Uma playlist que você montou com mais de 100 músicas.", points: { collector: 3 } } ] },
-            { text: "Como você organiza sua música?", options: [ { text: "Por data de descoberta.", points: { discoverer: 2 } }, { text: "Por artista e depois por data de lançamento do álbum.", points: { explorer: 3 } }, { text: "Em grandes playlists baseadas em gênero.", points: { collector: 3 } } ] },
-            { text: "O que é mais importante para você em uma música?", options: [ { text: "A originalidade e o som inovador.", points: { discoverer: 3 } }, { text: "A coesão lírica e musical dentro de um álbum.", points: { explorer: 3 } }, { text: "A variedade e a quantidade de faixas que você pode adicionar à sua coleção.", points: { collector: 2 } } ] },
-            { text: "Você prefere:", options: [ { text: "Ir a shows de bandas pequenas e locais.", points: { discoverer: 3 } }, { text: "Ouvir a discografia completa de um artista em casa.", points: { explorer: 2 } }, { text: "Ir a grandes festivais com dezenas de artistas.", points: { collector: 3 } } ] },
-            { text: "Ao descobrir um novo artista, qual é sua primeira reação?", options: [ { text: "Ver se ele tem outros projetos ou artistas similares.", points: { discoverer: 3 } }, { text: "Ouvir seu álbum mais aclamado do início ao fim.", points: { explorer: 3 } }, { text: "Adicionar as melhores músicas dele à sua playlist principal.", points: { collector: 2 } } ] },
-            { text: "Seu histórico de streaming é majoritariamente composto por:", options: [ { text: "Artistas que você descobriu na última semana.", points: { discoverer: 3 } }, { text: "Alguns artistas, mas com muitas músicas diferentes deles.", points: { explorer: 2 } }, { text: "Uma quantidade enorme de artistas diferentes.", points: { collector: 3 } } ] },
-            { text: "O que te deixa mais animado?", options: [ { text: "Encontrar uma banda com menos de 1000 ouvintes.", points: { discoverer: 3 } }, { text: "Entender a evolução de um artista através de seus álbuns.", points: { explorer: 3 } }, { text: "Ver sua biblioteca de artistas seguidos ultrapassar um novo marco.", points: { collector: 3 } } ] },
-            { text: "Para você, uma coleção de música ideal tem:", options: [ { text: "Muitas raridades e lados B.", points: { discoverer: 2, explorer: 1 } }, { text: "Álbuns conceituais e discografias completas.", points: { explorer: 3 } }, { text: "O maior número possível de artistas e gêneros.", points: { collector: 3 } } ] },
-            { text: "Qual frase te descreve melhor?", options: [ { text: "Eu sou um caçador de tesouros musicais.", points: { discoverer: 3 } }, { text: "Eu sou um historiador musical.", points: { explorer: 3 } }, { text: "Eu sou um curador de museu musical.", points: { collector: 3 } } ] }
+            { textKey: "quizQ1", options: [ { textKey: "quizQ1O1", points: { discoverer: 3 } }, { textKey: "quizQ1O2", points: { explorer: 3 } }, { textKey: "quizQ1O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ2", options: [ { textKey: "quizQ2O1", points: { discoverer: 3 } }, { textKey: "quizQ2O2", points: { explorer: 3 } }, { textKey: "quizQ2O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ3", options: [ { textKey: "quizQ3O1", points: { discoverer: 2 } }, { textKey: "quizQ3O2", points: { explorer: 3 } }, { textKey: "quizQ3O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ4", options: [ { textKey: "quizQ4O1", points: { discoverer: 3 } }, { textKey: "quizQ4O2", points: { explorer: 3 } }, { textKey: "quizQ4O3", points: { collector: 2 } } ] },
+            { textKey: "quizQ5", options: [ { textKey: "quizQ5O1", points: { discoverer: 3 } }, { textKey: "quizQ5O2", points: { explorer: 2 } }, { textKey: "quizQ5O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ6", options: [ { textKey: "quizQ6O1", points: { discoverer: 3 } }, { textKey: "quizQ6O2", points: { explorer: 3 } }, { textKey: "quizQ6O3", points: { collector: 2 } } ] },
+            { textKey: "quizQ7", options: [ { textKey: "quizQ7O1", points: { discoverer: 3 } }, { textKey: "quizQ7O2", points: { explorer: 2 } }, { textKey: "quizQ7O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ8", options: [ { textKey: "quizQ8O1", points: { discoverer: 3 } }, { textKey: "quizQ8O2", points: { explorer: 3 } }, { textKey: "quizQ8O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ9", options: [ { textKey: "quizQ9O1", points: { discoverer: 2, explorer: 1 } }, { textKey: "quizQ9O2", points: { explorer: 3 } }, { textKey: "quizQ9O3", points: { collector: 3 } } ] },
+            { textKey: "quizQ10", options: [ { textKey: "quizQ10O1", points: { discoverer: 3 } }, { textKey: "quizQ10O2", points: { explorer: 3 } }, { textKey: "quizQ10O3", points: { collector: 3 } } ] }
         ],
         currentQuestion: 0,
         answers: {}
@@ -993,23 +1003,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderQuestion() {
-        const question = quizState.questions[quizState.currentQuestion];
+        const questionData = quizState.questions[quizState.currentQuestion];
         const questionContainer = document.getElementById('question-container');
         let optionsHTML = '';
-        question.options.forEach((option, index) => {
+        questionData.options.forEach((option, index) => {
             optionsHTML += `
                 <div class="quiz-option">
                     <input type="radio" id="option${index}" name="quiz" value="${index}" ${quizState.answers[quizState.currentQuestion] == index ? 'checked' : ''}>
-                    <label for="option${index}">${option.text}</label>
+                    <label for="option${index}">${t(option.textKey)}</label>
                 </div>
             `;
         });
         questionContainer.innerHTML = `
-            <p class="quiz-question">${quizState.currentQuestion + 1}. ${question.text}</p>
+            <p class="quiz-question">${quizState.currentQuestion + 1}. ${t(questionData.textKey)}</p>
             ${optionsHTML}
         `;
         document.getElementById('prevQuestionBtn').style.display = quizState.currentQuestion > 0 ? 'inline-block' : 'none';
-        document.getElementById('nextQuestionBtn').textContent = (quizState.currentQuestion === quizState.questions.length - 1) ? 'Finish' : t('next');
+        document.getElementById('nextQuestionBtn').textContent = (quizState.currentQuestion === quizState.questions.length - 1) ? t('finish') : t('next');
     }
 
     async function finishQuiz() {
@@ -1075,6 +1085,34 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function init() {
         try {
+            // Adicionar chaves de tradução do quiz que faltavam
+            Object.assign(translations.en, {
+                finish: 'Finish',
+                quizQ1: "When you listen to music, you usually:", quizQ1O1: "Look for new artists and bands.", quizQ1O2: "Listen to complete albums from your favorite artists.", quizQ1O3: "Create large playlists with many different artists.",
+                quizQ2: "A friend asks for a music recommendation. You suggest:", quizQ2O1: "An unknown artist they've probably never heard of.", quizQ2O2: "A specific album that tells a story.", quizQ2O3: "A playlist you made with over 100 songs.",
+                quizQ3: "How do you organize your music?", quizQ3O1: "By discovery date.", quizQ3O2: "By artist and then by album release date.", quizQ3O3: "In large genre-based playlists.",
+                quizQ4: "What's most important to you in a song?", quizQ4O1: "Originality and innovative sound.", quizQ4O2: "Lyrical and musical cohesion within an album.", quizQ4O3: "The variety and number of tracks you can add to your collection.",
+                quizQ5: "You prefer to:", quizQ5O1: "Go to small, local band shows.", quizQ5O2: "Listen to an artist's entire discography at home.", quizQ5O3: "Go to large festivals with dozens of artists.",
+                quizQ6: "When you discover a new artist, what's your first reaction?", quizQ6O1: "See if they have other projects or similar artists.", quizQ6O2: "Listen to their most acclaimed album from start to finish.", quizQ6O3: "Add their best songs to your main playlist.",
+                quizQ7: "Your streaming history is mostly made up of:", quizQ7O1: "Artists you discovered in the last week.", quizQ7O2: "A few artists, but with many different songs by them.", quizQ7O3: "A huge number of different artists.",
+                quizQ8: "What excites you the most?", quizQ8O1: "Finding a band with fewer than 1000 listeners.", quizQ8O2: "Understanding an artist's evolution through their albums.", quizQ8O3: "Seeing your library of followed artists pass a new milestone.",
+                quizQ9: "For you, an ideal music collection has:", quizQ9O1: "Many rarities and B-sides.", quizQ9O2: "Concept albums and complete discographies.", quizQ9O3: "The largest possible number of artists and genres.",
+                quizQ10: "Which phrase best describes you?", quizQ10O1: "I am a musical treasure hunter.", quizQ10O2: "I am a music historian.", quizQ10O3: "I am a music museum curator."
+            });
+            Object.assign(translations.pt, {
+                finish: 'Finalizar',
+                quizQ1: "Quando ouve música, você geralmente:", quizQ1O1: "Procura por novos artistas e bandas.", quizQ1O2: "Ouve álbuns completos dos seus artistas favoritos.", quizQ1O3: "Cria grandes playlists com muitos artistas diferentes.",
+                quizQ2: "Um amigo pede uma recomendação musical. Você sugere:", quizQ2O1: "Um artista desconhecido que ele provavelmente nunca ouviu.", quizQ2O2: "Um álbum específico que conta uma história.", quizQ2O3: "Uma playlist que você montou com mais de 100 músicas.",
+                quizQ3: "Como você organiza sua música?", quizQ3O1: "Por data de descoberta.", quizQ3O2: "Por artista e depois por data de lançamento do álbum.", quizQ3O3: "Em grandes playlists baseadas em gênero.",
+                quizQ4: "O que é mais importante para você em uma música?", quizQ4O1: "A originalidade e o som inovador.", quizQ4O2: "A coesão lírica e musical dentro de um álbum.", quizQ4O3: "A variedade e a quantidade de faixas que você pode adicionar à sua coleção.",
+                quizQ5: "Você prefere:", quizQ5O1: "Ir a shows de bandas pequenas e locais.", quizQ5O2: "Ouvir a discografia completa de um artista em casa.", quizQ5O3: "Ir a grandes festivais com dezenas de artistas.",
+                quizQ6: "Ao descobrir um novo artista, qual é sua primeira reação?", quizQ6O1: "Ver se ele tem outros projetos ou artistas similares.", quizQ6O2: "Ouvir seu álbum mais aclamado do início ao fim.", quizQ6O3: "Adicionar as melhores músicas dele à sua playlist principal.",
+                quizQ7: "Seu histórico de streaming é majoritariamente composto por:", quizQ7O1: "Artistas que você descobriu na última semana.", quizQ7O2: "Alguns artistas, mas com muitas músicas diferentes deles.", quizQ7O3: "Uma quantidade enorme de artistas diferentes.",
+                quizQ8: "O que te deixa mais animado?", quizQ8O1: "Encontrar uma banda com menos de 1000 ouvintes.", quizQ8O2: "Entender a evolução de um artista através de seus álbuns.", quizQ8O3: "Ver sua biblioteca de artistas seguidos ultrapassar um novo marco.",
+                quizQ9: "Para você, uma coleção de música ideal tem:", quizQ9O1: "Muitas raridades e lados B.", quizQ9O2: "Álbuns conceituais e discografias completas.", quizQ9O3: "O maior número possível de artistas e gêneros.",
+                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
+            });
+            
             translateUI();
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();

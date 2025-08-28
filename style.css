@@ -406,25 +406,6 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
     box-shadow: 0 0 10px var(--primary-glow);
 }
 
-#clearFiltersBtn {
-    background-color: var(--card-hover-bg);
-    color: var(--light-gray-text);
-    border: 1px solid var(--border-color);
-    padding: 8px 18px;
-    border-radius: 50px;
-    cursor: pointer;
-    font-weight: bold;
-    font-family: var(--body-font);
-    transition: all 0.2s;
-    flex-shrink: 0;
-}
-
-#clearFiltersBtn:hover {
-    background-color: var(--primary-color);
-    color: #121212;
-    border-color: var(--primary-color);
-}
-
 .autocomplete-results {
     position: absolute;
     top: 100%;
@@ -468,7 +449,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 /* --- Página do Esquadrão de Insígnias --- */
 .squad-page-container {
     max-width: 800px;
-    margin: 20px auto;
+    margin: 80px auto; /* Increased margin for better spacing on home page */
     text-align: center;
     padding: 20px;
 }
@@ -549,5 +530,5 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
 
 @media (max-width: 500px) {
     .advanced-filters { flex-wrap: wrap; }
-    .advanced-filters select, .advanced-filters button { width: 100%; margin-bottom: 5px; }
+    .advanced-filters select { width: 100%; margin-bottom: 5px; }
 }

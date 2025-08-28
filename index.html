@@ -19,7 +19,6 @@
             <div class="logo"><h1>Lyrica</h1></div>
             <nav class="main-nav">
                 <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span data-translate-key="home">Home</span></div>
-                <div class="nav-item" data-target="squad"><i class="fas fa-award"></i><span data-translate-key="squad">Squad</span></div>
                 <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span data-translate-key="friends">Friends</span></div>
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
@@ -37,7 +36,6 @@
                     <div class="logo-mobile"><h1>Lyrica</h1></div>
                      <nav class="main-nav-mobile">
                         <div class="nav-item active" data-target="inicio" data-translate-key="home">Home</div>
-                        <div class="nav-item" data-target="squad" data-translate-key="squad">Squad</div>
                         <div class="nav-item" data-target="social" data-translate-key="friends">Friends</div>
                         <div class="nav-item" data-target="profile" id="profileNavItemMobile" data-translate-key="profile">Profile</div>
                         <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link-mobile">
@@ -60,7 +58,6 @@
                             <option value="jazz">Jazz</option>
                             <option value="classical">Classical</option>
                         </select>
-                        <button id="clearFiltersBtn" data-translate-key="clearFilters">Clear</button>
                     </div>
                     <div id="autocomplete-results" class="autocomplete-results"></div>
                 </div>
@@ -87,32 +84,39 @@
             <div class="main-content">
                 <div id="inicio" class="content-section active">
                     <div id="home-container">
-                        <!-- Home Page content will be injected here -->
-                    </div>
-                </div>
-                <div id="squad" class="content-section">
-                    <div class="squad-page-container">
-                        <h2 class="section-title-main" data-translate-key="squadTitle">Badge Squadron</h2>
-                        <p class="squad-description" data-translate-key="squadDescription">
-                            What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!
-                        </p>
-                        <div class="squad-badges-preview">
-                            <div class="badge-preview-item">
-                                <img src="img/Discoverer.png" alt="Discoverer Badge">
-                                <h3 data-translate-key="badgeDiscovererTitle">Discoverer</h3>
-                            </div>
-                            <div class="badge-preview-item">
-                                <img src="img/Explorer.png" alt="Explorer Badge">
-                                <h3 data-translate-key="badgeExplorerTitle">Explorer</h3>
-                            </div>
-                             <div class="badge-preview-item">
-                                <img src="img/Collector.png" alt="Collector Badge">
-                                <h3 data-translate-key="badgeCollectorTitle">Collector</h3>
-                            </div>
+                        <div id="popular-artists-container">
+                            <!-- Popular artists will be injected here by JS -->
                         </div>
-                        <button class="btn-primary btn-squad-start" id="startQuizBtn"><i class="fas fa-pen-ruler"></i> <span data-translate-key="startQuiz">Discover Your Badge</span></button>
+
+                        <!-- Squad Content Moved Here -->
+                        <div class="squad-page-container">
+                            <h2 class="section-title-main" data-translate-key="squadTitle">Badge Squadron</h2>
+                            <p class="squad-description" data-translate-key="squadDescription">
+                                What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!
+                            </p>
+                            <div class="squad-badges-preview">
+                                <div class="badge-preview-item">
+                                    <img src="img/Discoverer.png" alt="Discoverer Badge">
+                                    <h3 data-translate-key="badgeDiscovererTitle">Discoverer</h3>
+                                </div>
+                                <div class="badge-preview-item">
+                                    <img src="img/Explorer.png" alt="Explorer Badge">
+                                    <h3 data-translate-key="badgeExplorerTitle">Explorer</h3>
+                                </div>
+                                 <div class="badge-preview-item">
+                                    <img src="img/Collector.png" alt="Collector Badge">
+                                    <h3 data-translate-key="badgeCollectorTitle">Collector</h3>
+                                </div>
+                            </div>
+                            <button class="btn-primary btn-squad-start" id="startQuizBtn"><i class="fas fa-pen-ruler"></i> <span data-translate-key="startQuiz">Discover Your Badge</span></button>
+                        </div>
+                        
+                        <div id="recommendations-container">
+                             <!-- Recommendations will be injected here by JS -->
+                        </div>
                     </div>
                 </div>
+                <div id="squad" class="content-section"></div> <!-- This can now be removed or left empty -->
                 <div id="buscar" class="content-section"><h2 class="section-title-main" data-translate-key="searchResults">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
                 <div id="social" class="content-section">
