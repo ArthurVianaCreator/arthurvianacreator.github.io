@@ -43,6 +43,30 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomInModal { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+/* === INÍCIO DA ALTERAÇÃO === */
+@keyframes questionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes resultBadgeZoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+/* === FIM DA ALTERAÇÃO === */
+
+
 /* MAIN LAYOUT */
 .main-container { display: flex; height: 100vh; }
 .sidebar { width: 240px; background: var(--dark-bg); border-right: 1px solid var(--border-color); padding: 24px; display: flex; flex-direction: column; flex-shrink: 0; transition: background 0.3s, border-color 0.3s; }
@@ -468,14 +492,12 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     text-align: center;
 }
 
-/* === INÍCIO DA CORREÇÃO === */
 .badge-preview-item img {
-    width: 80px;  /* Reduzido de 100px */
-    height: 80px; /* Reduzido de 100px */
+    width: 80px;
+    height: 80px;
     margin-bottom: 10px;
     transition: transform 0.3s;
 }
-/* === FIM DA CORREÇÃO === */
 
 .badge-preview-item:hover img {
     transform: scale(1.1);
@@ -494,39 +516,120 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     align-items: center;
     gap: 10px;
     box-shadow: 0 4px 20px var(--primary-glow);
-    position: relative; /* Garante que o z-index funcione */
-    z-index: 2;         /* Coloca o botão acima de outros elementos */
+    position: relative; 
+    z-index: 2;         
 }
 .btn-squad-start:hover {
     transform: scale(1.05);
     filter: brightness(1.1);
 }
 
-/* BADGE QUIZ MODAL */
-.quiz-question { font-size: 1.1rem; margin-bottom: 20px; font-weight: 500; color: var(--white-text); }
-.quiz-option { margin-bottom: 15px; text-align: left; }
+/* === INÍCIO DAS ALTERAÇÕES NO BADGE QUIZ MODAL === */
+
+#badgeQuizModal .modal-content {
+    max-width: 500px;
+    padding: 25px;
+}
+
+#quiz-container {
+    min-height: 350px;
+}
+
+#question-container.changing {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+#question-container {
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+#question-container .quiz-question, #question-container .quiz-options-list {
+    animation: questionFadeIn 0.4s ease-out forwards;
+}
+
+.quiz-progress-container {
+    width: 100%;
+    height: 8px;
+    background-color: var(--dark-bg);
+    border-radius: 4px;
+    margin-bottom: 25px;
+    overflow: hidden;
+}
+
+.quiz-progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.4s ease-out;
+}
+
+.quiz-question { 
+    font-family: var(--elegant-font);
+    font-size: 1.3rem; 
+    margin-bottom: 25px; 
+    font-weight: 700; 
+    color: var(--white-text); 
+    line-height: 1.4;
+}
+.quiz-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.quiz-option { 
+    margin-bottom: 0; 
+    text-align: left; 
+}
 .quiz-option input[type="radio"] { display: none; }
 .quiz-option label {
     display: block;
-    padding: 12px 15px;
+    padding: 15px 20px;
     background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease-in-out;
 }
-.quiz-option label:hover { background-color: var(--dark-bg); }
+.quiz-option label:hover { 
+    background-color: var(--card-hover-bg); 
+    border-color: var(--gray-text);
+    transform: translateX(5px);
+}
 .quiz-option input[type="radio"]:checked + label {
     background-color: var(--primary-color);
     color: #121212;
     border-color: var(--primary-color);
     font-weight: bold;
+    box-shadow: 0 0 15px var(--primary-glow);
 }
-.quiz-navigation { display: flex; justify-content: space-between; margin-top: 25px; }
+.quiz-navigation { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-top: 30px; 
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
 #quiz-result { text-align: center; }
-#quiz-result img { width: 120px; height: 120px; margin: 10px auto 15px; }
-#quiz-result h3 { color: var(--primary-color); font-family: var(--elegant-font); font-size: 1.5rem; margin-bottom: 10px; }
-#quiz-result p { line-height: 1.5; margin-bottom: 20px; }
+#quiz-result img { 
+    width: 120px; 
+    height: 120px; 
+    margin: 10px auto 15px; 
+    animation: resultBadgeZoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+#quiz-result h3 { 
+    color: var(--primary-color); 
+    font-family: var(--elegant-font); 
+    font-size: 1.8rem; 
+    margin-bottom: 10px; 
+}
+#quiz-result p { 
+    line-height: 1.6; 
+    margin-bottom: 25px; 
+    font-size: 1rem;
+    color: var(--light-gray-text);
+}
+/* === FIM DAS ALTERAÇÕES NO BADGE QUIZ MODAL === */
+
 
 /* MOBILE RESPONSIVENESS FOR SEARCH */
 @media (max-width: 950px) {

@@ -282,15 +282,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); 
         },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
-        
-        // === INÍCIO DA CORREÇÃO ===
         clearModalMessages(m) { 
             const errorEl = m.querySelector('.modal-error');
             if (errorEl) {
                 errorEl.textContent = ''; 
             }
         }
-        // === FIM DA CORREÇÃO ===
     };
     
     async function renderHomePage() {
@@ -997,25 +994,34 @@ document.addEventListener('DOMContentLoaded', async function() {
             { textKey: "quizQ9", options: [ { textKey: "quizQ9O1", points: { discoverer: 2, explorer: 1 } }, { textKey: "quizQ9O2", points: { explorer: 3 } }, { textKey: "quizQ9O3", points: { collector: 3 } } ] },
             { textKey: "quizQ10", options: [ { textKey: "quizQ10O1", points: { discoverer: 3 } }, { textKey: "quizQ10O2", points: { explorer: 3 } }, { textKey: "quizQ10O3", points: { collector: 3 } } ] }
         ],
+        // === INÍCIO DA ALTERAÇÃO ===
+        shuffledQuestions: [],
+        // === FIM DA ALTERAÇÃO ===
         currentQuestion: 0,
         answers: {}
     };
 
+    // === INÍCIO DA ALTERAÇÃO ===
+    /**
+     * Shuffles array in-place using the Fisher-Yates algorithm.
+     * @param {Array} array An array containing the items.
+     */
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
     function startBadgeQuiz() {
         const modal = ui.manager.dom.badgeQuizModal;
-        if (!modal) {
-            console.error("Badge quiz modal not found!");
-            return;
-        }
-
         const quizContainer = modal.querySelector('#quiz-container');
         const resultContainer = modal.querySelector('#quiz-result');
 
-        if (!quizContainer || !resultContainer) {
-            console.error("Quiz containers not found inside the modal!");
-            return;
-        }
-
+        // Shuffle a copy of the questions array
+        quizState.shuffledQuestions = [...quizState.questions];
+        shuffleArray(quizState.shuffledQuestions);
+        
         quizState.currentQuestion = 0;
         quizState.answers = {};
 
@@ -1027,9 +1033,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderQuestion() {
-        const questionData = quizState.questions[quizState.currentQuestion];
+        const questionData = quizState.shuffledQuestions[quizState.currentQuestion];
         const questionContainer = document.getElementById('question-container');
-        if (!questionContainer) return;
+        const progressBar = document.getElementById('quizProgressBar');
+
+        // Update progress bar
+        const progress = ((quizState.currentQuestion) / quizState.shuffledQuestions.length) * 100;
+        progressBar.style.width = `${progress}%`;
 
         let optionsHTML = '';
         questionData.options.forEach((option, index) => {
@@ -1040,27 +1050,39 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             `;
         });
-        questionContainer.innerHTML = `
-            <p class="quiz-question">${quizState.currentQuestion + 1}. ${t(questionData.textKey)}</p>
-            ${optionsHTML}
-        `;
+
+        // Add a class to trigger the exit animation, then update content after a delay
+        questionContainer.classList.add('changing');
+        setTimeout(() => {
+            questionContainer.innerHTML = `
+                <p class="quiz-question">${t(questionData.textKey)}</p>
+                <div class="quiz-options-list">${optionsHTML}</div>
+            `;
+            questionContainer.classList.remove('changing');
+        }, 200); // This delay should match the animation duration
         
         const prevBtn = document.getElementById('prevQuestionBtn');
         const nextBtn = document.getElementById('nextQuestionBtn');
 
         if (prevBtn) prevBtn.style.display = quizState.currentQuestion > 0 ? 'inline-block' : 'none';
-        if (nextBtn) nextBtn.textContent = (quizState.currentQuestion === quizState.questions.length - 1) ? t('finish') : t('next');
+        if (nextBtn) nextBtn.textContent = (quizState.currentQuestion === quizState.shuffledQuestions.length - 1) ? t('finish') : t('next');
     }
+    // === FIM DA ALTERAÇÃO ===
 
     async function finishQuiz() {
         let scores = { discoverer: 0, explorer: 0, collector: 0 };
+        // === INÍCIO DA ALTERAÇÃO ===
+        // Update final progress bar state
+        document.getElementById('quizProgressBar').style.width = '100%';
+
         for (const questionIndex in quizState.answers) {
             const answerIndex = quizState.answers[questionIndex];
-            const points = quizState.questions[questionIndex].options[answerIndex].points;
+            const points = quizState.shuffledQuestions[questionIndex].options[answerIndex].points;
             for (const badge in points) {
                 scores[badge] = (scores[badge] || 0) + points[badge];
             }
         }
+        // === FIM DA ALTERAÇÃO ===
         
         let resultBadge = 'discoverer';
         if (scores.explorer > scores.discoverer && scores.explorer > scores.collector) {
@@ -1090,11 +1112,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('nextQuestionBtn').addEventListener('click', () => {
         const selectedOption = document.querySelector('input[name="quiz"]:checked');
         if (!selectedOption) {
-            alert("Please select an option.");
+            // Replaced alert with a more subtle error message
+            const modal = ui.manager.dom.badgeQuizModal;
+            ui.manager.showModalError(modal, "Please select an answer.");
             return;
         }
+        ui.manager.clearModalMessages(ui.manager.dom.badgeQuizModal);
         quizState.answers[quizState.currentQuestion] = selectedOption.value;
-        if (quizState.currentQuestion < quizState.questions.length - 1) {
+        // === INÍCIO DA ALTERAÇÃO ===
+        if (quizState.currentQuestion < quizState.shuffledQuestions.length - 1) {
+        // === FIM DA ALTERAÇÃO ===
             quizState.currentQuestion++;
             renderQuestion();
         } else {
@@ -1104,6 +1131,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('prevQuestionBtn').addEventListener('click', () => {
         if (quizState.currentQuestion > 0) {
+            // Clear error message when navigating
+            ui.manager.clearModalMessages(ui.manager.dom.badgeQuizModal);
             quizState.currentQuestion--;
             renderQuestion();
         }

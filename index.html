@@ -167,11 +167,14 @@
     <div id="badgeQuizModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal-btn">&times;</button>
-            <!-- === INÍCIO DA CORREÇÃO === -->
             <p class="modal-error"></p>
-            <!-- === FIM DA CORREÇÃO === -->
             <div id="quiz-container">
                 <h2 data-translate-key="badgeQuizTitle">Discover Your Music Profile</h2>
+                <!-- === INÍCIO DA ALTERAÇÃO === -->
+                <div class="quiz-progress-container">
+                    <div class="quiz-progress-bar" id="quizProgressBar"></div>
+                </div>
+                <!-- === FIM DA ALTERAÇÃO === -->
                 <div id="question-container"></div>
                 <div class="quiz-navigation">
                     <button id="prevQuestionBtn" class="btn-secondary" style="display: none;" data-translate-key="previous">Previous</button>
