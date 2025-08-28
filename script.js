@@ -282,7 +282,15 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); 
         },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
-        clearModalMessages(m) { m.querySelector('.modal-error').textContent = ''; }
+        
+        // === INÍCIO DA CORREÇÃO ===
+        clearModalMessages(m) { 
+            const errorEl = m.querySelector('.modal-error');
+            if (errorEl) {
+                errorEl.textContent = ''; 
+            }
+        }
+        // === FIM DA CORREÇÃO ===
     };
     
     async function renderHomePage() {
@@ -993,8 +1001,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         answers: {}
     };
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // A função foi reescrita para ser mais robusta, verificando se os elementos existem antes de tentar usá-los.
     function startBadgeQuiz() {
         const modal = ui.manager.dom.badgeQuizModal;
         if (!modal) {
@@ -1016,15 +1022,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         quizContainer.style.display = 'block';
         resultContainer.style.display = 'none';
         
-        renderQuestion(); // A função renderQuestion continua a mesma
+        renderQuestion();
         ui.manager.openModal(modal);
     }
-    // --- FIM DA CORREÇÃO ---
 
     function renderQuestion() {
         const questionData = quizState.questions[quizState.currentQuestion];
         const questionContainer = document.getElementById('question-container');
-        if (!questionContainer) return; // Adicionada verificação de segurança
+        if (!questionContainer) return;
 
         let optionsHTML = '';
         questionData.options.forEach((option, index) => {
@@ -1110,7 +1115,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function init() {
         try {
-            // Adicionar chaves de tradução do quiz que faltavam
             Object.assign(translations.en, {
                 finish: 'Finish',
                 quizQ1: "When you listen to music, you usually:", quizQ1O1: "Look for new artists and bands.", quizQ1O2: "Listen to complete albums from your favorite artists.", quizQ1O3: "Create large playlists with many different artists.",
@@ -1138,11 +1142,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
             });
             
-            // --- INÍCIO DA CORREÇÃO ---
-            // Movemos setupEventListeners para o início para garantir que a página seja interativa o mais rápido possível.
             setupEventListeners();
-            // --- FIM DA CORREÇÃO ---
-
             translateUI();
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();
