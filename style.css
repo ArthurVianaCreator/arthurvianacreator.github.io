@@ -153,11 +153,9 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 
 /* REVISED TAB STYLE TO MATCH IMAGE */
 .profile-tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
-.tab-link { background: #e0e0e0; border: 1px solid #bdbdbd; color: #212121; padding: 8px 16px; border-radius: 4px; font-family: var(--body-font); font-weight: 500; font-size: 1rem; cursor: pointer; transition: all 0.2s ease-in-out; }
-body:not(.light-theme) .tab-link { background: #333; border-color: #555; color: #f1f1f1; }
-.tab-link.active { font-weight: 700; }
-body:not(.light-theme) .tab-link.active { background: #f1f1f1; color: #121212; border-color: #f1f1f1; }
-body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-color: #212121; }
+.tab-link { background: var(--card-hover-bg); border: 1px solid var(--border-color); color: var(--light-gray-text); padding: 8px 16px; border-radius: 4px; font-family: var(--body-font); font-weight: 500; font-size: 1rem; cursor: pointer; transition: all 0.2s ease-in-out; }
+.tab-link:hover { color: var(--white-text); border-color: var(--gray-text); }
+.tab-link.active { font-weight: 700; background: var(--primary-color); color: #121212; border-color: var(--primary-color); }
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: fadeInUp 0.5s ease-out forwards; }
 
@@ -359,6 +357,7 @@ body.light-theme .tab-link.active { background: #212121; color: #f1f1f1; border-
     .user-dropdown { right: 0; }
     .main-nav-mobile { gap: 10px; font-size: 0.9rem; }
     .modal-actions-grid { grid-template-columns: 1fr; }
+    .squad-badges-preview { flex-direction: column; gap: 20px; }
 }
 
 /* SCROLLBAR */
