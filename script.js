@@ -993,18 +993,39 @@ document.addEventListener('DOMContentLoaded', async function() {
         answers: {}
     };
 
+    // --- INÍCIO DA CORREÇÃO ---
+    // A função foi reescrita para ser mais robusta, verificando se os elementos existem antes de tentar usá-los.
     function startBadgeQuiz() {
+        const modal = ui.manager.dom.badgeQuizModal;
+        if (!modal) {
+            console.error("Badge quiz modal not found!");
+            return;
+        }
+
+        const quizContainer = modal.querySelector('#quiz-container');
+        const resultContainer = modal.querySelector('#quiz-result');
+
+        if (!quizContainer || !resultContainer) {
+            console.error("Quiz containers not found inside the modal!");
+            return;
+        }
+
         quizState.currentQuestion = 0;
         quizState.answers = {};
-        document.getElementById('quiz-container').style.display = 'block';
-        document.getElementById('quiz-result').style.display = 'none';
-        renderQuestion();
-        ui.manager.openModal(ui.manager.dom.badgeQuizModal);
+
+        quizContainer.style.display = 'block';
+        resultContainer.style.display = 'none';
+        
+        renderQuestion(); // A função renderQuestion continua a mesma
+        ui.manager.openModal(modal);
     }
+    // --- FIM DA CORREÇÃO ---
 
     function renderQuestion() {
         const questionData = quizState.questions[quizState.currentQuestion];
         const questionContainer = document.getElementById('question-container');
+        if (!questionContainer) return; // Adicionada verificação de segurança
+
         let optionsHTML = '';
         questionData.options.forEach((option, index) => {
             optionsHTML += `
@@ -1018,8 +1039,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             <p class="quiz-question">${quizState.currentQuestion + 1}. ${t(questionData.textKey)}</p>
             ${optionsHTML}
         `;
-        document.getElementById('prevQuestionBtn').style.display = quizState.currentQuestion > 0 ? 'inline-block' : 'none';
-        document.getElementById('nextQuestionBtn').textContent = (quizState.currentQuestion === quizState.questions.length - 1) ? t('finish') : t('next');
+        
+        const prevBtn = document.getElementById('prevQuestionBtn');
+        const nextBtn = document.getElementById('nextQuestionBtn');
+
+        if (prevBtn) prevBtn.style.display = quizState.currentQuestion > 0 ? 'inline-block' : 'none';
+        if (nextBtn) nextBtn.textContent = (quizState.currentQuestion === quizState.questions.length - 1) ? t('finish') : t('next');
     }
 
     async function finishQuiz() {
