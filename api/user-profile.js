@@ -1,5 +1,3 @@
-// pages/api/user-profile.js
-
 import { createClient } from '@vercel/kv';
 
 export default async function handler(req, res) {

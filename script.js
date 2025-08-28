@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeExplorerTitle: 'Explorer', badgeExplorerDesc: "Not just the hits! This Explorer dives deep into discographies, discovering every track and B-side.",
             noDescription: 'No description provided.', editDescription: 'Edit Description', saveDescription: 'Save Description', cancelEdit: 'Cancel',
             descriptionCharCount: '{0}/200 characters', followLimitTitle: 'Artist Follow Limit',
+            artistsYouMightLike: 'Artists You Might Like', takeBadgeQuiz: 'Take Badge Quiz', badgeQuizTitle: 'Discover Your Music Profile',
+            quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', clearFilters: 'Clear'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -72,6 +74,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Não se contenta com os hits! Este Explorador mergulha fundo nas discografias, descobrindo cada faixa e lado B.',
             noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
             descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Artistas seguidos',
+            artistsYouMightLike: 'Artistas que você pode gostar', takeBadgeQuiz: 'Responder Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
+            quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', clearFilters: 'Limpar'
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -134,10 +138,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
         fetchUser: () => api.manager._request('user', 'GET'),
         updateUser: (d) => api.manager._request('user', 'PUT', d),
+        updateUserBadge: (badge) => api.manager._request('user-badge', 'POST', { badge }),
         manageFriend: (targetName, action) => api.manager._request('friends', 'POST', { targetName, action }),
         fetchPublicProfile: (name) => api.manager._request(`user-profile?name=${encodeURIComponent(name)}`),
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
+        getRecommendations: () => api.manager._request('recommendations', 'GET'),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
@@ -192,9 +198,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
+            badgeQuizModal: document.getElementById('badgeQuizModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'), homeContainer: document.getElementById('home-container'),
             themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
             profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'),
+            autocompleteResults: document.getElementById('autocomplete-results'), genreFilter: document.getElementById('genreFilter'),
+            yearFilter: document.getElementById('yearFilter'), clearFiltersBtn: document.getElementById('clearFiltersBtn')
         },
         updateForAuthState() {
             const u = state.currentUser;
@@ -240,8 +249,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
             const sub = item.type === 'artist' ? (item.genres?.[0] || t('artists')) : (item.artists?.map(a => a.name).join(', ') || t('albums'));
             const rankingHTML = ranking ? `<div class="ranking-badge">${ranking}</div>` : '';
+            const isFollowed = item.type === 'artist' && auth.manager.isFollowing(item.id);
+            const followedIndicator = isFollowed ? `<div class="followed-indicator"><i class="fas fa-check"></i></div>` : '';
             return `<div class="music-card" style="animation-delay: ${index * 50}ms">
                         ${rankingHTML}
+                        ${followedIndicator}
                         <div class="music-card-content" data-type="${item.type}" data-id="${item.id}">
                             <div class="music-img"><img src="${img}" alt="${item.name}"></div>
                             <div class="music-title">${item.name}</div>
@@ -273,8 +285,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.homeContainer.innerHTML = ui.manager.renderLoader(t('loading'));
         try {
             const popularData = await api.manager.getPopularArtists();
-            const gridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('') : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
-            ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${gridHTML}</div>`;
+            const recommendations = state.currentUser ? await api.manager.getRecommendations() : { artists: [] };
+            
+            let html = '';
+
+            const popularGridHTML = popularData.artists && popularData.artists.length > 0 ? popularData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index, index + 1)).join('') : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
+            html += `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${popularGridHTML}</div>`;
+
+            if (recommendations.artists && recommendations.artists.length > 0) {
+                const recommendationsGridHTML = recommendations.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('');
+                html += `<h2 class="section-title-main">${t('artistsYouMightLike')}</h2><div class="music-grid horizontal-music-grid">${recommendationsGridHTML}</div>`;
+            }
+
+            ui.manager.dom.homeContainer.innerHTML = html;
         } catch (e) {
             ui.manager.dom.homeContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
         }
@@ -834,6 +857,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 previewImage.style.opacity = userAvatar ? 1 : 0;
                 ui.manager.openModal(ui.manager.dom.avatarChangeModal);
             }
+            if (e.target.closest('#badgeQuizBtn')) {
+                startBadgeQuiz();
+            }
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
             if (e.target.closest('#takePhotoBtn')) startCamera();
             if (e.target.closest('#captureBtn')) capturePhoto();
@@ -881,27 +907,166 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); renderHomePage(); });
         
         let searchTimeout;
-        ui.manager.dom.searchInput.addEventListener('input', e => {
+        const performSearch = () => {
             clearTimeout(searchTimeout);
-            const query = e.target.value.trim();
-            if (!query) { if (document.getElementById('buscar').classList.contains('active')) renderHomePage(); return; }
+            const query = ui.manager.dom.searchInput.value.trim();
+            const genre = ui.manager.dom.genreFilter.value;
+            const year = ui.manager.dom.yearFilter.value;
+
+            if (!query && !genre && !year) {
+                if (document.getElementById('buscar').classList.contains('active')) renderHomePage();
+                return;
+            }
+
             ui.manager.switchContent('buscar');
             ui.manager.dom.searchResultsContainer.innerHTML = ui.manager.renderLoader(t('loading'));
+
             searchTimeout = setTimeout(async () => {
                 try {
-                    const [spotifyResults, userResults] = await Promise.all([api.manager.searchSpotify(query, 'artist,album', 10), api.manager.searchUsers(query)]);
+                    let searchQuery = query;
+                    if (genre) searchQuery += ` genre:"${genre}"`;
+                    if (year) searchQuery += ` year:${year}`;
+
+                    const [spotifyResults, userResults] = await Promise.all([
+                        api.manager.searchSpotify(searchQuery, 'artist,album', 20),
+                        query ? api.manager.searchUsers(query) : Promise.resolve([])
+                    ]);
+
                     let html = '';
-                    if (userResults && userResults.length > 0) html += `<h2 class="section-title-main">${t('users')}</h2><div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
-                    if (spotifyResults.artists?.items.length > 0) html += `<h2 class="section-title-main">${t('artists')}</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
-                    if (spotifyResults.albums?.items.length > 0) html += `<h2 class="section-title-main">${t('albums')}</h2><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                    if (userResults && userResults.length > 0) {
+                        html += `<h2 class="section-title-main">${t('users')}</h2><div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
+                    }
+                    if (spotifyResults.artists?.items.length > 0) {
+                        html += `<h2 class="section-title-main">${t('artists')}</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                    }
+                    if (spotifyResults.albums?.items.length > 0) {
+                        html += `<h2 class="section-title-main">${t('albums')}</h2><div class="music-grid">${spotifyResults.albums.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
+                    }
                     ui.manager.dom.searchResultsContainer.innerHTML = html || `<p class="search-message">${t('noResultsFound')}</p>`;
                 } catch (error) {
                     console.error("Search Error:", error);
                     ui.manager.dom.searchResultsContainer.innerHTML = `<p class="search-message">${t('searchFailed')}</p>`;
                 }
             }, 500);
+        };
+
+        ui.manager.dom.searchInput.addEventListener('input', performSearch);
+        ui.manager.dom.genreFilter.addEventListener('change', performSearch);
+        ui.manager.dom.yearFilter.addEventListener('change', performSearch);
+        ui.manager.dom.clearFiltersBtn.addEventListener('click', () => {
+            ui.manager.dom.searchInput.value = '';
+            ui.manager.dom.genreFilter.value = '';
+            ui.manager.dom.yearFilter.value = '';
+            performSearch();
         });
     }
+
+    const quizState = {
+        questions: [
+            { text: "Quando ouve música, você geralmente:", options: [ { text: "Procura por novos artistas e bandas.", points: { discoverer: 3 } }, { text: "Ouve álbuns completos dos seus artistas favoritos.", points: { explorer: 3 } }, { text: "Cria grandes playlists com muitos artistas diferentes.", points: { collector: 3 } } ] },
+            { text: "Um amigo pede uma recomendação musical. Você sugere:", options: [ { text: "Um artista desconhecido que ele provavelmente nunca ouviu.", points: { discoverer: 3 } }, { text: "Um álbum específico que conta uma história.", points: { explorer: 3 } }, { text: "Uma playlist que você montou com mais de 100 músicas.", points: { collector: 3 } } ] },
+            { text: "Como você organiza sua música?", options: [ { text: "Por data de descoberta.", points: { discoverer: 2 } }, { text: "Por artista e depois por data de lançamento do álbum.", points: { explorer: 3 } }, { text: "Em grandes playlists baseadas em gênero.", points: { collector: 3 } } ] },
+            { text: "O que é mais importante para você em uma música?", options: [ { text: "A originalidade e o som inovador.", points: { discoverer: 3 } }, { text: "A coesão lírica e musical dentro de um álbum.", points: { explorer: 3 } }, { text: "A variedade e a quantidade de faixas que você pode adicionar à sua coleção.", points: { collector: 2 } } ] },
+            { text: "Você prefere:", options: [ { text: "Ir a shows de bandas pequenas e locais.", points: { discoverer: 3 } }, { text: "Ouvir a discografia completa de um artista em casa.", points: { explorer: 2 } }, { text: "Ir a grandes festivais com dezenas de artistas.", points: { collector: 3 } } ] },
+            { text: "Ao descobrir um novo artista, qual é sua primeira reação?", options: [ { text: "Ver se ele tem outros projetos ou artistas similares.", points: { discoverer: 3 } }, { text: "Ouvir seu álbum mais aclamado do início ao fim.", points: { explorer: 3 } }, { text: "Adicionar as melhores músicas dele à sua playlist principal.", points: { collector: 2 } } ] },
+            { text: "Seu histórico de streaming é majoritariamente composto por:", options: [ { text: "Artistas que você descobriu na última semana.", points: { discoverer: 3 } }, { text: "Alguns artistas, mas com muitas músicas diferentes deles.", points: { explorer: 2 } }, { text: "Uma quantidade enorme de artistas diferentes.", points: { collector: 3 } } ] },
+            { text: "O que te deixa mais animado?", options: [ { text: "Encontrar uma banda com menos de 1000 ouvintes.", points: { discoverer: 3 } }, { text: "Entender a evolução de um artista através de seus álbuns.", points: { explorer: 3 } }, { text: "Ver sua biblioteca de artistas seguidos ultrapassar um novo marco.", points: { collector: 3 } } ] },
+            { text: "Para você, uma coleção de música ideal tem:", options: [ { text: "Muitas raridades e lados B.", points: { discoverer: 2, explorer: 1 } }, { text: "Álbuns conceituais e discografias completas.", points: { explorer: 3 } }, { text: "O maior número possível de artistas e gêneros.", points: { collector: 3 } } ] },
+            { text: "Qual frase te descreve melhor?", options: [ { text: "Eu sou um caçador de tesouros musicais.", points: { discoverer: 3 } }, { text: "Eu sou um historiador musical.", points: { explorer: 3 } }, { text: "Eu sou um curador de museu musical.", points: { collector: 3 } } ] }
+        ],
+        currentQuestion: 0,
+        answers: {}
+    };
+
+    function startBadgeQuiz() {
+        quizState.currentQuestion = 0;
+        quizState.answers = {};
+        document.getElementById('quiz-container').style.display = 'block';
+        document.getElementById('quiz-result').style.display = 'none';
+        renderQuestion();
+        ui.manager.openModal(ui.manager.dom.badgeQuizModal);
+    }
+
+    function renderQuestion() {
+        const question = quizState.questions[quizState.currentQuestion];
+        const questionContainer = document.getElementById('question-container');
+        let optionsHTML = '';
+        question.options.forEach((option, index) => {
+            optionsHTML += `
+                <div class="quiz-option">
+                    <input type="radio" id="option${index}" name="quiz" value="${index}" ${quizState.answers[quizState.currentQuestion] == index ? 'checked' : ''}>
+                    <label for="option${index}">${option.text}</label>
+                </div>
+            `;
+        });
+        questionContainer.innerHTML = `
+            <p class="quiz-question">${quizState.currentQuestion + 1}. ${question.text}</p>
+            ${optionsHTML}
+        `;
+        document.getElementById('prevQuestionBtn').style.display = quizState.currentQuestion > 0 ? 'inline-block' : 'none';
+        document.getElementById('nextQuestionBtn').textContent = (quizState.currentQuestion === quizState.questions.length - 1) ? 'Finish' : t('next');
+    }
+
+    async function finishQuiz() {
+        let scores = { discoverer: 0, explorer: 0, collector: 0 };
+        for (const questionIndex in quizState.answers) {
+            const answerIndex = quizState.answers[questionIndex];
+            const points = quizState.questions[questionIndex].options[answerIndex].points;
+            for (const badge in points) {
+                scores[badge] = (scores[badge] || 0) + points[badge];
+            }
+        }
+        
+        let resultBadge = 'discoverer';
+        if (scores.explorer > scores.discoverer && scores.explorer > scores.collector) {
+            resultBadge = 'explorer';
+        } else if (scores.collector > scores.discoverer && scores.collector > scores.explorer) {
+            resultBadge = 'collector';
+        } else if (scores.explorer === scores.collector && scores.explorer > scores.discoverer) {
+            resultBadge = 'collector'; // Tie-breaker
+        }
+
+        try {
+            state.currentUser = await api.manager.updateUserBadge(resultBadge);
+            ui.manager.updateForAuthState();
+
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('quiz-result').style.display = 'block';
+            document.getElementById('resultBadgeImage').src = badgeMap[resultBadge].src;
+            document.getElementById('resultBadgeName').textContent = t(badgeMap[resultBadge].titleKey);
+            document.getElementById('resultBadgeDescription').textContent = t(badgeMap[resultBadge].descriptionKey);
+
+        } catch (error) {
+            console.error("Error updating badge:", error);
+            alert("Could not save your new badge. Please try again.");
+        }
+    }
+
+    document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+        const selectedOption = document.querySelector('input[name="quiz"]:checked');
+        if (!selectedOption) {
+            alert("Please select an option.");
+            return;
+        }
+        quizState.answers[quizState.currentQuestion] = selectedOption.value;
+        if (quizState.currentQuestion < quizState.questions.length - 1) {
+            quizState.currentQuestion++;
+            renderQuestion();
+        } else {
+            finishQuiz();
+        }
+    });
+
+    document.getElementById('prevQuestionBtn').addEventListener('click', () => {
+        if (quizState.currentQuestion > 0) {
+            quizState.currentQuestion--;
+            renderQuestion();
+        }
+    });
+
+    document.getElementById('closeQuizResultBtn').addEventListener('click', () => {
+        ui.manager.closeAllModals();
+    });
 
     async function init() {
         try {

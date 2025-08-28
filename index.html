@@ -43,8 +43,25 @@
                         </a>
                     </nav>
                 </div>
-                <div class="search-bar">
-                    <i class="fas fa-search"></i><input type="text" id="searchInput" data-translate-placeholder-key="searchInputPlaceholder" placeholder="Search for artists, albums, or users...">
+                <div class="search-container">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" data-translate-placeholder-key="searchInputPlaceholder" placeholder="Search for artists, albums, or users...">
+                        <div id="autocomplete-results" class="autocomplete-results"></div>
+                    </div>
+                    <div class="advanced-filters">
+                        <select id="genreFilter">
+                            <option value="" data-translate-key="allGenres">All Genres</option>
+                            <option value="rock">Rock</option>
+                            <option value="pop">Pop</option>
+                            <option value="hip-hop">Hip Hop</option>
+                            <option value="electronic">Electronic</option>
+                            <option value="jazz">Jazz</option>
+                            <option value="classical">Classical</option>
+                        </select>
+                        <input type="number" id="yearFilter" min="1900" max="2025" placeholder="Year">
+                        <button id="clearFiltersBtn" data-translate-key="clearFilters">Clear</button>
+                    </div>
                 </div>
                 <div class="user-profile-area">
                     <button class="control-btn" id="themeToggleBtn">
@@ -60,6 +77,7 @@
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span data-translate-key="changeName">Change Name</span></div>
                         <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span data-translate-key="changePicture">Change Picture</span></div>
+                        <div class="dropdown-item" id="badgeQuizBtn"><i class="fas fa-award"></i><span data-translate-key="takeBadgeQuiz">Take Badge Quiz</span></div>
                         <div class="dropdown-item" id="logoutBtn"><i class="fas fa-sign-out-alt"></i><span data-translate-key="logout">Log Out</span></div>
                     </div>
                 </div>
@@ -118,6 +136,27 @@
         </div>
     </div>
     
+    <div id="badgeQuizModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn">&times;</button>
+            <div id="quiz-container">
+                <h2 data-translate-key="badgeQuizTitle">Discover Your Music Profile</h2>
+                <div id="question-container"></div>
+                <div class="quiz-navigation">
+                    <button id="prevQuestionBtn" class="btn-secondary" style="display: none;" data-translate-key="previous">Previous</button>
+                    <button id="nextQuestionBtn" class="btn-primary" data-translate-key="next">Next</button>
+                </div>
+            </div>
+            <div id="quiz-result" style="display: none;">
+                <h2 data-translate-key="quizResultTitle">Your Result!</h2>
+                <img id="resultBadgeImage" src="" alt="Your new badge">
+                <h3 id="resultBadgeName"></h3>
+                <p id="resultBadgeDescription"></p>
+                <button id="closeQuizResultBtn" class="btn-primary" data-translate-key="close">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="badgeTooltip" class="badge-tooltip">
         <h3 id="badgeTooltipTitle"></h3>
         <p id="badgeTooltipDesc"></p>
