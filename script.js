@@ -1138,12 +1138,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
             });
             
+            // --- INÍCIO DA CORREÇÃO ---
+            // Movemos setupEventListeners para o início para garantir que a página seja interativa o mais rápido possível.
+            setupEventListeners();
+            // --- FIM DA CORREÇÃO ---
+
             translateUI();
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();
             ui.manager.updateForAuthState();
             ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || 'dark');
-            setupEventListeners();
             await renderHomePage();
         } catch (error) {
             console.error("Initialization failed:", error);
