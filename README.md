@@ -57,6 +57,7 @@ Badges are visual identifiers that appear on the user's profile to highlight the
 *   **Lyrica Administrator:** Reserved for the creators and managers of the project. (img/Admin.png)
 *   **Lyrica Supporter:** Granted to users of the Premium plan. (img/Supporter.png)
 *   **Veteran:** For members who participated in the beta version. (img/BetaMember.png)
+*   **Artist:** Indicates an official artist profile verified by Lyrica. (img/Artist.png)
 *   **Discoverer:** For users who love to discover new and emerging artists. (img/Discoverer.png)
 *   **Collector:** For users with a large collection of followed artists. (img/Collector.png)
 *   **Explorer:** For users who delve deep into artist discographies. (img/Explorer.png)

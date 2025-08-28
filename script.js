@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeAdminTitle: 'Administrator', badgeAdminDesc: 'Holding the keys to the kingdom, this person helps build and maintain Lyrica.',
             badgeSupporterTitle: 'Supporter', badgeSupporterDesc: "This user is a Supporter! Their support helps keep the lights on at Lyrica. Thank you!",
             badgeVeteranTitle: 'Veteran', badgeVeteranDesc: "Been here since the beginning! This Veteran helped shape Lyrica during its beta phase.",
+            badgeArtistTitle: 'Artist', badgeArtistDesc: 'This is an official artist profile verified by Lyrica.',
             badgeDiscovererTitle: 'Discoverer', badgeDiscovererDesc: "Always ahead of the trends! This Discoverer has a special talent for finding hidden musical gems.",
             badgeCollectorTitle: 'Collector', badgeCollectorDesc: "A true music encyclopedia! This Collector has a vast and diverse collection of artists.",
             badgeExplorerTitle: 'Explorer', badgeExplorerDesc: "Not just the hits! This Explorer dives deep into discographies, discovering every track and B-side.",
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeAdminTitle: 'Administrador', badgeAdminDesc: 'Com as chaves do reino, esta pessoa ajuda a construir e manter o Lyrica.',
             badgeSupporterTitle: 'Apoiador', badgeSupporterDesc: 'Este usuário é um Apoiador! Seu suporte ajuda a manter as luzes acesas no Lyrica. Valeu!',
             badgeVeteranTitle: 'Veterano', badgeVeteranDesc: 'Esteve aqui desde o começo! Este Veterano ajudou a moldar o Lyrica em sua fase beta.',
+            badgeArtistTitle: 'Artista', badgeArtistDesc: 'Este é um perfil de artista oficial verificado pelo Lyrica.',
             badgeDiscovererTitle: 'Descobridor', badgeDiscovererDesc: 'Sempre à frente das tendências! Este Descobridor tem um talento especial para encontrar joias musicais escondidas.',
             badgeCollectorTitle: 'Colecionador', badgeCollectorDesc: 'Uma verdadeira enciclopédia musical ambulante! Este Colecionador possui uma vasta e diversificada coleção de artistas.',
             badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Não se contenta com os hits! Este Explorador mergulha fundo nas discografias, descobrindo cada faixa e lado B.',
@@ -98,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         admin: { src: 'img/Admin.png', titleKey: 'badgeAdminTitle', descriptionKey: 'badgeAdminDesc' },
         supporter: { src: 'img/Supporter.png', titleKey: 'badgeSupporterTitle', descriptionKey: 'badgeSupporterDesc' },
         veteran: { src: 'img/BetaMember.png', titleKey: 'badgeVeteranTitle', descriptionKey: 'badgeVeteranDesc' },
+        artist: { src: 'img/Artist.png', titleKey: 'badgeArtistTitle', descriptionKey: 'badgeArtistDesc' },
         discoverer: { src: 'img/Discoverer.png', titleKey: 'badgeDiscovererTitle', descriptionKey: 'badgeDiscovererDesc' },
         collector: { src: 'img/Collector.png', titleKey: 'badgeCollectorTitle', descriptionKey: 'badgeCollectorDesc' },
         explorer: { src: 'img/Explorer.png', titleKey: 'badgeExplorerTitle', descriptionKey: 'badgeExplorerDesc' }
