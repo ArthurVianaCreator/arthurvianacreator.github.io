@@ -448,7 +448,7 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 /* --- Página do Esquadrão de Insígnias --- */
 .squad-page-container {
     max-width: 800px;
-    margin: 80px auto; /* Increased margin for better spacing on home page */
+    margin: 80px auto;
     text-align: center;
     padding: 20px;
 }
@@ -467,12 +467,16 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .badge-preview-item {
     text-align: center;
 }
+
+/* === INÍCIO DA CORREÇÃO === */
 .badge-preview-item img {
-    width: 100px;
-    height: 100px;
+    width: 80px;  /* Reduzido de 100px */
+    height: 80px; /* Reduzido de 100px */
     margin-bottom: 10px;
     transition: transform 0.3s;
 }
+/* === FIM DA CORREÇÃO === */
+
 .badge-preview-item:hover img {
     transform: scale(1.1);
 }
@@ -490,6 +494,8 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     align-items: center;
     gap: 10px;
     box-shadow: 0 4px 20px var(--primary-glow);
+    position: relative; /* Garante que o z-index funcione */
+    z-index: 2;         /* Coloca o botão acima de outros elementos */
 }
 .btn-squad-start:hover {
     transform: scale(1.05);
