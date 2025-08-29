@@ -43,7 +43,6 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes zoomInModal { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-/* === INÍCIO DA ALTERAÇÃO === */
 @keyframes questionFadeIn {
     from {
         opacity: 0;
@@ -64,8 +63,19 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
         transform: scale(1);
     }
 }
-/* === FIM DA ALTERAÇÃO === */
-
+@keyframes popIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    70% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
 
 /* MAIN LAYOUT */
 .main-container { display: flex; height: 100vh; }
@@ -97,8 +107,8 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .user-avatar .profile-picture { width: 100%; height: 100%; object-fit: cover; }
 .user-info { display: flex; flex-direction: column; align-items: flex-start; }
 .user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
-.user-badges { display: flex; align-items: center; gap: 5px; height: 18px; margin-top: 2px; }
-.badge-icon { width: 18px; height: 18px; cursor: pointer; transition: transform 0.2s; }
+.user-badges { display: flex; align-items: center; gap: 5px; height: 22px; margin-top: 2px; }
+.badge-icon { width: 22px; height: 22px; cursor: pointer; transition: transform 0.2s; }
 .badge-icon:hover { transform: scale(1.2); }
 .user-profile i.fa-chevron-down { color: var(--gray-text); font-size: 0.8rem; transition: transform 0.2s; }
 .user-dropdown { position: absolute; top: 60px; right: 0; background: var(--card-hover-bg); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 220px; overflow: hidden; z-index: 10; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity 0.2s, visibility 0.2s, transform 0.2s; }
@@ -130,8 +140,8 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .profile-avatar-large .profile-picture, .profile-avatar-large .profile-avatar-large-placeholder { width: 100%; height: 100%; object-fit: cover; }
 .profile-avatar-large-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-family: var(--elegant-font); font-size: 5rem; font-weight: bold; color: var(--white-text); }
 .profile-info-main h2 { font-family: var(--elegant-font); font-size: clamp(2rem, 5vw, 3rem); color: var(--white-text); margin-bottom: 5px; }
-.profile-info-main .user-badges { justify-content: center; margin-bottom: 10px; }
-.profile-info-main .user-badges .badge-icon { width: 18px; height: 18px; }
+.profile-info-main .user-badges { justify-content: center; margin-bottom: 10px; height: 28px; }
+.profile-info-main .user-badges .badge-icon { width: 28px; height: 28px; }
 .friend-status-container { margin-top: 15px; }
 
 /* Profile Description */
@@ -454,19 +464,21 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 /* --- Indicador de Artista Seguido --- */
 .followed-indicator {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background-color: rgba(255, 193, 7, 0.9);
-    color: #121212;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    z-index: 2;
+    top: -10px;
+    right: -10px;
+    width: 28px;
+    height: 28px;
+    background-color: var(--success-color);
+    color: #ffffff;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 4px;
-    backdrop-filter: blur(4px);
+    justify-content: center;
+    font-size: 0.9rem;
+    z-index: 2;
+    border: 2px solid var(--darker-bg);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* --- Página do Esquadrão de Insígnias --- */
