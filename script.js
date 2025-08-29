@@ -135,10 +135,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             return response.json();
         },
-        fetchSpotifyAppToken: async () => { 
+        fetchSpotifyAppToken: async () => {
             try {
-                const data = await (await fetch('/api/getToken')).json(); 
-                state.spotifyAppToken = data.access_token; 
+                const data = await (await fetch('/api/getToken')).json();
+                state.spotifyAppToken = data.access_token;
             } catch (error) { console.error("Error fetching Spotify app token:", error); }
         },
         login: (e, p) => api.manager._request('login', 'POST', { email: e, password: p }),
@@ -158,23 +158,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
     };
-    
+
     auth.manager = {
         async init() {
             if (localStorage.getItem('authToken')) {
-                try { state.currentUser = await api.manager.fetchUser(); } 
+                try { state.currentUser = await api.manager.fetchUser(); }
                 catch (e) { this.logout(); }
             }
         },
-        async login(email, password) { 
-            const data = await api.manager.login(email, password); 
-            localStorage.setItem('authToken', data.token); 
-            state.currentUser = await api.manager.fetchUser(); 
+        async login(email, password) {
+            const data = await api.manager.login(email, password);
+            localStorage.setItem('authToken', data.token);
+            state.currentUser = await api.manager.fetchUser();
         },
-        async register(name, email, password) { 
-            const data = await api.manager.register(name, email, password); 
-            localStorage.setItem('authToken', data.token); 
-            state.currentUser = await api.manager.fetchUser(); 
+        async register(name, email, password) {
+            const data = await api.manager.register(name, email, password);
+            localStorage.setItem('authToken', data.token);
+            state.currentUser = await api.manager.fetchUser();
         },
         logout() { localStorage.removeItem('authToken'); state.currentUser = null; },
         isFollowing: (id) => state.currentUser?.following?.some(a => a.id === id),
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             return !isCurrentlyFollowing;
         }
     };
-    
+
     ui.manager = {
         dom: {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), searchInput: document.getElementById('searchInput'),
@@ -245,12 +245,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             for (let i = 0; i < name.length; i++) { hash = name.charCodeAt(i) + ((hash << 5) - hash); }
             return avatarColors[Math.abs(hash % avatarColors.length)];
         },
-        switchContent(id) { 
-            const currentActiveId = document.querySelector('.content-section.active')?.id;
-            if (id !== currentActiveId) state.lastView = currentActiveId || 'inicio';
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
+        switchContent(id) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             const targetSection = document.getElementById(id);
-            if(targetSection) targetSection.classList.add('active'); 
+            if(targetSection) targetSection.classList.add('active');
             document.querySelectorAll('.main-nav .nav-item, .main-nav-mobile .nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id));
         },
         renderMusicCard(item, index = 0, ranking = null) {
@@ -262,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             return `<div class="music-card" style="animation-delay: ${index * 50}ms">
                         ${rankingHTML}
                         ${followedIndicator}
-                        <div class="music-card-content" data-type="${item.type}" data-id="${item.id}">
+                        <div class="music-card-content" data-type="${item.type}" data-id="${item.id}" data-name="${item.name}">
                             <div class="music-img"><img src="${img}" alt="${item.name}"></div>
                             <div class="music-title">${item.name}</div>
                             <div class="music-artist">${sub}</div>
@@ -273,26 +271,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             let avatarHTML = user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
             return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}"><div class="user-card-avatar">${avatarHTML}</div><div class="user-card-name">${user.name}</div></div>`;
         },
-        populateGrid(container, items, renderFunc, emptyMessage = 'Nothing to show here.') { 
+        populateGrid(container, items, renderFunc, emptyMessage = 'Nothing to show here.') {
             if(!container) return;
-            container.innerHTML = items && items.length > 0 ? items.map((item, index) => renderFunc(item, index)).join('') : `<p class="search-message">${emptyMessage}</p>`; 
+            container.innerHTML = items && items.length > 0 ? items.map((item, index) => renderFunc(item, index)).join('') : `<p class="search-message">${emptyMessage}</p>`;
         },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
         applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); localStorage.setItem('lyricaTheme', theme); },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
-        closeAllModals() { 
+        closeAllModals() {
             stopCamera();
-            document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); 
+            document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
         },
         showModalError(m, msg) { m.querySelector('.modal-error').textContent = msg; },
-        clearModalMessages(m) { 
+        clearModalMessages(m) {
             const errorEl = m.querySelector('.modal-error');
             if (errorEl) {
-                errorEl.textContent = ''; 
+                errorEl.textContent = '';
             }
         }
     };
-    
+
     async function renderHomePage() {
         ui.manager.switchContent('inicio');
         const { popularArtistsContainer, recommendationsContainer } = ui.manager.dom;
@@ -336,12 +334,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingArtist'));
         try {
             const artist = await api.manager.getSpotifyArtist(artistId);
-            
+
             const [albumsData, bioData, topTracksData] = await Promise.all([
                 api.manager.getSpotifyArtistAlbums(artistId),
                 api.manager.getArtistBio(artist.name),
                 api.manager.getSpotifyArtistTopTracks(artistId)
             ]);
+
+            history.replaceState({ artistId: artistId }, '', `/${encodeURIComponent(artist.name)}`);
 
             const isFollowing = state.currentUser ? auth.manager.isFollowing(artistId) : false;
             const followBtnHTML = state.currentUser
@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    function renderProfilePage() { 
+    function renderProfilePage() {
         if (!state.currentUser) { ui.manager.switchContent('inicio'); ui.manager.openModal(ui.manager.dom.loginModal); return; }
         ui.manager.switchContent('profile');
         const u = state.currentUser;
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
             </div>
         </div>`;
-        
+
         const followCount = u.following?.length || 0;
         const followLimit = getFollowLimit(u);
         const percentage = (followCount / followLimit) * 100;
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             friendRequestsHTML = `<h2 class="section-title-main">${t('friendRequests')}</h2><div class="friend-requests-list">` +
             u.friendRequestsReceived.map(name => `<div class="friend-request-item"><span><strong class="user-link" data-username="${name}">${name}</strong> ${t('wantsToBeYourFriend', '')}</span><div class="friend-request-actions"><button class="btn-friend-action accept" data-action="accept" data-target-name="${name}"><i class="fas fa-check"></i> ${t('accept')}</button><button class="btn-friend-action reject" data-action="reject" data-target-name="${name}"><i class="fas fa-times"></i> ${t('decline')}</button></div></div>`).join('') + `</div>`;
         }
-        
+
         ui.manager.dom.socialContainer.innerHTML = `${friendRequestsHTML}<h2 class="section-title-main">${t('yourFriends')}</h2><div class="user-grid" id="friends-grid">${ui.manager.renderLoader('')}</div>`;
 
         const friendsGrid = document.getElementById('friends-grid');
@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.populateGrid(friendsGrid, [], (item, index) => ui.manager.renderUserCard(item, index), t('emptyFriends'));
         }
     }
-    
+
     async function renderPublicProfileView(userName) {
         if (state.currentUser && userName === state.currentUser.name) return renderProfilePage();
         ui.manager.switchContent('profile');
@@ -561,7 +561,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
                 <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
             ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
-            
+
             const friendsGrid = document.querySelector('#friends .user-grid');
             const friendNames = u.friends || [];
             if (friendNames.length > 0) {
@@ -579,17 +579,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadProfile', e.message)}</p>`;
         }
     }
-    
+
     async function handleLoginSubmit(e) {
         const btn = e.target, modal = ui.manager.dom.loginModal;
         ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = t('loggingIn');
         try {
             await auth.manager.login(modal.querySelector('#loginEmail').value, modal.querySelector('#loginPassword').value);
             ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
-        } catch (error) { ui.manager.showModalError(modal, error.message); } 
+        } catch (error) { ui.manager.showModalError(modal, error.message); }
         finally { btn.disabled = false; btn.textContent = t('login'); }
     }
-    
+
     async function handleRegisterSubmit(e) {
         const btn = e.target, modal = ui.manager.dom.registerModal;
         ui.manager.clearModalMessages(modal);
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             await auth.manager.register(name, email, password);
             ui.manager.closeAllModals(); ui.manager.updateForAuthState(); renderHomePage();
-        } catch (error) { ui.manager.showModalError(modal, error.message); } 
+        } catch (error) { ui.manager.showModalError(modal, error.message); }
         finally { btn.disabled = false; btn.textContent = t('createAccount'); }
     }
 
@@ -616,10 +616,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             state.currentUser = await api.manager.updateUser({ name: newName });
             ui.manager.updateForAuthState(); ui.manager.closeAllModals();
-        } catch (error) { ui.manager.showModalError(modal, error.message); } 
+        } catch (error) { ui.manager.showModalError(modal, error.message); }
         finally { btn.disabled = false; btn.textContent = t('save'); }
     }
-    
+
     async function handleAvatarSave() {
         const modal = ui.manager.dom.avatarChangeModal;
         const previewImage = document.getElementById('avatarPreviewImage');
@@ -661,7 +661,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             state.currentUser = await api.manager.updateUser({ avatar: null });
             ui.manager.updateForAuthState(); ui.manager.closeAllModals();
-        } catch (error) { ui.manager.showModalError(modal, error.message); } 
+        } catch (error) { ui.manager.showModalError(modal, error.message); }
         finally { btn.disabled = false; }
     }
 
@@ -671,10 +671,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!file) return;
         if (!file.type.startsWith('image/')) return ui.manager.showModalError(modal, t('errorFileInvalid'));
         if (file.size > 2 * 1024 * 1024) return ui.manager.showModalError(modal, t('errorFileTooLarge'));
-        
+
         const previewImage = document.getElementById('avatarPreviewImage');
         const reader = new FileReader();
-        
+
         reader.onload = e => {
             document.getElementById('video-container').style.display = 'none';
             document.querySelector('.avatar-preview-container').style.display = 'flex';
@@ -683,7 +683,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         };
         reader.readAsDataURL(file);
     }
-    
+
     async function startCamera() {
         const modal = document.getElementById('avatarChangeModal');
         const videoContainer = document.getElementById('video-container');
@@ -722,13 +722,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
-        
+
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
         stopCamera();
-        
+
         previewImage.src = canvas.toDataURL('image/png');
         previewImage.style.opacity = 1;
     }
@@ -748,23 +748,61 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } catch (error) { alert(`Error: ${error.message}`); btn.disabled = false; }
     }
-    
+
+    async function handleRouting() {
+        const pathName = decodeURIComponent(window.location.pathname.substring(1));
+
+        if (!pathName) {
+            return renderHomePage();
+        }
+
+        if (pathName.toLowerCase() === 'social') {
+            if (state.currentUser) {
+                return renderSocialPage();
+            } else {
+                history.replaceState({}, '', '/');
+                renderHomePage();
+                ui.manager.openModal(ui.manager.dom.loginModal);
+                return;
+            }
+        }
+
+        try {
+            await api.manager.fetchPublicProfile(pathName);
+            renderPublicProfileView(pathName);
+        } catch (userError) {
+            try {
+                const spotifyResults = await api.manager.searchSpotify(pathName, 'artist', 1);
+                if (spotifyResults.artists?.items.length > 0) {
+                    renderArtistView(spotifyResults.artists.items[0].id);
+                } else {
+                    history.replaceState({}, '', '/');
+                    renderHomePage();
+                }
+            } catch (spotifyError) {
+                console.error("Routing/Spotify Error:", spotifyError);
+                history.replaceState({}, '', '/');
+                renderHomePage();
+            }
+        }
+    }
+
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
             if (badgeIcon) {
-                if (badgeIcon.closest('.user-profile-area')) return; 
+                if (badgeIcon.closest('.user-profile-area')) return;
 
                 const tooltip = ui.manager.dom.badgeTooltip, badgeKey = badgeIcon.dataset.badgeKey, badgeInfo = badgeMap[badgeKey];
                 if (!badgeInfo) return;
                 if (tooltip.classList.contains('active') && tooltip.dataset.currentBadge === badgeKey) { tooltip.classList.remove('active'); return; }
-                
+
                 const badgeRect = badgeIcon.getBoundingClientRect();
                 document.getElementById('badgeTooltipTitle').textContent = t(badgeInfo.titleKey);
                 document.getElementById('badgeTooltipDesc').textContent = t(badgeInfo.descriptionKey);
                 tooltip.classList.add('active');
-                tooltip.dataset.currentBadge = badgeKey; 
-                
+                tooltip.dataset.currentBadge = badgeKey;
+
                 const tooltipRect = tooltip.getBoundingClientRect();
                 let left = badgeRect.left + (badgeRect.width / 2) - (tooltipRect.width / 2);
                 let top = badgeRect.bottom + 8;
@@ -780,26 +818,40 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (!e.target.closest('.user-dropdown')) ui.manager.dom.userDropdown.classList.remove('active');
-            
+
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) {
-                const { type, id } = cardContent.dataset;
-                if (type === 'artist') return renderArtistView(id);
+                const { type, id, name } = cardContent.dataset;
+                if (type === 'artist') {
+                    history.pushState({ artistId: id }, '', `/${encodeURIComponent(name)}`);
+                    return renderArtistView(id);
+                }
                 if (type === 'album') return renderAlbumView(id);
             }
             const artistLink = e.target.closest('.artist-link');
-            if(artistLink) return renderArtistView(artistLink.dataset.id);
-            
+            if (artistLink) {
+                history.pushState({ artistId: artistLink.dataset.id }, '', `/${encodeURIComponent(artistLink.textContent)}`);
+                return renderArtistView(artistLink.dataset.id);
+            }
+
             const userCard = e.target.closest('.user-card[data-username]');
-            if (userCard) return renderPublicProfileView(userCard.dataset.username);
-            
+            if (userCard) {
+                const username = userCard.dataset.username;
+                history.pushState({ username: username }, '', `/${encodeURIComponent(username)}`);
+                return renderPublicProfileView(username);
+            }
+
             const userLink = e.target.closest('.user-link[data-username]');
-            if (userLink) return renderPublicProfileView(userLink.dataset.username);
+            if (userLink) {
+                const username = userLink.dataset.username;
+                history.pushState({ username: username }, '', `/${encodeURIComponent(username)}`);
+                return renderPublicProfileView(username);
+            }
 
             const followBtn = e.target.closest('.follow-btn:not(:disabled)');
-            if (followBtn) { 
+            if (followBtn) {
                 try {
-                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); 
+                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId);
                     const isFollowing = await auth.manager.toggleFollow(artist);
                     followBtn.classList.toggle('following', isFollowing);
                     followBtn.querySelector('span').textContent = isFollowing ? t('following') : t('follow');
@@ -827,7 +879,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             if (e.target.closest('.cancel-desc-btn')) renderProfilePage();
-            
+
             if (e.target.closest('.save-desc-btn')) {
                 const newDesc = document.getElementById('description-textarea').value.trim();
                 try {
@@ -848,16 +900,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 tabLink.classList.add('active');
                 document.getElementById(tabLink.dataset.tab).classList.add('active');
             }
-            
+
             if (e.target.closest('.back-btn')) {
-                if (document.getElementById('details-view').classList.contains('active') && state.artistContextId) {
-                    const artistIdToReturnTo = state.artistContextId;
-                    state.artistContextId = null;
-                    return renderArtistView(artistIdToReturnTo);
-                }
-                const cameFromProfile = document.getElementById('profile').contains(e.target);
-                if (cameFromProfile && state.lastView === 'social') return renderSocialPage();
-                return ui.manager.switchContent(state.lastView);
+                history.back();
             }
 
             if (e.target.closest('#switchToRegister')) { ui.manager.closeAllModals(); ui.manager.openModal(ui.manager.dom.registerModal); }
@@ -870,7 +915,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 input.type = input.type === 'password' ? 'text' : 'password';
                 passToggle.className = `fas ${input.type === 'password' ? 'fa-eye' : 'fa-eye-slash'} password-toggle`;
             }
-            
+
             if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) {
                 const modal = ui.manager.dom.nameChangeModal;
@@ -914,13 +959,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 bioContainer.innerHTML = `<p>${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
             }
         });
-        
+
         ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
-        
+
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
 
@@ -930,14 +975,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
 
-            if (target === 'profile') renderProfilePage(); 
-            else if (target === 'social') renderSocialPage();
-            else if (target === 'inicio') renderHomePage();
-            else ui.manager.switchContent(target);
+            if (target === 'profile') {
+                const username = state.currentUser.name;
+                history.pushState({ username: username }, '', `/${encodeURIComponent(username)}`);
+                renderProfilePage();
+            } else if (target === 'social') {
+                history.pushState({}, '', '/social');
+                renderSocialPage();
+            } else if (target === 'inicio') {
+                history.pushState({}, '', '/');
+                renderHomePage();
+            } else {
+                ui.manager.switchContent(target);
+            }
         }));
 
-        document.getElementById('logoutBtn').addEventListener('click', () => { auth.manager.logout(); ui.manager.updateForAuthState(); renderHomePage(); });
-        
+        window.addEventListener('popstate', handleRouting);
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.manager.logout();
+            ui.manager.updateForAuthState();
+            history.pushState({}, '', '/');
+            renderHomePage();
+        });
+
         let searchTimeout;
         const performSearch = () => {
             clearTimeout(searchTimeout);
@@ -945,7 +1006,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             const genre = ui.manager.dom.genreFilter.value;
 
             if (!query && !genre) {
-                if (document.getElementById('buscar').classList.contains('active')) renderHomePage();
+                if (document.getElementById('buscar').classList.contains('active')) {
+                    history.pushState({}, '', '/');
+                    renderHomePage();
+                }
                 return;
             }
 
@@ -1024,13 +1088,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Shuffle a copy of the questions array
         quizState.shuffledQuestions = [...quizState.questions];
         shuffleArray(quizState.shuffledQuestions);
-        
+
         quizState.currentQuestion = 0;
         quizState.answers = {};
 
         quizContainer.style.display = 'block';
         resultContainer.style.display = 'none';
-        
+
         renderQuestion();
         ui.manager.openModal(modal);
     }
@@ -1063,7 +1127,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             `;
             questionContainer.classList.remove('changing');
         }, 200); // This delay should match the animation duration
-        
+
         const prevBtn = document.getElementById('prevQuestionBtn');
         const nextBtn = document.getElementById('nextQuestionBtn');
 
@@ -1086,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
         // === FIM DA ALTERAÇÃO ===
-        
+
         let resultBadge = 'discoverer';
         if (scores.explorer > scores.discoverer && scores.explorer > scores.collector) {
             resultBadge = 'explorer';
@@ -1173,14 +1237,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ9: "Para você, uma coleção de música ideal tem:", quizQ9O1: "Muitas raridades e lados B.", quizQ9O2: "Álbuns conceituais e discografias completas.", quizQ9O3: "O maior número possível de artistas e gêneros.",
                 quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
             });
-            
+
             setupEventListeners();
             translateUI();
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();
             ui.manager.updateForAuthState();
             ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || 'dark');
-            await renderHomePage();
+            await handleRouting();
         } catch (error) {
             console.error("Initialization failed:", error);
             ui.manager.dom.appLoader.innerHTML = `<div style="text-align: center; color: white;"><h2>Oops!</h2><p>Something went wrong during startup. Please refresh the page.</p></div>`;
@@ -1189,6 +1253,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.mainContainer.style.display = 'flex';
         }
     }
-    
+
     init();
 });
