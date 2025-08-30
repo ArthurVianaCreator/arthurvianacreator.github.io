@@ -49,7 +49,6 @@ export default async function handler(req, res) {
           if (normalizedOldName) {
             multi.del(`name:${normalizedOldName}`);
           }
-          // CORREÇÃO: Salva o email do usuário, não o número 1.
           multi.set(`name:${normalizedNewName}`, user.email);
           user.name = newName;
           await multi.exec();
@@ -60,6 +59,24 @@ export default async function handler(req, res) {
       }
       
       if (Array.isArray(updatedData.following)) {
+        // --- NEW: Detect and log new artist follows ---
+        const oldFollowingIds = new Set((user.following || []).map(a => a.id));
+        const newFollows = updatedData.following.filter(artist => !oldFollowingIds.has(artist.id));
+
+        for (const artist of newFollows) {
+            const activity = {
+                username: user.name,
+                action: 'FOLLOWED_ARTIST',
+                targetName: artist.name,
+                targetId: artist.id,
+                timestamp: Date.now()
+            };
+            await kv.lpush('global_activity_feed', JSON.stringify(activity));
+        }
+        if (newFollows.length > 0) {
+            await kv.ltrim('global_activity_feed', 0, 99);
+        }
+        // --- END OF NEW CODE ---
         user.following = updatedData.following;
         userWasUpdated = true;
       }

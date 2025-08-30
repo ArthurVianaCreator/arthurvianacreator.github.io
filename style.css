@@ -546,17 +546,47 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     filter: brightness(1.1);
 }
 
-/* === INÍCIO DAS ALTERAÇÕES NO BADGE QUIZ MODAL === */
+/* --- ACTIVITY FEED STYLES --- */
+#activity-feed-container {
+    margin-bottom: 30px;
+}
+.activity-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.activity-item {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--primary-color);
+    padding: 12px 15px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.activity-item i {
+    color: var(--gray-text);
+}
+.activity-item .activity-link {
+    color: var(--primary-color);
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+.activity-item .activity-link:hover {
+    text-decoration: underline;
+}
 
+/* BADGE QUIZ MODAL */
 #badgeQuizModal .modal-content {
     max-width: 500px;
     padding: 25px;
 }
-
 #quiz-container {
     min-height: 350px;
 }
-
 #question-container.changing {
     opacity: 0;
     transform: translateX(-20px);
@@ -567,7 +597,6 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 #question-container .quiz-question, #question-container .quiz-options-list {
     animation: questionFadeIn 0.4s ease-out forwards;
 }
-
 .quiz-progress-container {
     width: 100%;
     height: 8px;
@@ -576,7 +605,6 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     margin-bottom: 25px;
     overflow: hidden;
 }
-
 .quiz-progress-bar {
     width: 0%;
     height: 100%;
@@ -584,7 +612,6 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     border-radius: 4px;
     transition: width 0.4s ease-out;
 }
-
 .quiz-question {
     font-family: var(--elegant-font);
     font-size: 1.3rem;
@@ -650,8 +677,6 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     font-size: 1rem;
     color: var(--light-gray-text);
 }
-/* === FIM DAS ALTERAÇÕES NO BADGE QUIZ MODAL === */
-
 
 /* MOBILE RESPONSIVENESS FOR SEARCH */
 @media (max-width: 950px) {

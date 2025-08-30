@@ -41,7 +41,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             artistsYouMightLike: 'Artists You Might Like', retakeBadgeQuiz: 'Retake Quiz', badgeQuizTitle: 'Discover Your Music Profile',
             quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', year: 'Year',
             startQuiz: 'Discover Your Badge', squadTitle: 'Badge Squadron',
-            squadDescription: "What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!"
+            squadDescription: "What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!",
+            activityFollowedArtist: '{0} started following {1}',
+            activityBecameFriends: '{0} and {1} are now friends',
+            recentActivity: 'Recent Activity',
+            noRecentActivity: 'No recent activity from your friends.'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -81,7 +85,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             artistsYouMightLike: 'Artistas que você pode gostar', retakeBadgeQuiz: 'Refazer Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
             quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', year: 'Ano',
             startQuiz: 'Descubra Sua Insígnia', squadTitle: 'Esquadrão das Insígnias',
-            squadDescription: "Que tipo de fã de música você é? O Explorador que mergulha fundo nas discografias? O Descobridor que está sempre encontrando a próxima grande novidade? Ou o Colecionador com uma biblioteca imensa? Responda 10 perguntas rápidas para descobrir e ganhar sua insígnia exclusiva!"
+            squadDescription: "Que tipo de fã de música você é? O Explorador que mergulha fundo nas discografias? O Descobridor que está sempre encontrando a próxima grande novidade? Ou o Colecionador com uma biblioteca imensa? Responda 10 perguntas rápidas para descobrir e ganhar sua insígnia exclusiva!",
+            activityFollowedArtist: '{0} começou a seguir {1}',
+            activityBecameFriends: '{0} e {1} são agora amigos',
+            recentActivity: 'Atividade Recente',
+            noRecentActivity: 'Nenhuma atividade recente dos seus amigos.'
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -151,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         getRecommendations: () => api.manager._request('recommendations', 'GET'),
+        fetchActivityFeed: () => api.manager._request('activity-feed', 'GET'),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
@@ -498,13 +507,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!state.currentUser) { ui.manager.switchContent('inicio'); ui.manager.openModal(ui.manager.dom.loginModal); return; }
         ui.manager.switchContent('social');
         const u = state.currentUser;
+        
         let friendRequestsHTML = '';
         if (u.friendRequestsReceived && u.friendRequestsReceived.length > 0) {
             friendRequestsHTML = `<h2 class="section-title-main">${t('friendRequests')}</h2><div class="friend-requests-list">` +
             u.friendRequestsReceived.map(name => `<div class="friend-request-item"><span><strong class="user-link" data-username="${name}">${name}</strong> ${t('wantsToBeYourFriend', '')}</span><div class="friend-request-actions"><button class="btn-friend-action accept" data-action="accept" data-target-name="${name}"><i class="fas fa-check"></i> ${t('accept')}</button><button class="btn-friend-action reject" data-action="reject" data-target-name="${name}"><i class="fas fa-times"></i> ${t('decline')}</button></div></div>`).join('') + `</div>`;
         }
+        
+        ui.manager.dom.socialContainer.innerHTML = `
+            <div id="activity-feed-container">${ui.manager.renderLoader('')}</div>
+            ${friendRequestsHTML}
+            <h2 class="section-title-main">${t('yourFriends')}</h2>
+            <div class="user-grid" id="friends-grid">${ui.manager.renderLoader('')}</div>
+        `;
 
-        ui.manager.dom.socialContainer.innerHTML = `${friendRequestsHTML}<h2 class="section-title-main">${t('yourFriends')}</h2><div class="user-grid" id="friends-grid">${ui.manager.renderLoader('')}</div>`;
+        renderActivityFeed();
 
         const friendsGrid = document.getElementById('friends-grid');
         const friendNames = u.friends || [];
@@ -521,6 +538,51 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    async function renderActivityFeed() {
+        const container = document.getElementById('activity-feed-container');
+        try {
+            const activities = await api.manager.fetchActivityFeed();
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = `<h2 class="section-title-main">${t('recentActivity')}</h2><p class="search-message">${t('noRecentActivity')}</p>`;
+                return;
+            }
+
+            const activityItemsHTML = activities.map(activity => {
+                let icon = '';
+                let text = '';
+
+                switch (activity.action) {
+                    case 'FOLLOWED_ARTIST':
+                        icon = '<i class="fas fa-music"></i>';
+                        text = t('activityFollowedArtist', 
+                            `<span class="activity-link user-link" data-username="${activity.username}">${activity.username}</span>`, 
+                            `<span class="activity-link artist-link" data-id="${activity.targetId}">${activity.targetName}</span>`
+                        );
+                        break;
+                    case 'BECAME_FRIENDS':
+                        icon = '<i class="fas fa-user-friends"></i>';
+                        text = t('activityBecameFriends', 
+                            `<span class="activity-link user-link" data-username="${activity.user1}">${activity.user1}</span>`, 
+                            `<span class="activity-link user-link" data-username="${activity.user2}">${activity.user2}</span>`
+                        );
+                        break;
+                    default:
+                        return '';
+                }
+                return `<div class="activity-item">${icon}<p>${text}</p></div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <h2 class="section-title-main">${t('recentActivity')}</h2>
+                <div class="activity-feed-list">${activityItemsHTML}</div>
+            `;
+        } catch (error) {
+            console.error("Failed to load activity feed:", error);
+            container.innerHTML = `<h2 class="section-title-main">${t('recentActivity')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
+        }
+    }
+    
     async function renderPublicProfileView(userName) {
         if (state.currentUser && userName === state.currentUser.name) return renderProfilePage();
         ui.manager.switchContent('profile');
@@ -561,7 +623,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
                 <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
             ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
-
+            
             const friendsGrid = document.querySelector('#friends .user-grid');
             const friendNames = u.friends || [];
             if (friendNames.length > 0) {
@@ -579,7 +641,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadProfile', e.message)}</p>`;
         }
     }
-
+    
     async function handleLoginSubmit(e) {
         const btn = e.target, modal = ui.manager.dom.loginModal;
         ui.manager.clearModalMessages(modal); btn.disabled = true; btn.textContent = t('loggingIn');
@@ -589,7 +651,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) { ui.manager.showModalError(modal, error.message); }
         finally { btn.disabled = false; btn.textContent = t('login'); }
     }
-
+    
     async function handleRegisterSubmit(e) {
         const btn = e.target, modal = ui.manager.dom.registerModal;
         ui.manager.clearModalMessages(modal);
@@ -619,7 +681,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) { ui.manager.showModalError(modal, error.message); }
         finally { btn.disabled = false; btn.textContent = t('save'); }
     }
-
+    
     async function handleAvatarSave() {
         const modal = ui.manager.dom.avatarChangeModal;
         const previewImage = document.getElementById('avatarPreviewImage');
@@ -671,10 +733,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (!file) return;
         if (!file.type.startsWith('image/')) return ui.manager.showModalError(modal, t('errorFileInvalid'));
         if (file.size > 2 * 1024 * 1024) return ui.manager.showModalError(modal, t('errorFileTooLarge'));
-
+        
         const previewImage = document.getElementById('avatarPreviewImage');
         const reader = new FileReader();
-
+        
         reader.onload = e => {
             document.getElementById('video-container').style.display = 'none';
             document.querySelector('.avatar-preview-container').style.display = 'flex';
@@ -683,7 +745,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         };
         reader.readAsDataURL(file);
     }
-
+    
     async function startCamera() {
         const modal = document.getElementById('avatarChangeModal');
         const videoContainer = document.getElementById('video-container');
@@ -722,13 +784,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
-
+        
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
+        
         stopCamera();
-
+        
         previewImage.src = canvas.toDataURL('image/png');
         previewImage.style.opacity = 1;
     }
@@ -748,7 +810,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } catch (error) { alert(`Error: ${error.message}`); btn.disabled = false; }
     }
-
+    
     async function handleRouting() {
         const pathName = decodeURIComponent(window.location.pathname.substring(1));
 
@@ -786,23 +848,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
     }
-
+    
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
             if (badgeIcon) {
-                if (badgeIcon.closest('.user-profile-area')) return;
+                if (badgeIcon.closest('.user-profile-area')) return; 
 
                 const tooltip = ui.manager.dom.badgeTooltip, badgeKey = badgeIcon.dataset.badgeKey, badgeInfo = badgeMap[badgeKey];
                 if (!badgeInfo) return;
                 if (tooltip.classList.contains('active') && tooltip.dataset.currentBadge === badgeKey) { tooltip.classList.remove('active'); return; }
-
+                
                 const badgeRect = badgeIcon.getBoundingClientRect();
                 document.getElementById('badgeTooltipTitle').textContent = t(badgeInfo.titleKey);
                 document.getElementById('badgeTooltipDesc').textContent = t(badgeInfo.descriptionKey);
                 tooltip.classList.add('active');
-                tooltip.dataset.currentBadge = badgeKey;
-
+                tooltip.dataset.currentBadge = badgeKey; 
+                
                 const tooltipRect = tooltip.getBoundingClientRect();
                 let left = badgeRect.left + (badgeRect.width / 2) - (tooltipRect.width / 2);
                 let top = badgeRect.bottom + 8;
@@ -818,7 +880,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
             if (!e.target.closest('.user-dropdown')) ui.manager.dom.userDropdown.classList.remove('active');
-
+            
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) {
                 const { type, id, name } = cardContent.dataset;
@@ -829,18 +891,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (type === 'album') return renderAlbumView(id);
             }
             const artistLink = e.target.closest('.artist-link');
-            if (artistLink) {
+            if(artistLink) {
                 history.pushState({ artistId: artistLink.dataset.id }, '', `/${encodeURIComponent(artistLink.textContent)}`);
                 return renderArtistView(artistLink.dataset.id);
             }
-
+            
             const userCard = e.target.closest('.user-card[data-username]');
             if (userCard) {
                 const username = userCard.dataset.username;
                 history.pushState({ username: username }, '', `/${encodeURIComponent(username)}`);
                 return renderPublicProfileView(username);
             }
-
+            
             const userLink = e.target.closest('.user-link[data-username]');
             if (userLink) {
                 const username = userLink.dataset.username;
@@ -849,9 +911,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             const followBtn = e.target.closest('.follow-btn:not(:disabled)');
-            if (followBtn) {
+            if (followBtn) { 
                 try {
-                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId);
+                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); 
                     const isFollowing = await auth.manager.toggleFollow(artist);
                     followBtn.classList.toggle('following', isFollowing);
                     followBtn.querySelector('span').textContent = isFollowing ? t('following') : t('follow');
@@ -879,7 +941,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             if (e.target.closest('.cancel-desc-btn')) renderProfilePage();
-
+            
             if (e.target.closest('.save-desc-btn')) {
                 const newDesc = document.getElementById('description-textarea').value.trim();
                 try {
@@ -900,7 +962,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 tabLink.classList.add('active');
                 document.getElementById(tabLink.dataset.tab).classList.add('active');
             }
-
+            
             if (e.target.closest('.back-btn')) {
                 history.back();
             }
@@ -915,7 +977,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 input.type = input.type === 'password' ? 'text' : 'password';
                 passToggle.className = `fas ${input.type === 'password' ? 'fa-eye' : 'fa-eye-slash'} password-toggle`;
             }
-
+            
             if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) {
                 const modal = ui.manager.dom.nameChangeModal;
@@ -929,7 +991,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 previewImage.style.opacity = userAvatar ? 1 : 0;
                 ui.manager.openModal(ui.manager.dom.avatarChangeModal);
             }
-            if (e.target.closest('#badgeQuizBtn') || e.target.closest('#startQuizBtn')) {
+            if (e.target.closest('#startQuizBtn')) {
                 if (state.currentUser) {
                     startBadgeQuiz();
                 } else {
@@ -959,13 +1021,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 bioContainer.innerHTML = `<p>${shortBio} <a href="#" class="expand-bio-btn">${t('readMore')}</a></p>`;
             }
         });
-
+        
         ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
-
+        
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
 
@@ -978,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (target === 'profile') {
                 const username = state.currentUser.name;
                 history.pushState({ username: username }, '', `/${encodeURIComponent(username)}`);
-                renderProfilePage();
+                renderProfilePage(); 
             } else if (target === 'social') {
                 history.pushState({}, '', '/social');
                 renderSocialPage();
@@ -989,16 +1051,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 ui.manager.switchContent(target);
             }
         }));
-
+        
         window.addEventListener('popstate', handleRouting);
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            auth.manager.logout();
-            ui.manager.updateForAuthState();
+        document.getElementById('logoutBtn').addEventListener('click', () => { 
+            auth.manager.logout(); 
+            ui.manager.updateForAuthState(); 
             history.pushState({}, '', '/');
-            renderHomePage();
+            renderHomePage(); 
         });
-
+        
         let searchTimeout;
         const performSearch = () => {
             clearTimeout(searchTimeout);
@@ -1061,18 +1123,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             { textKey: "quizQ9", options: [ { textKey: "quizQ9O1", points: { discoverer: 2, explorer: 1 } }, { textKey: "quizQ9O2", points: { explorer: 3 } }, { textKey: "quizQ9O3", points: { collector: 3 } } ] },
             { textKey: "quizQ10", options: [ { textKey: "quizQ10O1", points: { discoverer: 3 } }, { textKey: "quizQ10O2", points: { explorer: 3 } }, { textKey: "quizQ10O3", points: { collector: 3 } } ] }
         ],
-        // === INÍCIO DA ALTERAÇÃO ===
         shuffledQuestions: [],
-        // === FIM DA ALTERAÇÃO ===
         currentQuestion: 0,
         answers: {}
     };
 
-    // === INÍCIO DA ALTERAÇÃO ===
-    /**
-     * Shuffles array in-place using the Fisher-Yates algorithm.
-     * @param {Array} array An array containing the items.
-     */
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -1085,16 +1140,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         const quizContainer = modal.querySelector('#quiz-container');
         const resultContainer = modal.querySelector('#quiz-result');
 
-        // Shuffle a copy of the questions array
         quizState.shuffledQuestions = [...quizState.questions];
         shuffleArray(quizState.shuffledQuestions);
-
+        
         quizState.currentQuestion = 0;
         quizState.answers = {};
 
         quizContainer.style.display = 'block';
         resultContainer.style.display = 'none';
-
+        
         renderQuestion();
         ui.manager.openModal(modal);
     }
@@ -1104,7 +1158,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const questionContainer = document.getElementById('question-container');
         const progressBar = document.getElementById('quizProgressBar');
 
-        // Update progress bar
         const progress = ((quizState.currentQuestion) / quizState.shuffledQuestions.length) * 100;
         progressBar.style.width = `${progress}%`;
 
@@ -1118,7 +1171,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             `;
         });
 
-        // Add a class to trigger the exit animation, then update content after a delay
         questionContainer.classList.add('changing');
         setTimeout(() => {
             questionContainer.innerHTML = `
@@ -1126,20 +1178,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="quiz-options-list">${optionsHTML}</div>
             `;
             questionContainer.classList.remove('changing');
-        }, 200); // This delay should match the animation duration
-
+        }, 200);
+        
         const prevBtn = document.getElementById('prevQuestionBtn');
         const nextBtn = document.getElementById('nextQuestionBtn');
 
         if (prevBtn) prevBtn.style.display = quizState.currentQuestion > 0 ? 'inline-block' : 'none';
         if (nextBtn) nextBtn.textContent = (quizState.currentQuestion === quizState.shuffledQuestions.length - 1) ? t('finish') : t('next');
     }
-    // === FIM DA ALTERAÇÃO ===
 
     async function finishQuiz() {
         let scores = { discoverer: 0, explorer: 0, collector: 0 };
-        // === INÍCIO DA ALTERAÇÃO ===
-        // Update final progress bar state
         document.getElementById('quizProgressBar').style.width = '100%';
 
         for (const questionIndex in quizState.answers) {
@@ -1149,15 +1198,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 scores[badge] = (scores[badge] || 0) + points[badge];
             }
         }
-        // === FIM DA ALTERAÇÃO ===
-
+        
         let resultBadge = 'discoverer';
         if (scores.explorer > scores.discoverer && scores.explorer > scores.collector) {
             resultBadge = 'explorer';
         } else if (scores.collector > scores.discoverer && scores.collector > scores.explorer) {
             resultBadge = 'collector';
         } else if (scores.explorer === scores.collector && scores.explorer > scores.discoverer) {
-            resultBadge = 'collector'; // Tie-breaker
+            resultBadge = 'collector';
         }
 
         try {
@@ -1179,16 +1227,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('nextQuestionBtn').addEventListener('click', () => {
         const selectedOption = document.querySelector('input[name="quiz"]:checked');
         if (!selectedOption) {
-            // Replaced alert with a more subtle error message
             const modal = ui.manager.dom.badgeQuizModal;
             ui.manager.showModalError(modal, "Please select an answer.");
             return;
         }
         ui.manager.clearModalMessages(ui.manager.dom.badgeQuizModal);
         quizState.answers[quizState.currentQuestion] = selectedOption.value;
-        // === INÍCIO DA ALTERAÇÃO ===
         if (quizState.currentQuestion < quizState.shuffledQuestions.length - 1) {
-        // === FIM DA ALTERAÇÃO ===
             quizState.currentQuestion++;
             renderQuestion();
         } else {
@@ -1198,7 +1243,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('prevQuestionBtn').addEventListener('click', () => {
         if (quizState.currentQuestion > 0) {
-            // Clear error message when navigating
             ui.manager.clearModalMessages(ui.manager.dom.badgeQuizModal);
             quizState.currentQuestion--;
             renderQuestion();
@@ -1237,7 +1281,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ9: "Para você, uma coleção de música ideal tem:", quizQ9O1: "Muitas raridades e lados B.", quizQ9O2: "Álbuns conceituais e discografias completas.", quizQ9O3: "O maior número possível de artistas e gêneros.",
                 quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
             });
-
+            
             setupEventListeners();
             translateUI();
             await api.manager.fetchSpotifyAppToken();
@@ -1253,6 +1297,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             ui.manager.dom.mainContainer.style.display = 'flex';
         }
     }
-
+    
     init();
 });
