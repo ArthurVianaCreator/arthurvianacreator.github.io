@@ -133,10 +133,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.intervalId = setInterval(async () => {
                 if (this.trackedUsers.size === 0 || !state.currentUser) return;
                 try {
-                    const response = await fetch('/api/users', { // <-- MODIFICADO
+                    const response = await fetch('/api/users', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'getStatuses', userNames: Array.from(this.trackedUsers) }) // <-- MODIFICADO
+                        body: JSON.stringify({ action: 'getStatuses', userNames: Array.from(this.trackedUsers) })
                     });
                     if (!response.ok) throw new Error('Failed to fetch statuses');
                     const statuses = await response.json();
@@ -210,11 +210,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         },
         login: (e, p) => api.manager._request('login', 'POST', { email: e, password: p }),
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
-        fetchUser: () => api.manager._request('users', 'GET'), // <-- MODIFICADO
-        updateUser: (d) => api.manager._request('users', 'PUT', d), // <-- MODIFICADO
-        updateUserBadge: (badge) => api.manager._request('users', 'POST', { action: 'updateBadge', badge }), // <-- MODIFICADO
+        fetchUser: () => api.manager._request('users', 'GET'),
+        updateUser: (d) => api.manager._request('users', 'PUT', d),
+        updateUserBadge: (badge) => api.manager._request('users', 'POST', { action: 'updateBadge', badge }),
         manageFriend: (targetName, action) => api.manager._request('friends', 'POST', { targetName, action }),
-        fetchPublicProfile: (name) => api.manager._request(`users?name=${encodeURIComponent(name)}`), // <-- MODIFICADO
+        fetchPublicProfile: (name) => api.manager._request(`users?name=${encodeURIComponent(name)}`),
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         getRecommendations: () => api.manager._request('recommendations', 'GET'),
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (isFollowing) {
                 const isFavorite = state.currentUser?.favoriteArtistId === artistId;
                 favoriteBtnHTML = `
-                    <button class="btn-secondary favorite-btn ${isFavorite ? 'is-favorite' : ''}" data-artist-id="${artist.id}">
+                    <button class="favorite-btn ${isFavorite ? 'is-favorite' : ''}" data-artist-id="${artist.id}">
                         <i class="fas fa-star"></i>
                         <span>${isFavorite ? t('removeFavorite') : t('setAsFavorite')}</span>
                     </button>
@@ -568,11 +568,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         </div>`;
 
         let favoriteArtistHTML = '';
-        let followedArtists = u.following ? [...u.following] : [];
+        let followedArtistsForGrid = u.following ? [...u.following] : [];
         if (u.favoriteArtistId) {
-            const favoriteArtist = followedArtists.find(a => a.id === u.favoriteArtistId);
+            const favoriteArtist = followedArtistsForGrid.find(a => a.id === u.favoriteArtistId);
             if (favoriteArtist) {
-                followedArtists = followedArtists.filter(a => a.id !== u.favoriteArtistId);
+                followedArtistsForGrid = followedArtistsForGrid.filter(a => a.id !== u.favoriteArtistId);
                 const favImg = favoriteArtist.images?.[0]?.url || 'https://via.placeholder.com/150';
                 favoriteArtistHTML = `
                     <h2 class="section-title-main">${t('favoriteArtist')}</h2>
@@ -619,7 +619,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             ${followTrackerHTML}
             <h2 class="section-title-main">${t('artistsYouFollow')}</h2>
             <div class="music-grid" id="followed-artists-grid"></div>`;
-        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), followedArtists.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
+        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), followedArtistsForGrid.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
     }
 
     async function renderSocialPage() {
@@ -706,6 +706,26 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             const descriptionHTML = u.description ? `<div class="profile-description-container"><div class="profile-description">${u.description}</div></div>` : '';
 
+            let favoriteArtistHTML = '';
+            let followedArtistsForGrid = u.following ? [...u.following] : [];
+            if (u.favoriteArtistId) {
+                const favoriteArtist = followedArtistsForGrid.find(a => a.id === u.favoriteArtistId);
+                if (favoriteArtist) {
+                    followedArtistsForGrid = followedArtistsForGrid.filter(a => a.id !== u.favoriteArtistId);
+                    const favImg = favoriteArtist.images?.[0]?.url || 'https://via.placeholder.com/150';
+                    favoriteArtistHTML = `
+                        <h2 class="section-title-main">${t('favoriteArtist')}</h2>
+                        <div class="favorite-artist-card" data-id="${favoriteArtist.id}" data-name="${favoriteArtist.name}">
+                            <div class="favorite-artist-img"><img src="${favImg}" alt="${favoriteArtist.name}"></div>
+                            <div class="favorite-artist-info">
+                                <h3>${favoriteArtist.name}</h3>
+                                <p>${(favoriteArtist.genres || []).join(', ')}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
             ui.manager.dom.profileContainer.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
                 <div class="profile-header-main">
@@ -718,13 +738,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                 </div>
                 ${descriptionHTML}
+                ${favoriteArtistHTML}
                 <div class="profile-tabs">
                     <button class="tab-link active" data-tab="artists">${t('followingCount', u.following?.length || 0)}</button>
                     <button class="tab-link" data-tab="friends">${t('friendsCount', u.friends?.length || 0)}</button>
                 </div>
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
                 <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
-            ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
+            ui.manager.populateGrid(document.querySelector('#artists .music-grid'), followedArtistsForGrid.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
             
             const friendsGrid = document.querySelector('#friends .user-grid');
             const friendNames = u.friends || [];
@@ -1422,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ7: "Seu histórico de streaming é majoritariamente composto por:", quizQ7O1: "Artistas que você descobriu na última semana.", quizQ7O2: "Alguns artistas, mas com muitas músicas diferentes deles.", quizQ7O3: "Uma quantidade enorme de artistas diferentes.",
                 quizQ8: "O que te deixa mais animado?", quizQ8O1: "Encontrar uma banda com menos de 1000 ouvintes.", quizQ8O2: "Entender a evolução de um artista através de seus álbuns.", quizQ8O3: "Ver sua biblioteca de artistas seguidos ultrapassar um novo marco.",
                 quizQ9: "Para você, uma coleção de música ideal tem:", quizQ9O1: "Muitas raridades e lados B.", quizQ9O2: "Álbuns conceituais e discografias completas.", quizQ9O3: "O maior número possível de artistas e gêneros.",
-                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ1O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
+                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ1O2: "Eu sou um historiador musical.", quizQ1O3: "Eu sou um curador de museu musical."
             });
             
             setupEventListeners();

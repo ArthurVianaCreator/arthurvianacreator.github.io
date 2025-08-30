@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { name } = req.query;
 
-    // Se houver um 'name' na query, busca um perfil público (antigo user-profile.js)
+    // Se houver um 'name' na query, busca um perfil público
     if (name) {
       try {
         const normalizedName = name.toLowerCase();
@@ -40,7 +40,8 @@ export default async function handler(req, res) {
           following: user.following || [],
           friends: user.friends || [],
           description: user.description || null,
-          lastSeen: user.lastSeen || null
+          lastSeen: user.lastSeen || null,
+          favoriteArtistId: user.favoriteArtistId || null // <-- LINHA CORRIGIDA
         };
         return res.status(200).json(publicData);
       } catch (error) {
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Se não houver 'name', busca o perfil do usuário logado (antigo user.js GET)
+    // Se não houver 'name', busca o perfil do usuário logado
     const currentUser = await authenticate(req, kv, JWT_SECRET);
     if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
     
@@ -60,14 +61,13 @@ export default async function handler(req, res) {
     return res.status(200).json(userData);
   }
 
-  // --- ROTA PUT: Atualiza o perfil do usuário logado --- (antigo user.js PUT)
+  // --- ROTA PUT: Atualiza o perfil do usuário logado ---
   if (req.method === 'PUT') {
     const user = await authenticate(req, kv, JWT_SECRET);
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
     try {
         const updatedData = req.body;
-        // ... (Lógica de atualização do user.js)
         if (updatedData.name) {
             const newName = updatedData.name.trim();
             if (newName.length <= 4) { return res.status(400).json({ error: 'Name must be more than 4 characters long' }); }
@@ -115,7 +115,6 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { action, ...body } = req.body;
 
-    // Ação para atualizar badge (antigo user-badge.js)
     if (action === 'updateBadge') {
       const currentUser = await authenticate(req, kv, JWT_SECRET);
       if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
@@ -133,7 +132,6 @@ export default async function handler(req, res) {
       return res.status(200).json(safeUserData);
     }
     
-    // Ação para buscar status de múltiplos usuários (antigo users-status.js)
     if (action === 'getStatuses') {
       const { userNames } = body;
       if (!Array.isArray(userNames) || userNames.length === 0) return res.status(400).json({ error: 'userNames must be a non-empty array.' });
@@ -154,6 +152,5 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid action provided.' });
   }
 
-  // Se o método não for GET, PUT ou POST
   return res.status(405).json({ error: 'Method Not Allowed' });
 }

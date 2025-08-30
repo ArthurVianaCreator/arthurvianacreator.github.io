@@ -291,11 +291,38 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .details-info .follow-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px var(--primary-glow); filter: brightness(1.1); }
 .details-info .follow-btn.following { background: transparent; border: 2px solid var(--gray-text); color: var(--light-gray-text); box-shadow: none; }
 .details-info .follow-btn.following:hover { background-color: var(--card-hover-bg); border-color: var(--light-gray-text); color: var(--white-text); transform: scale(1.05); filter: none; }
-.favorite-btn { padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-.favorite-btn.is-favorite { background-color: var(--primary-color); color: #121212; border-color: var(--primary-color); }
-.favorite-btn .fa-star { color: var(--primary-color); }
-.favorite-btn.is-favorite .fa-star { color: #121212; }
 
+/* --- FAVORITE BUTTON STYLES (CORRECTED) --- */
+.favorite-btn {
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-family: var(--body-font);
+    cursor: pointer; /* Added cursor */
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px solid var(--gray-text);
+    background: transparent;
+    color: var(--light-gray-text);
+}
+.favorite-btn:hover {
+    background-color: var(--card-hover-bg);
+    border-color: var(--primary-color);
+    color: var(--white-text);
+}
+.favorite-btn.is-favorite {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #121212;
+    box-shadow: 0 4px 15px var(--primary-glow);
+}
+.favorite-btn.is-favorite:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
 
 /* ARTIST PAGE LAYOUT */
 .artist-content-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
@@ -668,6 +695,7 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     box-shadow: 0 4px 20px var(--primary-glow);
     position: relative;
     z-index: 2;
+    cursor: pointer; /* Added cursor */
 }
 .btn-squad-start:hover {
     transform: scale(1.05);
