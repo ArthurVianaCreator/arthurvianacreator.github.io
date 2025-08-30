@@ -36,22 +36,24 @@ export default async function handler(req, res) {
     
     const rawActivities = await kv.lrange('global_activity_feed', 0, 99);
     
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+
     const feedActivities = rawActivities
       .map(activityStr => {
         try {
-          return JSON.parse(activityStr); // Safely parse each entry
+          return JSON.parse(activityStr);
         } catch (e) {
           console.error("Failed to parse activity from feed:", activityStr, e);
-          return null; // Return null for invalid entries
+          return null;
         }
       })
-      .filter(Boolean) // Remove any null entries that failed to parse
-      .filter(activity => { // Corrected filtering logic
+      .filter(Boolean)
+      .filter(activity => activity.timestamp > twentyFourHoursAgo) // Keep only activities from the last 24 hours
+      .filter(activity => {
         if (activity.action === 'FOLLOWED_ARTIST') {
           return friendList.includes(activity.username);
         }
         if (activity.action === 'BECAME_FRIENDS') {
-          // Show activity if either of the two new friends is in the user's friend list
           return friendList.includes(activity.user1) || friendList.includes(activity.user2);
         }
         return false;

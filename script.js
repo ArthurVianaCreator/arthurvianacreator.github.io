@@ -288,7 +288,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         },
         renderUserCard(user, index = 0) {
             let avatarHTML = user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
-            return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}"><div class="user-card-avatar">${avatarHTML}</div><div class="user-card-name">${user.name}</div></div>`;
+            const status = formatUserStatus(user.lastSeen);
+            const statusDotHTML = (status && status.class === 'online') ? `<div class="user-card-status-dot"></div>` : '';
+            
+            return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}">
+                        <div class="user-card-avatar">
+                            ${avatarHTML}
+                            ${statusDotHTML}
+                        </div>
+                        <div class="user-card-name">${user.name}</div>
+                    </div>`;
         },
         populateGrid(container, items, renderFunc, emptyMessage = 'Nothing to show here.') {
             if(!container) return;
@@ -1014,8 +1023,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             const passToggle = e.target.closest('.password-toggle');
             if (passToggle) {
                 const input = passToggle.previousElementSibling;
+                const icon = passToggle.querySelector('i');
                 input.type = input.type === 'password' ? 'text' : 'password';
-                passToggle.className = `fas ${input.type === 'password' ? 'fa-eye' : 'fa-eye-slash'} password-toggle`;
+                icon.className = `fas ${input.type === 'password' ? 'fa-eye' : 'fa-eye-slash'}`;
             }
             
             if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
