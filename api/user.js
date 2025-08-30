@@ -66,8 +66,10 @@ export default async function handler(req, res) {
       
       if (typeof updatedData.favoriteArtistId !== 'undefined') {
         if (updatedData.favoriteArtistId === null) {
+            // Se o valor for nulo, remove a propriedade
             delete user.favoriteArtistId;
         } else {
+            // Garante que o usuário segue o artista antes de favoritá-lo
             const isFollowing = user.following && user.following.some(a => a.id === updatedData.favoriteArtistId);
             if (isFollowing) {
                 user.favoriteArtistId = updatedData.favoriteArtistId;

@@ -167,10 +167,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             document.querySelectorAll(`.user-card[data-username="${userName}"]`).forEach(card => {
                 const dotEl = card.querySelector('.user-card-status-dot');
-                const dotNameEl = card.querySelector('.user-card-status-dot-name');
+                const textEl = card.querySelector('.user-card-status-text');
                 const isOnline = status.class === 'online';
                 if (dotEl) dotEl.style.display = isOnline ? 'block' : 'none';
-                if (dotNameEl) dotNameEl.style.display = isOnline ? 'block' : 'none';
+                if (textEl) textEl.textContent = status.text;
             });
         }
     };
@@ -253,10 +253,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             const followingList = state.currentUser.following || [];
             const isCurrentlyFollowing = followingList.some(a => a.id === artist.id);
             let updatedFollowingList;
+            let updatedData = {};
             if (isCurrentlyFollowing) {
                 updatedFollowingList = followingList.filter(a => a.id !== artist.id);
                 if (state.currentUser.favoriteArtistId === artist.id) {
-                    await api.manager.updateUser({ favoriteArtistId: null });
+                    updatedData.favoriteArtistId = null;
                     delete state.currentUser.favoriteArtistId;
                 }
             } else {
@@ -264,7 +265,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (followingList.length >= limit) throw new Error(t('errorFollowLimit', limit));
                 updatedFollowingList = [...followingList, artistData];
             }
-            state.currentUser = await api.manager.updateUser({ following: updatedFollowingList });
+            updatedData.following = updatedFollowingList;
+            state.currentUser = await api.manager.updateUser(updatedData);
             if (document.getElementById('profile').classList.contains('active')) {
                 renderProfilePage();
             }
@@ -345,17 +347,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             const status = formatUserStatus(user.lastSeen);
             const isOnline = status?.class === 'online';
             const statusDotHTML = `<div class="user-card-status-dot" style="display: ${isOnline ? 'block' : 'none'}"></div>`;
-            const statusDotNameHTML = `<div class="user-card-status-dot-name" style="display: ${isOnline ? 'block' : 'none'}"></div>`;
-
+            
             return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}">
                         <div class="user-card-avatar">
                             ${avatarHTML}
                             ${statusDotHTML}
                         </div>
                         <div class="user-card-name-container">
-                            ${statusDotNameHTML}
                             <div class="user-card-name">${user.name}</div>
                         </div>
+                        <div class="user-card-status-text">${status ? status.text : ''}</div>
                     </div>`;
         },
         populateGrid(container, items, renderFunc, emptyMessage = 'Nothing to show here.') {
@@ -440,8 +441,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const isFavorite = state.currentUser?.favoriteArtistId === artistId;
                 favoriteBtnHTML = `
                     <button class="btn-secondary favorite-btn ${isFavorite ? 'is-favorite' : ''}" data-artist-id="${artist.id}">
-                        <i class="fas ${isFavorite ? 'fa-star' : 'fa-star-o'}"></i>
-                        <span>${isFavorite ? t('favoriteArtist') : t('setAsFavorite')}</span>
+                        <i class="fas fa-star"></i>
+                        <span>${isFavorite ? t('removeFavorite') : t('setAsFavorite')}</span>
                     </button>
                 `;
             }

@@ -295,8 +295,6 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .favorite-btn.is-favorite { background-color: var(--primary-color); color: #121212; border-color: var(--primary-color); }
 .favorite-btn .fa-star { color: var(--primary-color); }
 .favorite-btn.is-favorite .fa-star { color: #121212; }
-.favorite-btn:not(.is-favorite) .fa-star-o { color: var(--light-gray-text); }
-.favorite-btn:hover .fa-star-o { color: var(--primary-color); }
 
 
 /* ARTIST PAGE LAYOUT */
@@ -401,12 +399,15 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     justify-content: center;
     gap: 6px;
 }
-.user-card-status-dot-name {
-    width: 8px;
-    height: 8px;
-    background-color: var(--success-color);
-    border-radius: 50%;
-    flex-shrink: 0;
+.user-card-name {
+    font-weight: 500;
+    color: var(--white-text);
+}
+.user-card-status-text {
+    font-size: 0.8rem;
+    color: var(--gray-text);
+    margin-top: 4px;
+    min-height: 1.2em; /* Prevents layout shift */
 }
 
 /* FRIENDS PAGE & ACTIONS */
