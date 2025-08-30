@@ -45,7 +45,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             activityFollowedArtist: '{0} started following {1}',
             activityBecameFriends: '{0} and {1} are now friends',
             recentActivity: 'Recent Activity',
-            noRecentActivity: 'No recent activity from your friends.'
+            noRecentActivity: 'No recent activity from your friends.',
+            online: 'Online',
+            lastSeen: 'Last seen {0}',
+            lastSeenMinutes: 'Last seen {0}m ago',
+            lastSeenHours: 'Last seen {0}h ago',
+            lastSeenDays: 'Last seen {0}d ago'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -89,7 +94,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             activityFollowedArtist: '{0} começou a seguir {1}',
             activityBecameFriends: '{0} e {1} são agora amigos',
             recentActivity: 'Atividade Recente',
-            noRecentActivity: 'Nenhuma atividade recente dos seus amigos.'
+            noRecentActivity: 'Nenhuma atividade recente dos seus amigos.',
+            online: 'Online',
+            lastSeen: 'Visto por último {0}',
+            lastSeenMinutes: 'Visto há {0}m',
+            lastSeenHours: 'Visto há {0}h',
+            lastSeenDays: 'Visto há {0}d'
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -582,6 +592,31 @@ document.addEventListener('DOMContentLoaded', async function() {
             container.innerHTML = `<h2 class="section-title-main">${t('recentActivity')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
         }
     }
+
+    function formatUserStatus(timestamp) {
+        if (!timestamp) return null;
+
+        const now = new Date();
+        const lastSeenDate = new Date(timestamp);
+        const diffSeconds = Math.round((now - lastSeenDate) / 1000);
+        const diffMinutes = Math.round(diffSeconds / 60);
+        const diffHours = Math.round(diffMinutes / 60);
+        const diffDays = Math.round(diffHours / 24);
+
+        if (diffSeconds < 300) { // 5 minutes
+            return { text: t('online'), class: 'online' };
+        }
+        if (diffMinutes < 60) {
+            return { text: t('lastSeenMinutes', diffMinutes), class: 'offline' };
+        }
+        if (diffHours < 24) {
+            return { text: t('lastSeenHours', diffHours), class: 'offline' };
+        }
+        if (diffDays <= 7) {
+            return { text: t('lastSeenDays', diffDays), class: 'offline' };
+        }
+        return { text: t('lastSeen', lastSeenDate.toLocaleDateString()), class: 'offline' };
+    }
     
     async function renderPublicProfileView(userName) {
         if (state.currentUser && userName === state.currentUser.name) return renderProfilePage();
@@ -596,6 +631,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${t(badgeMap[badgeKey].titleKey)}" class="badge-icon" data-badge-key="${badgeKey}">`;
                 });
             }
+
+            const status = formatUserStatus(u.lastSeen);
+            const statusHTML = status ? `<div class="online-status"><div class="status-dot ${status.class}"></div><span>${status.text}</span></div>` : '';
+            
             let friendStatusHTML = '';
             if (state.currentUser) {
                 if (state.currentUser.friends?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action remove" data-action="remove" data-target-name="${u.name}"><i class="fas fa-user-minus"></i> ${t('removeFriend')}</button>`;
@@ -611,6 +650,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="profile-avatar-large">${avatarHTML}</div>
                     <div class="profile-info-main">
                         <h2>${u.name}</h2>
+                        ${statusHTML}
                         <div class="user-badges">${badgesHTML}</div>
                         <div class="friend-status-container">${friendStatusHTML}</div>
                     </div>

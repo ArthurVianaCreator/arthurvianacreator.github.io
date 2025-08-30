@@ -28,13 +28,17 @@ export default async function handler(req, res) {
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+
+    // Update lastSeen on any authenticated action
+    user.lastSeen = Date.now();
+
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     if (req.method === 'GET') {
+      await kv.set(`user:${user.email}`, user); // Save updated timestamp
       const { password, ip, ...userData } = user;
       res.status(200).json(userData);
     } else if (req.method === 'PUT') {
       const updatedData = req.body;
-      let userWasUpdated = false;
 
       if (updatedData.name) {
         const newName = updatedData.name.trim();
@@ -55,11 +59,9 @@ export default async function handler(req, res) {
         } else {
           user.name = newName;
         }
-        userWasUpdated = true;
       }
       
       if (Array.isArray(updatedData.following)) {
-        // --- NEW: Detect and log new artist follows ---
         const oldFollowingIds = new Set((user.following || []).map(a => a.id));
         const newFollows = updatedData.following.filter(artist => !oldFollowingIds.has(artist.id));
 
@@ -76,29 +78,22 @@ export default async function handler(req, res) {
         if (newFollows.length > 0) {
             await kv.ltrim('global_activity_feed', 0, 99);
         }
-        // --- END OF NEW CODE ---
         user.following = updatedData.following;
-        userWasUpdated = true;
       }
 
       if (Array.isArray(updatedData.badges)) {
         user.badges = updatedData.badges;
-        userWasUpdated = true;
       }
       
       if (typeof updatedData.avatar !== 'undefined') {
         user.avatar = updatedData.avatar;
-        userWasUpdated = true;
       }
 
       if (typeof updatedData.description === 'string') {
         user.description = updatedData.description.trim();
-        userWasUpdated = true;
       }
 
-      if (userWasUpdated) {
-          await kv.set(`user:${user.email}`, user);
-      }
+      await kv.set(`user:${user.email}`, user);
       
       const { password, ip, ...userData } = user;
       res.status(200).json(userData);

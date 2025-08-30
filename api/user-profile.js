@@ -14,7 +14,6 @@ export default async function handler(req, res) {
     const { KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     
-    // 1. Encontrar o email associado ao nome.
     const normalizedName = name.toLowerCase();
     const userEmail = await kv.get(`name:${normalizedName}`);
     
@@ -22,14 +21,12 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    // 2. Buscar o objeto completo do usuário usando o email.
     const user = await kv.get(`user:${userEmail}`);
 
     if (!user) {
       return res.status(404).json({ error: 'User data not found.' });
     }
 
-    // 3. Retornar apenas os dados públicos e seguros.
     const publicData = {
       name: user.name,
       avatar: user.avatar || null,
@@ -37,6 +34,7 @@ export default async function handler(req, res) {
       following: user.following || [],
       friends: user.friends || [],
       description: user.description || null,
+      lastSeen: user.lastSeen || null
     };
 
     res.status(200).json(publicData);

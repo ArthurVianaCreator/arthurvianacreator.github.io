@@ -57,10 +57,10 @@ export default async function handler(req, res) {
       friends: [],
       friendRequestsSent: [],
       friendRequestsReceived: [],
+      lastSeen: Date.now() // Set lastSeen on registration
     };
     
     await kv.set(`user:${normalizedEmail}`, user);
-    // Armazena o email associado ao nome para busca posterior
     await kv.set(`name:${normalizedName}`, normalizedEmail);
 
     const token = jwt.sign({ email: normalizedEmail }, JWT_SECRET, { expiresIn: '7d' });

@@ -23,7 +23,7 @@
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
             <div class="sidebar-footer">
-                <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link">
+                <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link" aria-label="Instagram">
                     <i class="fab fa-instagram"></i>
                     <span>Instagram</span>
                 </a>
@@ -38,7 +38,7 @@
                         <div class="nav-item active" data-target="inicio" data-translate-key="home">Home</div>
                         <div class="nav-item" data-target="social" data-translate-key="friends">Friends</div>
                         <div class="nav-item" data-target="profile" id="profileNavItemMobile" data-translate-key="profile">Profile</div>
-                        <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link-mobile">
+                        <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link-mobile" aria-label="Instagram">
                             <i class="fab fa-instagram"></i>
                         </a>
                     </nav>
@@ -49,7 +49,8 @@
                         <input type="text" id="searchInput" data-translate-placeholder-key="searchInputPlaceholder" placeholder="Search for artists, albums, or users...">
                     </div>
                     <div class="advanced-filters">
-                        <select id="genreFilter">
+                        <label for="genreFilter" class="visually-hidden">Filter by Genre</label>
+                        <select id="genreFilter" title="Filter by Genre">
                             <option value="" data-translate-key="allGenres">All Genres</option>
                             <option value="rock">Rock</option>
                             <option value="pop">Pop</option>
@@ -62,7 +63,7 @@
                     <div id="autocomplete-results" class="autocomplete-results"></div>
                 </div>
                 <div class="user-profile-area">
-                    <button class="control-btn" id="themeToggleBtn">
+                    <button class="control-btn" id="themeToggleBtn" aria-label="Toggle theme" title="Toggle theme">
                         <i class="fas fa-sun"></i>
                         <i class="fas fa-moon"></i>
                     </button>
@@ -128,14 +129,14 @@
         </div>
     </div>
     
-    <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2 data-translate-key="login">Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" data-translate-placeholder-key="email" placeholder="Email"><div class="password-wrapper"><input type="password" id="loginPassword" data-translate-placeholder-key="password" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn" data-translate-key="login">Login</button></div><p class="modal-switch"><span data-translate-key="dontHaveAccount">Don't have an account?</span> <a href="#" id="switchToRegister" data-translate-key="signUp">Sign Up</a></p></div></div>
-    <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2 data-translate-key="signUp">Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" data-translate-placeholder-key="yourName" placeholder="Your Name"><input type="email" id="registerEmail" data-translate-placeholder-key="email" placeholder="Email"><div class="password-wrapper"><input type="password" id="registerPassword" data-translate-placeholder-key="password" placeholder="Password"><i class="fas fa-eye password-toggle"></i></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn" data-translate-key="createAccount">Create Account</button></div><p class="modal-switch"><span data-translate-key="alreadyHaveAccount">Already have an account?</span> <a href="#" id="switchToLogin" data-translate-key="login">Login</a></p></div></div>
+    <div id="loginModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn" aria-label="Close">&times;</button><h2 data-translate-key="login">Login</h2><p class="modal-error"></p><input type="email" id="loginEmail" data-translate-placeholder-key="email" placeholder="Email" aria-label="Email"><div class="password-wrapper"><input type="password" id="loginPassword" data-translate-placeholder-key="password" placeholder="Password" aria-label="Password"><button class="password-toggle" aria-label="Toggle password visibility"><i class="fas fa-eye"></i></button></div><div class="modal-actions"><button class="btn-primary" id="loginSubmitBtn" data-translate-key="login">Login</button></div><p class="modal-switch"><span data-translate-key="dontHaveAccount">Don't have an account?</span> <a href="#" id="switchToRegister" data-translate-key="signUp">Sign Up</a></p></div></div>
+    <div id="registerModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn" aria-label="Close">&times;</button><h2 data-translate-key="signUp">Sign Up</h2><p class="modal-error"></p><input type="text" id="registerName" data-translate-placeholder-key="yourName" placeholder="Your Name" aria-label="Your Name"><input type="email" id="registerEmail" data-translate-placeholder-key="email" placeholder="Email" aria-label="Email"><div class="password-wrapper"><input type="password" id="registerPassword" data-translate-placeholder-key="password" placeholder="Password" aria-label="Password"><button class="password-toggle" aria-label="Toggle password visibility"><i class="fas fa-eye"></i></button></div><div class="modal-actions"><button class="btn-primary" id="registerSubmitBtn" data-translate-key="createAccount">Create Account</button></div><p class="modal-switch"><span data-translate-key="alreadyHaveAccount">Already have an account?</span> <a href="#" id="switchToLogin" data-translate-key="login">Login</a></p></div></div>
     
-    <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn">&times;</button><h2 data-translate-key="changeYourName">Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" data-translate-placeholder-key="newName" placeholder="New name"><div class="modal-actions"><button class="btn-secondary" id="cancelNameChangeBtn" data-translate-key="cancel">Cancel</button><button class="btn-primary" id="saveNameBtn" data-translate-key="save">Save</button></div></div></div>
+    <div id="nameChangeModal" class="modal-overlay"><div class="modal-content"><button class="close-modal-btn" aria-label="Close">&times;</button><h2 data-translate-key="changeYourName">Change Your Name</h2><p class="modal-error"></p><input type="text" id="newNameInput" data-translate-placeholder-key="newName" placeholder="New name" aria-label="New name"><div class="modal-actions"><button class="btn-secondary" id="cancelNameChangeBtn" data-translate-key="cancel">Cancel</button><button class="btn-primary" id="saveNameBtn" data-translate-key="save">Save</button></div></div></div>
     
     <div id="avatarChangeModal" class="modal-overlay">
         <div class="modal-content">
-            <button class="close-modal-btn">&times;</button>
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
             <h2 data-translate-key="changeProfilePicture">Change Profile Picture</h2>
             <p class="modal-error"></p>
             <div id="video-container" style="display: none;">
@@ -144,7 +145,7 @@
             <div class="avatar-preview-container">
                 <img id="avatarPreviewImage" src="" alt="Avatar Preview">
             </div>
-            <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+            <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" aria-label="Upload avatar file">
             <div id="avatar-actions">
                 <div class="modal-actions-grid">
                     <button class="btn-secondary" id="uploadAvatarBtn"><i class="fas fa-upload"></i> <span data-translate-key="uploadImage">Upload Image</span></button>
@@ -165,15 +166,13 @@
     
     <div id="badgeQuizModal" class="modal-overlay">
         <div class="modal-content">
-            <button class="close-modal-btn">&times;</button>
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
             <p class="modal-error"></p>
             <div id="quiz-container">
                 <h2 data-translate-key="badgeQuizTitle">Discover Your Music Profile</h2>
-                <!-- === INÍCIO DA ALTERAÇÃO === -->
                 <div class="quiz-progress-container">
                     <div class="quiz-progress-bar" id="quizProgressBar"></div>
                 </div>
-                <!-- === FIM DA ALTERAÇÃO === -->
                 <div id="question-container"></div>
                 <div class="quiz-navigation">
                     <button id="prevQuestionBtn" class="btn-secondary" style="display: none;" data-translate-key="previous">Previous</button>

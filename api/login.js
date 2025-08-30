@@ -16,7 +16,8 @@ export default async function handler(req, res) {
   try {
     const { email, password } = req.body;
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
-    const user = await kv.get(`user:${email.toLowerCase()}`);
+    const userKey = `user:${email.toLowerCase()}`;
+    const user = await kv.get(userKey);
 
     if (!user || !user.password) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -26,6 +27,10 @@ export default async function handler(req, res) {
     if (!passwordMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+
+    // Update lastSeen timestamp on login
+    user.lastSeen = Date.now();
+    await kv.set(userKey, user);
 
     const token = jwt.sign({ email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     res.status(200).json({ token });

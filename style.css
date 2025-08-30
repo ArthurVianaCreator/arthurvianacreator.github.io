@@ -144,6 +144,26 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .profile-info-main .user-badges .badge-icon { width: 28px; height: 28px; }
 .friend-status-container { margin-top: 15px; }
 
+.online-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--gray-text);
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--gray-text);
+}
+.status-dot.online {
+    background-color: var(--success-color);
+}
+
 /* Profile Description */
 .profile-description-container { position: relative; max-width: 600px; margin: 0 auto 30px; }
 .profile-description {
