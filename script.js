@@ -133,10 +133,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.intervalId = setInterval(async () => {
                 if (this.trackedUsers.size === 0 || !state.currentUser) return;
                 try {
-                    const response = await fetch('/api/users-status', {
+                    const response = await fetch('/api/users', { // <-- MODIFICADO
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userNames: Array.from(this.trackedUsers) })
+                        body: JSON.stringify({ action: 'getStatuses', userNames: Array.from(this.trackedUsers) }) // <-- MODIFICADO
                     });
                     if (!response.ok) throw new Error('Failed to fetch statuses');
                     const statuses = await response.json();
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 } catch (error) {
                     console.error("Error updating user statuses:", error);
                 }
-            }, 30000); // Poll every 30 seconds
+            }, 30000);
         },
         stop() {
             clearInterval(this.intervalId);
@@ -210,11 +210,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         },
         login: (e, p) => api.manager._request('login', 'POST', { email: e, password: p }),
         register: (n, e, p) => api.manager._request('register', 'POST', { name: n, email: e, password: p }),
-        fetchUser: () => api.manager._request('user', 'GET'),
-        updateUser: (d) => api.manager._request('user', 'PUT', d),
-        updateUserBadge: (badge) => api.manager._request('user-badge', 'POST', { badge }),
+        fetchUser: () => api.manager._request('users', 'GET'), // <-- MODIFICADO
+        updateUser: (d) => api.manager._request('users', 'PUT', d), // <-- MODIFICADO
+        updateUserBadge: (badge) => api.manager._request('users', 'POST', { action: 'updateBadge', badge }), // <-- MODIFICADO
         manageFriend: (targetName, action) => api.manager._request('friends', 'POST', { targetName, action }),
-        fetchPublicProfile: (name) => api.manager._request(`user-profile?name=${encodeURIComponent(name)}`),
+        fetchPublicProfile: (name) => api.manager._request(`users?name=${encodeURIComponent(name)}`), // <-- MODIFICADO
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         getRecommendations: () => api.manager._request('recommendations', 'GET'),
@@ -1422,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ7: "Seu histórico de streaming é majoritariamente composto por:", quizQ7O1: "Artistas que você descobriu na última semana.", quizQ7O2: "Alguns artistas, mas com muitas músicas diferentes deles.", quizQ7O3: "Uma quantidade enorme de artistas diferentes.",
                 quizQ8: "O que te deixa mais animado?", quizQ8O1: "Encontrar uma banda com menos de 1000 ouvintes.", quizQ8O2: "Entender a evolução de um artista através de seus álbuns.", quizQ8O3: "Ver sua biblioteca de artistas seguidos ultrapassar um novo marco.",
                 quizQ9: "Para você, uma coleção de música ideal tem:", quizQ9O1: "Muitas raridades e lados B.", quizQ9O2: "Álbuns conceituais e discografias completas.", quizQ9O3: "O maior número possível de artistas e gêneros.",
-                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
+                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ1O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
             });
             
             setupEventListeners();
