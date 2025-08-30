@@ -119,6 +119,56 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const getFollowLimit = (user) => 100;
 
+    const statusManager = {
+        trackedUsers: new Set(),
+        intervalId: null,
+        start() {
+            if (this.intervalId) return;
+            this.intervalId = setInterval(async () => {
+                if (this.trackedUsers.size === 0 || !state.currentUser) return;
+                try {
+                    const response = await fetch('/api/users-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userNames: Array.from(this.trackedUsers) })
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch statuses');
+                    const statuses = await response.json();
+                    for (const userName in statuses) {
+                        const timestamp = statuses[userName];
+                        const status = formatUserStatus(timestamp);
+                        this.updateUserStatusInDOM(userName, status);
+                    }
+                } catch (error) {
+                    console.error("Error updating user statuses:", error);
+                }
+            }, 30000); // Poll every 30 seconds
+        },
+        stop() {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        },
+        track(userNames) {
+            if (!Array.isArray(userNames)) return;
+            userNames.forEach(name => this.trackedUsers.add(name));
+        },
+        clear() { this.trackedUsers.clear(); },
+        updateUserStatusInDOM(userName, status) {
+            if (!status) return;
+            const profileStatusEl = document.querySelector(`.online-status[data-username-status="${userName}"]`);
+            if (profileStatusEl) {
+                profileStatusEl.innerHTML = `<div class="status-dot ${status.class}"></div><span>${status.text}</span>`;
+            }
+            document.querySelectorAll(`.user-card[data-username="${userName}"]`).forEach(card => {
+                const dotEl = card.querySelector('.user-card-status-dot');
+                const dotNameEl = card.querySelector('.user-card-status-dot-name');
+                const isOnline = status.class === 'online';
+                if (dotEl) dotEl.style.display = isOnline ? 'block' : 'none';
+                if (dotNameEl) dotNameEl.style.display = isOnline ? 'block' : 'none';
+            });
+        }
+    };
+
     api.manager = {
         async _request(endpoint, method = 'GET', body = null) {
             const headers = { 'Content-Type': 'application/json' };
@@ -258,6 +308,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             return avatarColors[Math.abs(hash % avatarColors.length)];
         },
         switchContent(id) {
+            statusManager.clear();
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             const targetSection = document.getElementById(id);
             if(targetSection) targetSection.classList.add('active');
@@ -282,8 +333,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderUserCard(user, index = 0) {
             let avatarHTML = user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
             const status = formatUserStatus(user.lastSeen);
-            const statusDotHTML = (status && status.class === 'online') ? `<div class="user-card-status-dot"></div>` : '';
-            const statusDotNameHTML = (status && status.class === 'online') ? `<div class="user-card-status-dot-name"></div>` : '';
+            const isOnline = status?.class === 'online';
+            const statusDotHTML = `<div class="user-card-status-dot" style="display: ${isOnline ? 'block' : 'none'}"></div>`;
+            const statusDotNameHTML = `<div class="user-card-status-dot-name" style="display: ${isOnline ? 'block' : 'none'}"></div>`;
 
             return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}">
                         <div class="user-card-avatar">
@@ -538,6 +590,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const friendsGrid = document.getElementById('friends-grid');
         const friendNames = u.friends || [];
+        statusManager.track(friendNames);
         if (friendNames.length > 0) {
             try {
                 const friendPromises = friendNames.map(name => api.manager.fetchPublicProfile(name).catch(e => null));
@@ -591,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             const status = formatUserStatus(u.lastSeen);
-            const statusHTML = status ? `<div class="online-status"><div class="status-dot ${status.class}"></div><span>${status.text}</span></div>` : '';
+            const statusHTML = status ? `<div class="online-status" data-username-status="${u.name}"><div class="status-dot ${status.class}"></div><span>${status.text}</span></div>` : '';
             
             let friendStatusHTML = '';
             if (state.currentUser) {
@@ -624,6 +677,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             const friendsGrid = document.querySelector('#friends .user-grid');
             const friendNames = u.friends || [];
+            statusManager.track([userName, ...friendNames]);
             if (friendNames.length > 0) {
                  try {
                     const friendPromises = friendNames.map(name => api.manager.fetchPublicProfile(name).catch(e => null));
@@ -1104,6 +1158,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     let html = '';
                     if (userResults && userResults.length > 0) {
                         html += `<h2 class="section-title-main">${t('users')}</h2><div class="user-grid">${userResults.map((u, i) => ui.manager.renderUserCard(u, i)).join('')}</div>`;
+                        statusManager.track(userResults.map(u => u.name));
                     }
                     if (spotifyResults.artists?.items.length > 0) {
                         html += `<h2 class="section-title-main">${t('artists')}</h2><div class="music-grid">${spotifyResults.artists.items.map((item, i) => ui.manager.renderMusicCard(item, i)).join('')}</div>`;
@@ -1299,6 +1354,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             translateUI();
             await api.manager.fetchSpotifyAppToken();
             await auth.manager.init();
+            statusManager.start();
             ui.manager.updateForAuthState();
             ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || 'dark');
             
