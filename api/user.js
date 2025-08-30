@@ -29,12 +29,11 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Update lastSeen on any authenticated action
     user.lastSeen = Date.now();
 
     const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     if (req.method === 'GET') {
-      await kv.set(`user:${user.email}`, user); // Save updated timestamp
+      await kv.set(`user:${user.email}`, user);
       const { password, ip, ...userData } = user;
       res.status(200).json(userData);
     } else if (req.method === 'PUT') {
@@ -62,22 +61,6 @@ export default async function handler(req, res) {
       }
       
       if (Array.isArray(updatedData.following)) {
-        const oldFollowingIds = new Set((user.following || []).map(a => a.id));
-        const newFollows = updatedData.following.filter(artist => !oldFollowingIds.has(artist.id));
-
-        for (const artist of newFollows) {
-            const activity = {
-                username: user.name,
-                action: 'FOLLOWED_ARTIST',
-                targetName: artist.name,
-                targetId: artist.id,
-                timestamp: Date.now()
-            };
-            await kv.lpush('global_activity_feed', JSON.stringify(activity));
-        }
-        if (newFollows.length > 0) {
-            await kv.ltrim('global_activity_feed', 0, 99);
-        }
         user.following = updatedData.following;
       }
 

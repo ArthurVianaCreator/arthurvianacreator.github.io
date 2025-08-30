@@ -333,6 +333,19 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     border: 2px solid var(--card-bg);
     z-index: 2;
 }
+.user-card-name-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.user-card-status-dot-name {
+    width: 8px;
+    height: 8px;
+    background-color: var(--success-color);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
 /* FRIENDS PAGE & ACTIONS */
 .friend-requests-list { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
@@ -596,39 +609,6 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .btn-squad-start:hover {
     transform: scale(1.05);
     filter: brightness(1.1);
-}
-
-/* --- ACTIVITY FEED STYLES --- */
-#activity-feed-container {
-    margin-bottom: 30px;
-}
-.activity-feed-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.activity-item {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-left: 3px solid var(--primary-color);
-    padding: 12px 15px;
-    border-radius: 0 6px 6px 0;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.activity-item i {
-    color: var(--gray-text);
-}
-.activity-item .activity-link {
-    color: var(--primary-color);
-    font-weight: bold;
-    text-decoration: none;
-    cursor: pointer;
-}
-.activity-item .activity-link:hover {
-    text-decoration: underline;
 }
 
 /* BADGE QUIZ MODAL */

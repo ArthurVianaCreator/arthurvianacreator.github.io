@@ -1,5 +1,3 @@
-// pages/api/friends.js
-
 import { createClient } from '@vercel/kv';
 import jwt from 'jsonwebtoken';
 
@@ -76,17 +74,6 @@ export default async function handler(req, res) {
         currentUser.friends.push(targetUser.name);
         targetUser.friendRequestsSent = targetUser.friendRequestsSent.filter(name => name !== currentUser.name);
         targetUser.friends.push(currentUser.name);
-
-        // --- NEW: Log friendship activity ---
-        const activity = {
-            action: 'BECAME_FRIENDS',
-            user1: currentUser.name,
-            user2: targetUser.name,
-            timestamp: Date.now()
-        };
-        await kv.lpush('global_activity_feed', JSON.stringify(activity));
-        await kv.ltrim('global_activity_feed', 0, 99); // Keep the latest 100 activities
-        // --- END OF NEW CODE ---
         break;
 
       case 'reject':

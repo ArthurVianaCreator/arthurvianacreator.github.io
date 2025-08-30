@@ -42,10 +42,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', year: 'Year',
             startQuiz: 'Discover Your Badge', squadTitle: 'Badge Squadron',
             squadDescription: "What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!",
-            activityFollowedArtist: '{0} started following {1}',
-            activityBecameFriends: '{0} and {1} are now friends',
-            recentActivity: 'Recent Activity',
-            noRecentActivity: 'No recent activity from your friends.',
             online: 'Online',
             lastSeen: 'Last seen {0}',
             lastSeenMinutes: 'Last seen {0}m ago',
@@ -91,10 +87,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', year: 'Ano',
             startQuiz: 'Descubra Sua Insígnia', squadTitle: 'Esquadrão das Insígnias',
             squadDescription: "Que tipo de fã de música você é? O Explorador que mergulha fundo nas discografias? O Descobridor que está sempre encontrando a próxima grande novidade? Ou o Colecionador com uma biblioteca imensa? Responda 10 perguntas rápidas para descobrir e ganhar sua insígnia exclusiva!",
-            activityFollowedArtist: '{0} começou a seguir {1}',
-            activityBecameFriends: '{0} e {1} são agora amigos',
-            recentActivity: 'Atividade Recente',
-            noRecentActivity: 'Nenhuma atividade recente dos seus amigos.',
             online: 'Online',
             lastSeen: 'Visto por último {0}',
             lastSeenMinutes: 'Visto há {0}m',
@@ -169,7 +161,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         getRecommendations: () => api.manager._request('recommendations', 'GET'),
-        fetchActivityFeed: () => api.manager._request('activity-feed', 'GET'),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
@@ -290,13 +281,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             let avatarHTML = user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
             const status = formatUserStatus(user.lastSeen);
             const statusDotHTML = (status && status.class === 'online') ? `<div class="user-card-status-dot"></div>` : '';
-            
+            const statusDotNameHTML = (status && status.class === 'online') ? `<div class="user-card-status-dot-name"></div>` : '';
+
             return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}">
                         <div class="user-card-avatar">
                             ${avatarHTML}
                             ${statusDotHTML}
                         </div>
-                        <div class="user-card-name">${user.name}</div>
+                        <div class="user-card-name-container">
+                            ${statusDotNameHTML}
+                            <div class="user-card-name">${user.name}</div>
+                        </div>
                     </div>`;
         },
         populateGrid(container, items, renderFunc, emptyMessage = 'Nothing to show here.') {
@@ -534,13 +529,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         ui.manager.dom.socialContainer.innerHTML = `
-            <div id="activity-feed-container">${ui.manager.renderLoader('')}</div>
             ${friendRequestsHTML}
             <h2 class="section-title-main">${t('yourFriends')}</h2>
             <div class="user-grid" id="friends-grid">${ui.manager.renderLoader('')}</div>
         `;
-
-        renderActivityFeed();
 
         const friendsGrid = document.getElementById('friends-grid');
         const friendNames = u.friends || [];
@@ -554,51 +546,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } else {
             ui.manager.populateGrid(friendsGrid, [], (item, index) => ui.manager.renderUserCard(item, index), t('emptyFriends'));
-        }
-    }
-
-    async function renderActivityFeed() {
-        const container = document.getElementById('activity-feed-container');
-        try {
-            const activities = await api.manager.fetchActivityFeed();
-            
-            if (!activities || activities.length === 0) {
-                container.innerHTML = `<h2 class="section-title-main">${t('recentActivity')}</h2><p class="search-message">${t('noRecentActivity')}</p>`;
-                return;
-            }
-
-            const activityItemsHTML = activities.map(activity => {
-                let icon = '';
-                let text = '';
-
-                switch (activity.action) {
-                    case 'FOLLOWED_ARTIST':
-                        icon = '<i class="fas fa-music"></i>';
-                        text = t('activityFollowedArtist', 
-                            `<span class="activity-link user-link" data-username="${activity.username}">${activity.username}</span>`, 
-                            `<span class="activity-link artist-link" data-id="${activity.targetId}">${activity.targetName}</span>`
-                        );
-                        break;
-                    case 'BECAME_FRIENDS':
-                        icon = '<i class="fas fa-user-friends"></i>';
-                        text = t('activityBecameFriends', 
-                            `<span class="activity-link user-link" data-username="${activity.user1}">${activity.user1}</span>`, 
-                            `<span class="activity-link user-link" data-username="${activity.user2}">${activity.user2}</span>`
-                        );
-                        break;
-                    default:
-                        return '';
-                }
-                return `<div class="activity-item">${icon}<p>${text}</p></div>`;
-            }).join('');
-
-            container.innerHTML = `
-                <h2 class="section-title-main">${t('recentActivity')}</h2>
-                <div class="activity-feed-list">${activityItemsHTML}</div>
-            `;
-        } catch (error) {
-            console.error("Failed to load activity feed:", error);
-            container.innerHTML = `<h2 class="section-title-main">${t('recentActivity')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
         }
     }
 
