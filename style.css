@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap');
-
 /* DARK THEME (DEFAULT) */
 :root {
     --primary-color: #FFC107;
@@ -833,4 +832,45 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 @media (max-width: 500px) {
     .advanced-filters { flex-wrap: wrap; }
     .advanced-filters select { width: 100%; margin-bottom: 5px; }
+}
+
+/* --- LANGUAGE SWITCHER --- */
+.language-switcher-container {
+    padding: 6px 15px;
+    cursor: default;
+}
+.language-switcher-container:hover {
+    background-color: transparent;
+}
+.language-switcher {
+    display: flex;
+    margin-left: 10px;
+    gap: 5px;
+    background-color: var(--card-bg);
+    border-radius: 20px;
+    padding: 4px;
+    border: 1px solid var(--border-color);
+}
+.lang-btn {
+    background: none;
+    border: none;
+    color: var(--gray-text);
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.lang-btn:hover {
+    color: var(--white-text);
+    background-color: var(--card-hover-bg);
+}
+.lang-btn.active {
+    background-color: var(--primary-color);
+    color: #121212;
+}
+.dropdown-item i.fa-globe {
+    width: 16px;
+    text-align: center;
+    color: var(--light-gray-text);
 }

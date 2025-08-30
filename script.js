@@ -115,7 +115,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             delete: 'Excluir'
         }
     };
-    const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
+    const getLanguage = () => {
+        const savedLang = localStorage.getItem('lyricaLanguage');
+        if (savedLang && translations[savedLang]) {
+            return savedLang;
+        }
+        const browserLang = navigator.language.split('-')[0];
+        return translations[browserLang] ? browserLang : 'en';
+    };
     const currentTranslations = translations[getLanguage()];
     const t = (key, ...args) => {
         let text = currentTranslations[key] || key;
@@ -126,6 +133,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.querySelectorAll('[data-translate-key]').forEach(el => el.textContent = t(el.getAttribute('data-translate-key')));
         document.querySelectorAll('[data-translate-placeholder-key]').forEach(el => el.placeholder = t(el.getAttribute('data-translate-placeholder-key')));
     };
+
+    function setLanguageAndReload(lang) {
+        if (translations[lang]) {
+            localStorage.setItem('lyricaLanguage', lang);
+            window.location.reload();
+        }
+    }
+
+    function setActiveLangButton() {
+        const currentLang = getLanguage();
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === currentLang);
+        });
+    }
 
     const badgeMap = {
         admin: { src: 'img/Admin.png', titleKey: 'badgeAdminTitle', descriptionKey: 'badgeAdminDesc' },
@@ -1250,6 +1271,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 input.type = input.type === 'password' ? 'text' : 'password';
                 icon.className = `fas ${input.type === 'password' ? 'fa-eye' : 'fa-eye-slash'}`;
             }
+
+            const langBtn = e.target.closest('.lang-btn');
+            if (langBtn) {
+                setLanguageAndReload(langBtn.dataset.lang);
+            }
             
             if (e.target.closest('#loginPromptBtn')) ui.manager.openModal(ui.manager.dom.loginModal);
             if (e.target.closest('#changeNameBtn')) {
@@ -1575,6 +1601,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
 
             await handleRouting();
+            setActiveLangButton();
         } catch (error) {
             console.error("Initialization failed:", error);
             ui.manager.dom.appLoader.innerHTML = `<div style="text-align: center; color: white;"><h2>Oops!</h2><p>Something went wrong during startup. Please refresh the page.</p></div>`;
