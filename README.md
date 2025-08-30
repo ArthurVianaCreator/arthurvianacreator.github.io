@@ -16,22 +16,25 @@ To create a modern and functional platform where users can discover, follow, and
 
 ### Content Exploration
 
-*   **Featured Artists:** A section with popular and influential artists.
+*   **Popular Artists:** A section with the most influential and followed artists on the platform.
 *   **Artists You Might Like:** A personalized recommendation system to discover new artists based on your taste.
-*   **New Releases:** A dedicated area to follow the latest albums and singles.
-*   **Advanced Search:** A powerful search tool with autocomplete, real-time suggestions, and filters for genre and release year.
+*   **Platform News:** A dedicated area to keep up with the latest news and announcements from Lyrica.
+*   **Advanced Search:** A powerful search tool with real-time suggestions and genre filters.
 *   **Detail Pages:** Complete profiles for artists and albums, featuring popular tracks, a full discography, and an integrated music player.
 
 ### User Interaction
 
 *   **User Accounts:** Simplified account creation and login system.
 *   **Follow Artists:** Allows creating a personalized library by following artists of interest.
-*   **Profile Management:** Options to change the username and manage the account.
+*   **Profile Management:** Options to change username, profile picture, and manage the account.
+*   **Friends System:** Add other users, send and receive friend requests, and view your friends' profiles.
+*   **Public Profiles:** Explore other users' profiles, see the artists they follow, and their friends.
 
 ### Personalization
 
 *   **Visual Themes:** A light or dark theme selector to customize the site's appearance.
 *   **Advanced Badge System:** A personalized questionnaire to determine which of the three exclusive badges (Discoverer, Explorer, or Collector) best fits your music personality.
+*   **Language Selection:** Easily switch between Portuguese and English for a more comfortable browsing experience.
 
 ## Monetization Model
 
