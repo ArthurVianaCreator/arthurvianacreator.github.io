@@ -1,36 +1,53 @@
+// /api/popular-artists.js
 import { createClient } from '@vercel/kv';
 
-async function getSpotifySeveralArtists(ids, env) {
-    const basicAuth = Buffer.from(`${env.SPOTIFY_CLIENT_ID}:${env.SPOTIFY_CLIENT_SECRET}`).toString('base64');
-    const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
+const kv = createClient({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+});
+
+const SPOTIFY_TOKEN_KEY = 'spotify_access_token';
+
+async function getSpotifyAccessToken() {
+    let token = await kv.get(SPOTIFY_TOKEN_KEY);
+    if (token) return token;
+
+    const { SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } = process.env;
+    const basicAuth = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
+
+    const response = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: { 'Authorization': `Basic ${basicAuth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'grant_type=client_credentials',
     });
-    if (!tokenResponse.ok) throw new Error('Failed to fetch Spotify token');
-    const tokenData = await tokenResponse.json();
-    const artistsResponse = await fetch(`https://api.spotify.com/v1/artists?ids=${ids.join(',')}`, {
-        headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
+
+    if (!response.ok) throw new Error('Failed to fetch new Spotify token.');
+
+    const data = await response.json();
+    await kv.set(SPOTIFY_TOKEN_KEY, data.access_token, { ex: data.expires_in - 300 });
+    return data.access_token;
+}
+
+async function fetchFromSpotify(endpoint) {
+    const accessToken = await getSpotifyAccessToken();
+    const apiResponse = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
     });
-    if (!artistsResponse.ok) throw new Error(`Spotify API Error: ${artistsResponse.status}`);
-    return artistsResponse.json();
+
+    if (!apiResponse.ok) throw new Error(`Spotify API Error: ${apiResponse.statusText}`);
+    return apiResponse.json();
 }
 
 export default async function handler(req, res) {
-  const { KV_REST_API_URL, KV_REST_API_TOKEN, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET } = process.env;
-  if (!KV_REST_API_URL || !KV_REST_API_TOKEN || !SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
-    console.error('Server configuration error: Missing environment variables for popular artists.');
-    return res.status(500).json({ error: 'Server configuration error.' });
-  }
-  
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
+  
   try {
-    const kv = createClient({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN });
     const userKeys = [];
     for await (const key of kv.scanIterator({ match: 'user:*' })) {
         userKeys.push(key);
     }
     if (userKeys.length === 0) return res.status(200).json({ artists: [] });
+    
     const allUsers = await kv.mget(...userKeys);
     const artistFollowCounts = {};
     allUsers.forEach(user => {
@@ -40,13 +57,17 @@ export default async function handler(req, res) {
             });
         }
     });
+    
     const sortedArtistIds = Object.keys(artistFollowCounts).sort((a, b) => artistFollowCounts[b] - artistFollowCounts[a]);
     const top9ArtistIds = sortedArtistIds.slice(0, 9);
+    
     if (top9ArtistIds.length === 0) return res.status(200).json({ artists: [] });
-    const popularArtistsData = await getSpotifySeveralArtists(top9ArtistIds, process.env);
+    
+    const popularArtistsData = await fetchFromSpotify(`artists?ids=${top9ArtistIds.join(',')}`);
     res.status(200).json(popularArtistsData);
+    
   } catch (error) {
-    console.error('Popular Artists API Error:', error);
+    console.error('Popular Artists API Error:', error.message);
     return res.status(500).json({ error: 'A server-side error occurred.' });
   }
 }
