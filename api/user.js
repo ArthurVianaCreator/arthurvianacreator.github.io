@@ -63,6 +63,17 @@ export default async function handler(req, res) {
       if (Array.isArray(updatedData.following)) {
         user.following = updatedData.following;
       }
+      
+      if (typeof updatedData.favoriteArtistId !== 'undefined') {
+        if (updatedData.favoriteArtistId === null) {
+            delete user.favoriteArtistId;
+        } else {
+            const isFollowing = user.following && user.following.some(a => a.id === updatedData.favoriteArtistId);
+            if (isFollowing) {
+                user.favoriteArtistId = updatedData.favoriteArtistId;
+            }
+        }
+      }
 
       if (Array.isArray(updatedData.badges)) {
         user.badges = updatedData.badges;

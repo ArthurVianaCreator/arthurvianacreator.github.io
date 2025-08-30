@@ -47,7 +47,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             lastSeen: 'Last seen {0}',
             lastSeenMinutes: 'Last seen {0}m ago',
             lastSeenHours: 'Last seen {0}h ago',
-            lastSeenDays: 'Last seen {0}d ago'
+            lastSeenDays: 'Last seen {0}d ago',
+            favoriteArtist: 'Favorite Artist',
+            setAsFavorite: 'Set as Favorite',
+            removeFavorite: 'Remove Favorite'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -92,7 +95,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             lastSeen: 'Visto por último {0}',
             lastSeenMinutes: 'Visto há {0}m',
             lastSeenHours: 'Visto há {0}h',
-            lastSeenDays: 'Visto há {0}d'
+            lastSeenDays: 'Visto há {0}d',
+            favoriteArtist: 'Artista Favorito',
+            setAsFavorite: 'Definir como Favorito',
+            removeFavorite: 'Remover Favorito'
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -249,6 +255,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             let updatedFollowingList;
             if (isCurrentlyFollowing) {
                 updatedFollowingList = followingList.filter(a => a.id !== artist.id);
+                if (state.currentUser.favoriteArtistId === artist.id) {
+                    await api.manager.updateUser({ favoriteArtistId: null });
+                    delete state.currentUser.favoriteArtistId;
+                }
             } else {
                 const limit = getFollowLimit(state.currentUser);
                 if (followingList.length >= limit) throw new Error(t('errorFollowLimit', limit));
@@ -425,6 +435,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? t('following') : t('follow')}</span></button>`
                 : `<button class="follow-btn" disabled>${t('loginToFollow')}</button>`;
 
+            let favoriteBtnHTML = '';
+            if (isFollowing) {
+                const isFavorite = state.currentUser?.favoriteArtistId === artistId;
+                favoriteBtnHTML = `
+                    <button class="btn-secondary favorite-btn ${isFavorite ? 'is-favorite' : ''}" data-artist-id="${artist.id}">
+                        <i class="fas ${isFavorite ? 'fa-star' : 'fa-star-o'}"></i>
+                        <span>${isFavorite ? t('favoriteArtist') : t('setAsFavorite')}</span>
+                    </button>
+                `;
+            }
+
             let metaInfo = artist.genres.join(', ');
             if (bioData.origin) metaInfo += ` &bull; ${bioData.origin}`;
 
@@ -464,7 +485,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="details-info">
                         <h2>${artist.name}</h2>
                         <p class="meta-info">${metaInfo}</p>
-                        ${followBtnHTML}
+                        <div class="details-actions">
+                           ${followBtnHTML}
+                           ${favoriteBtnHTML}
+                        </div>
                     </div>
                 </div>
                 <div class="artist-content-columns">
@@ -542,6 +566,31 @@ document.addEventListener('DOMContentLoaded', async function() {
             </div>
         </div>`;
 
+        let favoriteArtistHTML = '';
+        let followedArtists = u.following ? [...u.following] : [];
+        if (u.favoriteArtistId) {
+            const favoriteArtist = followedArtists.find(a => a.id === u.favoriteArtistId);
+            if (favoriteArtist) {
+                followedArtists = followedArtists.filter(a => a.id !== u.favoriteArtistId);
+                const favImg = favoriteArtist.images?.[0]?.url || 'https://via.placeholder.com/150';
+                favoriteArtistHTML = `
+                    <h2 class="section-title-main">${t('favoriteArtist')}</h2>
+                    <div class="favorite-artist-card" data-id="${favoriteArtist.id}" data-name="${favoriteArtist.name}">
+                        <div class="favorite-artist-img">
+                            <img src="${favImg}" alt="${favoriteArtist.name}">
+                        </div>
+                        <div class="favorite-artist-info">
+                            <h3>${favoriteArtist.name}</h3>
+                            <p>${(favoriteArtist.genres || []).join(', ')}</p>
+                            <button class="btn-secondary remove-favorite-btn">
+                                <i class="fas fa-times"></i> ${t('removeFavorite')}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
         const followCount = u.following?.length || 0;
         const followLimit = getFollowLimit(u);
         const percentage = (followCount / followLimit) * 100;
@@ -565,10 +614,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             </div>
             ${descriptionHTML}
+            ${favoriteArtistHTML}
             ${followTrackerHTML}
             <h2 class="section-title-main">${t('artistsYouFollow')}</h2>
             <div class="music-grid" id="followed-artists-grid"></div>`;
-        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), u.following?.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
+        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), followedArtists.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
     }
 
     async function renderSocialPage() {
@@ -976,14 +1026,38 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return renderPublicProfileView(username);
             }
 
+            const favoriteArtistCard = e.target.closest('.favorite-artist-card');
+            if (favoriteArtistCard && !e.target.closest('.remove-favorite-btn')) {
+                const { id, name } = favoriteArtistCard.dataset;
+                history.pushState({ artistId: id }, '', `/${encodeURIComponent(name)}`);
+                return renderArtistView(id);
+            }
+
+            const removeFavoriteBtn = e.target.closest('.remove-favorite-btn');
+            if (removeFavoriteBtn) {
+                try {
+                    state.currentUser = await api.manager.updateUser({ favoriteArtistId: null });
+                    renderProfilePage();
+                } catch (error) { alert(error.message); }
+            }
+
+            const favoriteBtn = e.target.closest('.favorite-btn');
+            if (favoriteBtn) {
+                const artistId = favoriteBtn.dataset.artistId;
+                try {
+                    const isCurrentlyFavorite = state.currentUser.favoriteArtistId === artistId;
+                    state.currentUser = await api.manager.updateUser({ favoriteArtistId: isCurrentlyFavorite ? null : artistId });
+                    renderArtistView(artistId);
+                } catch (error) { alert(error.message); }
+            }
+
             const followBtn = e.target.closest('.follow-btn:not(:disabled)');
             if (followBtn) { 
                 try {
-                    const artist = await api.manager.getSpotifyArtist(followBtn.dataset.artistId); 
+                    const artistId = followBtn.dataset.artistId;
+                    const artist = await api.manager.getSpotifyArtist(artistId); 
                     const isFollowing = await auth.manager.toggleFollow(artist);
-                    followBtn.classList.toggle('following', isFollowing);
-                    followBtn.querySelector('span').textContent = isFollowing ? t('following') : t('follow');
-                    followBtn.querySelector('i').className = `fas ${isFollowing ? 'fa-check' : 'fa-plus'}`;
+                    renderArtistView(artistId);
                 } catch (error) { alert(error.message); }
             }
 

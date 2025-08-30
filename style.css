@@ -205,6 +205,60 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .progress-bar-fill { height: 100%; background-color: var(--primary-color); border-radius: 5px; transition: width 0.5s ease-out; }
 .limit-text { font-weight: 700; color: var(--white-text); font-size: 0.9rem; flex-shrink: 0; }
 
+/* Favorite Artist Card on Profile */
+.favorite-artist-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--primary-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px auto 30px;
+    max-width: 600px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.favorite-artist-card:hover {
+    background: var(--card-hover-bg);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px var(--primary-glow);
+}
+.favorite-artist-img {
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.favorite-artist-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.favorite-artist-info {
+    flex-grow: 1;
+}
+.favorite-artist-info h3 {
+    font-family: var(--elegant-font);
+    font-size: 1.8rem;
+    color: var(--white-text);
+    margin: 0 0 5px 0;
+}
+.favorite-artist-info p {
+    color: var(--gray-text);
+    margin: 0 0 15px 0;
+    text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.remove-favorite-btn {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
 /* REVISED TAB STYLE TO MATCH IMAGE */
 .profile-tabs { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; }
 .tab-link { background: var(--card-hover-bg); border: 1px solid var(--border-color); color: var(--light-gray-text); padding: 8px 16px; border-radius: 4px; font-family: var(--body-font); font-weight: 500; font-size: 1rem; cursor: pointer; transition: all 0.2s ease-in-out; }
@@ -232,10 +286,18 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 }
 .details-info .artist-link { cursor: pointer; transition: color 0.2s; }
 .details-info .artist-link:hover { color: var(--primary-color); text-decoration: underline; }
-.details-info .follow-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 30px; border-radius: 50px; border: none; background: linear-gradient(45deg, var(--primary-color), #ffd54f); color: #121212; font-size: 1rem; font-weight: bold; font-family: var(--body-font); cursor: pointer; transition: all 0.3s ease; margin-top: 20px; box-shadow: 0 4px 15px var(--primary-glow); }
+.details-info .details-actions { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
+.details-info .follow-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 30px; border-radius: 50px; border: none; background: linear-gradient(45deg, var(--primary-color), #ffd54f); color: #121212; font-size: 1rem; font-weight: bold; font-family: var(--body-font); cursor: pointer; transition: all 0.3s ease; margin-top: 0; box-shadow: 0 4px 15px var(--primary-glow); }
 .details-info .follow-btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px var(--primary-glow); filter: brightness(1.1); }
 .details-info .follow-btn.following { background: transparent; border: 2px solid var(--gray-text); color: var(--light-gray-text); box-shadow: none; }
 .details-info .follow-btn.following:hover { background-color: var(--card-hover-bg); border-color: var(--light-gray-text); color: var(--white-text); transform: scale(1.05); filter: none; }
+.favorite-btn { padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.favorite-btn.is-favorite { background-color: var(--primary-color); color: #121212; border-color: var(--primary-color); }
+.favorite-btn .fa-star { color: var(--primary-color); }
+.favorite-btn.is-favorite .fa-star { color: #121212; }
+.favorite-btn:not(.is-favorite) .fa-star-o { color: var(--light-gray-text); }
+.favorite-btn:hover .fa-star-o { color: var(--primary-color); }
+
 
 /* ARTIST PAGE LAYOUT */
 .artist-content-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
