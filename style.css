@@ -451,6 +451,17 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .btn-friend-action.reject:hover, .btn-friend-action.remove:hover { background: var(--danger-color); color: #fff; }
 .btn-friend-action:disabled { filter: grayscale(0.8); cursor: not-allowed; }
 
+/* NEWS PAGE STYLES */
+.news-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.news-list-container { display: flex; flex-direction: column; gap: 20px; }
+.news-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
+.news-card-header { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 5px; }
+.news-card h3 { font-family: var(--elegant-font); font-size: 1.5rem; color: var(--white-text); }
+.news-card-meta { font-size: 0.85rem; color: var(--gray-text); margin-bottom: 15px; }
+.news-card-content { line-height: 1.7; }
+.delete-news-btn { font-size: 0.8rem; padding: 5px 10px; }
+#postNewsModal textarea { min-height: 150px; resize: vertical; }
+
 /* MODALS */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s; }
 .modal-overlay.active { display: flex; }

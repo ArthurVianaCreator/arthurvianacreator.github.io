@@ -50,7 +50,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             lastSeenDays: 'Last seen {0}d ago',
             favoriteArtist: 'Favorite Artist',
             setAsFavorite: 'Set as Favorite',
-            removeFavorite: 'Remove Favorite'
+            removeFavorite: 'Remove Favorite',
+            news: 'News',
+            postNews: 'Post News',
+            title: 'Title',
+            content: 'Content...',
+            post: 'Post',
+            noNews: 'No news yet. Check back later!',
+            delete: 'Delete'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -98,7 +105,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             lastSeenDays: 'Visto há {0}d',
             favoriteArtist: 'Artista Favorito',
             setAsFavorite: 'Definir como Favorito',
-            removeFavorite: 'Remover Favorito'
+            removeFavorite: 'Remover Favorito',
+            news: 'Notícias',
+            postNews: 'Postar Notícia',
+            title: 'Título',
+            content: 'Conteúdo...',
+            post: 'Postar',
+            noNews: 'Nenhuma notícia ainda. Volte mais tarde!',
+            delete: 'Excluir'
         }
     };
     const getLanguage = () => { const lang = navigator.language.split('-')[0]; return translations[lang] ? lang : 'en'; };
@@ -219,6 +233,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         getRecommendations: () => api.manager._request('recommendations', 'GET'),
         heartbeat: () => api.manager._request('heartbeat', 'POST'),
+        getNews: () => api.manager._request('news', 'GET'),
+        postNews: (title, content) => api.manager._request('news', 'POST', { title, content }),
+        deleteNews: (id) => api.manager._request(`news?id=${id}`, 'DELETE'),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
@@ -279,12 +296,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
-            badgeQuizModal: document.getElementById('badgeQuizModal'),
+            badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
             recommendationsContainer: document.getElementById('recommendations-container'),
             themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
-            profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'),
+            profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'), newsContainer: document.getElementById('news'),
             autocompleteResults: document.getElementById('autocomplete-results'), genreFilter: document.getElementById('genreFilter'),
         },
         updateForAuthState() {
@@ -312,6 +329,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             if(document.getElementById('profile').classList.contains('active')) renderProfilePage();
             if(document.getElementById('social').classList.contains('active')) renderSocialPage();
+            if(document.getElementById('news').classList.contains('active')) renderNewsPage();
         },
         getAvatarColor(name) {
             const avatarColors = ['#e53935', '#1e88e5', '#43a047', '#f4511e', '#5e35b1', '#00acc1', '#d81b60'];
@@ -953,6 +971,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }
 
+        if (pathName.toLowerCase() === 'news') {
+            return renderNewsPage();
+        }
+
         try {
             await api.manager.fetchPublicProfile(pathName);
             renderPublicProfileView(pathName);
@@ -984,6 +1006,77 @@ document.addEventListener('DOMContentLoaded', async function() {
             } catch (error) {
                 console.error("Heartbeat failed:", error.message);
             }
+        }
+    }
+
+    async function renderNewsPage() {
+        ui.manager.switchContent('news');
+        const container = ui.manager.dom.newsContainer;
+        container.innerHTML = ui.manager.renderLoader(t('loading'));
+        
+        let adminControlsHTML = '';
+        if (state.currentUser && state.currentUser.badges.includes('admin')) {
+            adminControlsHTML = `
+                <div class="news-admin-controls">
+                    <button class="btn-primary" id="openPostNewsModalBtn"><i class="fas fa-plus"></i> ${t('postNews')}</button>
+                </div>
+            `;
+        }
+        
+        try {
+            const newsItems = await api.manager.getNews();
+            let newsHTML = `<div class="news-header"><h2 class="section-title-main">${t('news')}</h2>${adminControlsHTML}</div>`;
+
+            if (newsItems.length === 0) {
+                newsHTML += `<p class="search-message">${t('noNews')}</p>`;
+            } else {
+                newsHTML += '<div class="news-list-container">';
+                newsItems.forEach(item => {
+                    const deleteBtn = (state.currentUser && state.currentUser.badges.includes('admin'))
+                        ? `<button class="btn-danger delete-news-btn" data-id="${item.id}"><i class="fas fa-trash"></i> ${t('delete')}</button>`
+                        : '';
+                    newsHTML += `
+                        <div class="news-card">
+                            <div class="news-card-header">
+                                <h3>${item.title}</h3>
+                                ${deleteBtn}
+                            </div>
+                            <p class="news-card-meta">By ${item.author} on ${new Date(item.createdAt).toLocaleDateString()}</p>
+                            <div class="news-card-content">${item.content.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                });
+                newsHTML += '</div>';
+            }
+            container.innerHTML = newsHTML;
+        } catch (error) {
+            container.innerHTML = `<h2 class="section-title-main">${t('news')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
+            console.error("Error rendering news page:", error);
+        }
+    }
+
+    async function handlePostNewsSubmit(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.postNewsModal;
+        const title = modal.querySelector('#newsTitleInput').value.trim();
+        const content = modal.querySelector('#newsContentInput').value.trim();
+
+        if (!title || !content) {
+            return ui.manager.showModalError(modal, t('allFieldsRequired'));
+        }
+
+        btn.disabled = true;
+        btn.textContent = t('saving');
+
+        try {
+            await api.manager.postNews(title, content);
+            ui.manager.closeAllModals();
+            renderNewsPage();
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = t('post');
         }
     }
     
@@ -1115,6 +1208,23 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
 
+            if (e.target.closest('#openPostNewsModalBtn')) {
+                ui.manager.openModal(ui.manager.dom.postNewsModal);
+            }
+
+            const deleteNewsBtn = e.target.closest('.delete-news-btn');
+            if (deleteNewsBtn) {
+                const articleId = deleteNewsBtn.dataset.id;
+                if (confirm('Are you sure you want to delete this news article?')) {
+                    try {
+                        await api.manager.deleteNews(articleId);
+                        renderNewsPage();
+                    } catch (error) {
+                        alert('Failed to delete article: ' + error.message);
+                    }
+                }
+            }
+
             handleFriendAction(e);
 
             const tabLink = e.target.closest('.tab-link');
@@ -1190,6 +1300,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
+        document.getElementById('postNewsSubmitBtn').addEventListener('click', handlePostNewsSubmit);
         
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
@@ -1207,6 +1318,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else if (target === 'social') {
                 history.pushState({}, '', '/social');
                 renderSocialPage();
+            } else if (target === 'news') {
+                history.pushState({}, '', '/news');
+                renderNewsPage();
             } else if (target === 'inicio') {
                 history.pushState({}, '', '/');
                 renderHomePage();

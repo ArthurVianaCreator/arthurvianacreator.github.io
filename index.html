@@ -19,6 +19,7 @@
             <div class="logo"><h1>Lyrica</h1></div>
             <nav class="main-nav">
                 <div class="nav-item active" data-target="inicio"><i class="fas fa-home"></i><span data-translate-key="home">Home</span></div>
+                <div class="nav-item" data-target="news"><i class="fas fa-newspaper"></i><span data-translate-key="news">News</span></div>
                 <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span data-translate-key="friends">Friends</span></div>
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
@@ -36,6 +37,7 @@
                     <div class="logo-mobile"><h1>Lyrica</h1></div>
                      <nav class="main-nav-mobile">
                         <div class="nav-item active" data-target="inicio" data-translate-key="home">Home</div>
+                        <div class="nav-item" data-target="news" data-translate-key="news">News</div>
                         <div class="nav-item" data-target="social" data-translate-key="friends">Friends</div>
                         <div class="nav-item" data-target="profile" id="profileNavItemMobile" data-translate-key="profile">Profile</div>
                         <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link-mobile" aria-label="Instagram">
@@ -83,11 +85,7 @@
             <div class="main-content">
                 <div id="inicio" class="content-section active">
                     <div id="home-container">
-                        <div id="popular-artists-container">
-                            <!-- Popular artists will be injected here by JS -->
-                        </div>
-
-                        <!-- Squad Content Moved Here -->
+                        <div id="popular-artists-container"></div>
                         <div class="squad-page-container">
                             <h2 class="section-title-main" data-translate-key="squadTitle">Badge Squadron</h2>
                             <p class="squad-description" data-translate-key="squadDescription">
@@ -109,21 +107,14 @@
                             </div>
                             <button class="btn-primary btn-squad-start" id="startQuizBtn"><i class="fas fa-pen-ruler"></i> <span data-translate-key="startQuiz">Discover Your Badge</span></button>
                         </div>
-                        
-                        <div id="recommendations-container">
-                             <!-- Recommendations will be injected here by JS -->
-                        </div>
+                        <div id="recommendations-container"></div>
                     </div>
                 </div>
-                <div id="squad" class="content-section"></div> <!-- This can now be removed or left empty -->
+                <div id="news" class="content-section"></div>
                 <div id="buscar" class="content-section"><h2 class="section-title-main" data-translate-key="searchResults">Search Results</h2><div id="searchResultsContainer"></div></div>
                 <div id="details-view" class="content-section"></div>
-                <div id="social" class="content-section">
-                    <!-- Social/Friends content will be injected here -->
-                </div>
-                <div id="profile" class="content-section">
-                    <!-- Profile content will be injected here -->
-                </div>
+                <div id="social" class="content-section"></div>
+                <div id="profile" class="content-section"></div>
             </div>
         </div>
     </div>
@@ -138,12 +129,8 @@
             <button class="close-modal-btn" aria-label="Close">&times;</button>
             <h2 data-translate-key="changeProfilePicture">Change Profile Picture</h2>
             <p class="modal-error"></p>
-            <div id="video-container" style="display: none;">
-                <video id="videoStream" autoplay playsinline></video>
-            </div>
-            <div class="avatar-preview-container">
-                <img id="avatarPreviewImage" src="" alt="Avatar Preview">
-            </div>
+            <div id="video-container" style="display: none;"><video id="videoStream" autoplay playsinline></video></div>
+            <div class="avatar-preview-container"><img id="avatarPreviewImage" src="" alt="Avatar Preview"></div>
             <input type="file" id="avatarFileInput" accept="image/*" style="display: none;" aria-label="Upload avatar file">
             <div id="avatar-actions">
                 <div class="modal-actions-grid">
@@ -151,15 +138,9 @@
                     <button class="btn-secondary" id="takePhotoBtn"><i class="fas fa-camera-retro"></i> <span data-translate-key="takePhoto">Take Photo</span></button>
                     <button class="btn-danger" id="removeAvatarBtn"><i class="fas fa-trash"></i> <span data-translate-key="remove">Remove</span></button>
                 </div>
-                <div class="modal-actions">
-                     <button class="btn-primary" id="saveAvatarBtn"><i class="fas fa-save"></i> <span data-translate-key="saveAndClose">Save & Close</span></button>
-                </div>
+                <div class="modal-actions"><button class="btn-primary" id="saveAvatarBtn"><i class="fas fa-save"></i> <span data-translate-key="saveAndClose">Save & Close</span></button></div>
             </div>
-            <div id="capture-actions" style="display: none;">
-                <div class="modal-actions">
-                    <button class="btn-primary" id="captureBtn"><i class="fas fa-camera"></i> <span data-translate-key="capture">Capture</span></button>
-                </div>
-            </div>
+            <div id="capture-actions" style="display: none;"><div class="modal-actions"><button class="btn-primary" id="captureBtn"><i class="fas fa-camera"></i> <span data-translate-key="capture">Capture</span></button></div></div>
         </div>
     </div>
     
@@ -169,9 +150,7 @@
             <p class="modal-error"></p>
             <div id="quiz-container">
                 <h2 data-translate-key="badgeQuizTitle">Discover Your Music Profile</h2>
-                <div class="quiz-progress-container">
-                    <div class="quiz-progress-bar" id="quizProgressBar"></div>
-                </div>
+                <div class="quiz-progress-container"><div class="quiz-progress-bar" id="quizProgressBar"></div></div>
                 <div id="question-container"></div>
                 <div class="quiz-navigation">
                     <button id="prevQuestionBtn" class="btn-secondary" style="display: none;" data-translate-key="previous">Previous</button>
@@ -184,6 +163,19 @@
                 <h3 id="resultBadgeName"></h3>
                 <p id="resultBadgeDescription"></p>
                 <button id="closeQuizResultBtn" class="btn-primary" data-translate-key="close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="postNewsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h2 data-translate-key="postNews">Post News</h2>
+            <p class="modal-error"></p>
+            <input type="text" id="newsTitleInput" data-translate-placeholder-key="title" placeholder="Title" aria-label="Title">
+            <textarea id="newsContentInput" data-translate-placeholder-key="content" placeholder="Content..." aria-label="Content"></textarea>
+            <div class="modal-actions">
+                <button class="btn-primary" id="postNewsSubmitBtn" data-translate-key="post">Post</button>
             </div>
         </div>
     </div>
