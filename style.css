@@ -336,7 +336,17 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .modal-content input, .modal-content textarea { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--gray-text); background: var(--card-bg); color: var(--white-text); font-size: 1rem; margin-bottom: 15px; font-family: var(--body-font); }
 .password-wrapper { position: relative; margin-bottom: 15px; }
 .password-wrapper input { margin-bottom: 0; padding-right: 45px; }
-.password-toggle { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); color: var(--gray-text); cursor: pointer; }
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    color: var(--gray-text);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 8px;
+}
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; width: 100%;}
 /* Base style for buttons in modals and similar actions */
 .modal-actions button, .modal-actions-grid button, .editor-actions button, .quiz-navigation button {
@@ -697,6 +707,19 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     font-size: 1rem;
     color: var(--light-gray-text);
 }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 
 /* MOBILE RESPONSIVENESS FOR SEARCH */
 @media (max-width: 950px) {
