@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const state = { currentUser: null, spotifyAppToken: null, lastView: 'inicio', artistContextId: null, cameraStream: null };
     const api = {}, auth = {}, ui = {};
+    let lastHeartbeatTimestamp = 0;
 
     // 1. Translation System
     const translations = {
@@ -161,6 +162,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         getRecommendations: () => api.manager._request('recommendations', 'GET'),
+        heartbeat: () => api.manager._request('heartbeat', 'POST'),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
@@ -559,7 +561,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const diffHours = Math.round(diffMinutes / 60);
         const diffDays = Math.round(diffHours / 24);
 
-        if (diffSeconds < 300) { // 5 minutes
+        if (diffSeconds < 120) { // 2 minutes for 'online' status
             return { text: t('online'), class: 'online' };
         }
         if (diffMinutes < 60) {
@@ -841,6 +843,20 @@ document.addEventListener('DOMContentLoaded', async function() {
                 console.error("Routing/Spotify Error:", spotifyError);
                 history.replaceState({}, '', '/');
                 renderHomePage();
+            }
+        }
+    }
+
+    async function updateUserPresence() {
+        const now = Date.now();
+        if (now - lastHeartbeatTimestamp < 60000) return; // Throttle to 1 minute
+        
+        lastHeartbeatTimestamp = now;
+        if (localStorage.getItem('authToken')) {
+            try {
+                await api.manager.heartbeat();
+            } catch (error) {
+                console.error("Heartbeat failed:", error.message);
             }
         }
     }
@@ -1285,6 +1301,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             await auth.manager.init();
             ui.manager.updateForAuthState();
             ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || 'dark');
+            
+            updateUserPresence(); // Initial heartbeat
+            setInterval(updateUserPresence, 60000); // Heartbeat every minute
+            ['mousemove', 'keydown', 'scroll'].forEach(event => {
+                document.addEventListener(event, updateUserPresence);
+            });
+
             await handleRouting();
         } catch (error) {
             console.error("Initialization failed:", error);
