@@ -477,20 +477,32 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-
     async function renderArtistView(artistId) {
         state.artistContextId = null;
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingArtist'));
         try {
+            // A chamada principal para os detalhes do artista permanece separada
             const artist = await api.manager.getSpotifyArtist(artistId);
 
-            const [albumsData, bioData, topTracksData, relatedArtistsData] = await Promise.all([
+            // Usamos Promise.allSettled para as chamadas secundárias
+            const results = await Promise.allSettled([
                 api.manager.getSpotifyArtistAlbums(artistId),
                 api.manager.getArtistBio(artist.name),
                 api.manager.getSpotifyArtistTopTracks(artistId),
-                api.manager.getSpotifyRelatedArtists(artistId)
+                api.manager.getSpotifyRelatedArtists(artistId) // Esta é a chamada que pode falhar
             ]);
+
+            // Processamos cada resultado verificando seu status
+            const albumsData = results[0].status === 'fulfilled' ? results[0].value : { items: [] };
+            const bioData = results[1].status === 'fulfilled' ? results[1].value : { bio: t('noBioAvailable'), origin: null };
+            const topTracksData = results[2].status === 'fulfilled' ? results[2].value : { tracks: [] };
+            const relatedArtistsData = results[3].status === 'fulfilled' ? results[3].value : { artists: [] };
+            
+            // Se a chamada de artistas relacionados falhou, registramos o erro no console para depuração
+            if (results[3].status === 'rejected') {
+                console.error("Failed to fetch related artists (but page will still load):", results[3].reason);
+            }
 
             history.replaceState({ artistId: artistId }, '', `/${encodeURIComponent(artist.name)}`);
 
@@ -525,7 +537,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 bioHTML = `<p class="artist-bio">${t('noBioAvailable')}</p>`;
             }
-
 
             let topTracksHTML = '';
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
@@ -576,9 +587,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 ${similarArtistsHTML ? `<h3 class="section-title-main">${t('similarArtists')}</h3>${similarArtistsHTML}` : ''}
                 `;
         } catch (e) {
+            // Este catch agora só será acionado se a busca principal do artista falhar
             ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadArtist', e.message)}</p>`;
         }
     }
+
 
     async function renderAlbumView(albumId) {
         ui.manager.switchContent('details-view');
