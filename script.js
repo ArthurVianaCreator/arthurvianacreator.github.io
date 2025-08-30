@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
         getSpotifyArtistTopTracks: (id) => api.manager._spotifyRequest(`artists/${id}/top-tracks?market=BR`),
-        getSpotifyRelatedArtists: (id) => api.manager._spotifyRequest(`artists/${id}/related-artists`),
+        getSpotifyRelatedArtists: (id) => api.manager._request(`related-artists?artistId=${id}`),
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
     };
