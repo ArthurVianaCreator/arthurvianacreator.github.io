@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeExplorerTitle: 'Explorer', badgeExplorerDesc: "A musical archaeologist. They dive deep beyond the hits, exploring every album and the value of music.",
             noDescription: 'No description provided.', editDescription: 'Edit Description', saveDescription: 'Save Description', cancelEdit: 'Cancel',
             descriptionCharCount: '{0}/200 characters', followLimitTitle: 'Artist Follow Limit',
-            artistsYouMightLike: 'Artists You Might Like', retakeBadgeQuiz: 'Retake Quiz', badgeQuizTitle: 'Discover Your Music Profile',
+            retakeBadgeQuiz: 'Retake Quiz', badgeQuizTitle: 'Discover Your Music Profile',
             quizResultTitle: 'Your Result!', close: 'Close', next: 'Next', previous: 'Previous', allGenres: 'All Genres', year: 'Year',
             startQuiz: 'Discover Your Badge', squadTitle: 'Badge Squadron',
             squadDescription: "What kind of music fan are you? The Explorer who dives deep into discographies? The Discoverer who's always finding the next big thing? Or the Collector with an immense library? Answer 10 quick questions to find out and earn your exclusive badge!",
@@ -57,7 +57,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             content: 'Content...',
             post: 'Post',
             noNews: 'No news yet. Check back later!',
-            delete: 'Delete'
+            delete: 'Delete',
+            similarArtists: 'Similar Artists',
+            notifications: 'Notifications',
+            noNotifications: 'No new notifications.',
+            newFriendRequest: '<strong>{0}</strong> sent you a friend request.'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -94,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeExplorerTitle: 'Explorador', badgeExplorerDesc: 'Um arqueólogo musical. Eles mergulham fundo além dos hits, explorando cada álbum e o valor da música.',
             noDescription: 'Nenhuma descrição fornecida.', editDescription: 'Editar Descrição', saveDescription: 'Salvar Descrição', cancelEdit: 'Cancelar',
             descriptionCharCount: '{0}/200 caracteres', followLimitTitle: 'Artistas seguidos',
-            artistsYouMightLike: 'Artistas que você pode gostar', retakeBadgeQuiz: 'Refazer Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
+            retakeBadgeQuiz: 'Refazer Questionário', badgeQuizTitle: 'Descubra Seu Perfil Musical',
             quizResultTitle: 'Seu Resultado!', close: 'Fechar', next: 'Próximo', previous: 'Anterior', allGenres: 'Todos os Gêneros', year: 'Ano',
             startQuiz: 'Descubra Sua Insígnia', squadTitle: 'Esquadrão das Insígnias',
             squadDescription: "Que tipo de fã de música você é? O Explorador que mergulha fundo nas discografias? O Descobridor que está sempre encontrando a próxima grande novidade? Ou o Colecionador com uma biblioteca imensa? Responda 10 perguntas rápidas para descobrir e ganhar sua insígnia exclusiva!",
@@ -112,7 +116,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             content: 'Conteúdo...',
             post: 'Postar',
             noNews: 'Nenhuma notícia ainda. Volte mais tarde!',
-            delete: 'Excluir'
+            delete: 'Excluir',
+            similarArtists: 'Artistas Similares',
+            notifications: 'Notificações',
+            noNotifications: 'Nenhuma notificação nova.',
+            newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.'
         }
     };
     const getLanguage = () => {
@@ -252,7 +260,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         fetchPublicProfile: (name) => api.manager._request(`users?name=${encodeURIComponent(name)}`),
         searchUsers: (query) => api.manager._request(`search-users?query=${encodeURIComponent(query)}`),
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
-        getRecommendations: () => api.manager._request('recommendations', 'GET'),
         heartbeat: () => api.manager._request('heartbeat', 'POST'),
         getNews: () => api.manager._request('news', 'GET'),
         postNews: (title, content) => api.manager._request('news', 'POST', { title, content }),
@@ -261,6 +268,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
         getSpotifyArtistAlbums: (id) => api.manager._spotifyRequest(`artists/${id}/albums?include_groups=album,single&limit=20`),
         getSpotifyArtistTopTracks: (id) => api.manager._spotifyRequest(`artists/${id}/top-tracks?market=BR`),
+        getSpotifyRelatedArtists: (id) => api.manager._spotifyRequest(`artists/${id}/related-artists`),
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
     };
@@ -320,15 +328,42 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
-            recommendationsContainer: document.getElementById('recommendations-container'),
             themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
             profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'), newsContainer: document.getElementById('news'),
             autocompleteResults: document.getElementById('autocomplete-results'), genreFilter: document.getElementById('genreFilter'),
+            notificationBellBtn: document.getElementById('notificationBellBtn'), notificationCounter: document.querySelector('.notification-counter'), notificationDropdown: document.getElementById('notificationDropdown'),
+        },
+        renderNotifications() {
+            if (!state.currentUser) return;
+            const requests = state.currentUser.friendRequestsReceived || [];
+            const count = requests.length;
+            const counterEl = this.dom.notificationCounter;
+            const listEl = this.dom.notificationDropdown.querySelector('.notification-list');
+
+            if (count > 0) {
+                counterEl.textContent = count;
+                counterEl.style.display = 'flex';
+            } else {
+                counterEl.style.display = 'none';
+            }
+            
+            if (count > 0) {
+                listEl.innerHTML = requests.map(name => `
+                    <div class="notification-item" data-target="social">
+                        <i class="fas fa-user-plus"></i>
+                        <span>${t('newFriendRequest', name)}</span>
+                    </div>
+                `).join('');
+            } else {
+                listEl.innerHTML = `<div class="empty-notifications">${t('noNotifications')}</div>`;
+            }
         },
         updateForAuthState() {
             const u = state.currentUser;
             this.dom.loginPromptBtn.style.display = u ? 'none' : 'block';
             this.dom.userProfile.style.display = u ? 'flex' : 'none';
+            this.dom.notificationBellBtn.style.display = u ? 'block' : 'none';
+
             if (u) {
                 this.dom.userAvatar.innerHTML = '';
                 if (u.avatar) {
@@ -347,7 +382,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                     badgesHTML += '</div>';
                 }
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
+                this.renderNotifications();
+            } else {
+                 this.dom.notificationCounter.style.display = 'none';
             }
+
             if(document.getElementById('profile').classList.contains('active')) renderProfilePage();
             if(document.getElementById('social').classList.contains('active')) renderSocialPage();
             if(document.getElementById('news').classList.contains('active')) renderNewsPage();
@@ -420,20 +459,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function renderHomePage() {
         ui.manager.switchContent('inicio');
-        const { popularArtistsContainer, recommendationsContainer } = ui.manager.dom;
+        const { popularArtistsContainer } = ui.manager.dom;
 
         popularArtistsContainer.innerHTML = ui.manager.renderLoader(t('loading'));
-        recommendationsContainer.innerHTML = state.currentUser ? ui.manager.renderLoader('') : '';
 
         try {
-            let recommendations = { artists: [] };
-            if (state.currentUser) {
-                try {
-                    recommendations = await api.manager.getRecommendations();
-                } catch (recError) {
-                    console.error("Failed to get personalized recommendations:", recError);
-                }
-            }
             const popularData = await api.manager.getPopularArtists();
 
             const popularGridHTML = popularData.artists && popularData.artists.length > 0
@@ -441,16 +471,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 : `<p class="search-message">${t('couldNotLoadSection')}</p>`;
             popularArtistsContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><div class="music-grid horizontal-music-grid">${popularGridHTML}</div>`;
 
-            if (recommendations.artists && recommendations.artists.length > 0) {
-                const recommendationsGridHTML = recommendations.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('');
-                recommendationsContainer.innerHTML = `<h2 class="section-title-main">${t('artistsYouMightLike')}</h2><div class="music-grid horizontal-music-grid">${recommendationsGridHTML}</div>`;
-            } else {
-                recommendationsContainer.innerHTML = '';
-            }
         } catch (e) {
             console.error("Error rendering homepage:", e);
             popularArtistsContainer.innerHTML = `<h2 class="section-title-main">${t('topArtists')}</h2><p class="search-message">${t('couldNotLoadSection')}</p>`;
-            recommendationsContainer.innerHTML = '';
         }
     }
 
@@ -462,10 +485,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             const artist = await api.manager.getSpotifyArtist(artistId);
 
-            const [albumsData, bioData, topTracksData] = await Promise.all([
+            const [albumsData, bioData, topTracksData, relatedArtistsData] = await Promise.all([
                 api.manager.getSpotifyArtistAlbums(artistId),
                 api.manager.getArtistBio(artist.name),
-                api.manager.getSpotifyArtistTopTracks(artistId)
+                api.manager.getSpotifyArtistTopTracks(artistId),
+                api.manager.getSpotifyRelatedArtists(artistId)
             ]);
 
             history.replaceState({ artistId: artistId }, '', `/${encodeURIComponent(artist.name)}`);
@@ -517,6 +541,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             const discographyHTML = albumsData?.items?.length > 0 ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map((album, index) => ui.manager.renderMusicCard({ ...album, type: 'album' }, index)).join('')}</div>` : `<p class="search-message">${t('noAlbumsFound')}</p>`;
+            
+            const similarArtistsHTML = relatedArtistsData?.artists?.length > 0 ? `<div class="music-grid horizontal-music-grid">${relatedArtistsData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('')}</div>` : '';
+
 
             ui.manager.dom.detailsView.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
@@ -545,7 +572,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <h3 class="section-title-main">${t('popularTracks')}</h3>
                         ${topTracksHTML}
                     </div>
-                </div>`;
+                </div>
+                ${similarArtistsHTML ? `<h3 class="section-title-main">${t('similarArtists')}</h3>${similarArtistsHTML}` : ''}
+                `;
         } catch (e) {
             ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadArtist', e.message)}</p>`;
         }
@@ -966,6 +995,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             const { user } = await api.manager.manageFriend(targetName, action);
             state.currentUser = user;
+            ui.manager.renderNotifications();
             if (document.getElementById('social').classList.contains('active')) renderSocialPage();
             else {
                 const profileHeader = document.querySelector('.profile-info-main h2');
@@ -1130,8 +1160,16 @@ document.addEventListener('DOMContentLoaded', async function() {
                 delete ui.manager.dom.badgeTooltip.dataset.currentBadge;
             }
 
-            if (e.target.closest('#userProfile')) return ui.manager.dom.userDropdown.classList.toggle('active');
+            if (e.target.closest('#userProfile')) {
+                 ui.manager.dom.notificationDropdown.classList.remove('active');
+                 return ui.manager.dom.userDropdown.classList.toggle('active');
+            }
+            if (e.target.closest('#notificationBellBtn')) {
+                ui.manager.dom.userDropdown.classList.remove('active');
+                return ui.manager.dom.notificationDropdown.classList.toggle('active');
+            }
             if (!e.target.closest('.user-dropdown')) ui.manager.dom.userDropdown.classList.remove('active');
+            if (!e.target.closest('.notification-dropdown')) ui.manager.dom.notificationDropdown.classList.remove('active');
             
             const cardContent = e.target.closest('.music-card-content');
             if (cardContent) {
@@ -1231,6 +1269,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (e.target.closest('#openPostNewsModalBtn')) {
                 ui.manager.openModal(ui.manager.dom.postNewsModal);
+            }
+            
+            const notificationItem = e.target.closest('.notification-item');
+            if (notificationItem) {
+                history.pushState({}, '', '/social');
+                renderSocialPage();
             }
 
             const deleteNewsBtn = e.target.closest('.delete-news-btn');

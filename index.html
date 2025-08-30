@@ -64,6 +64,16 @@
                     <div id="autocomplete-results" class="autocomplete-results"></div>
                 </div>
                 <div class="user-profile-area">
+                    <div class="notification-area">
+                        <button class="control-btn" id="notificationBellBtn" aria-label="Toggle notifications" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-counter" style="display: none;">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header" data-translate-key="notifications">Notifications</div>
+                            <div class="notification-list"></div>
+                        </div>
+                    </div>
                     <button class="control-btn" id="themeToggleBtn" aria-label="Toggle theme" title="Toggle theme">
                         <i class="fas fa-sun"></i>
                         <i class="fas fa-moon"></i>
@@ -114,7 +124,6 @@
                             </div>
                             <button class="btn-primary btn-squad-start" id="startQuizBtn"><i class="fas fa-pen-ruler"></i> <span data-translate-key="startQuiz">Discover Your Badge</span></button>
                         </div>
-                        <div id="recommendations-container"></div>
                     </div>
                 </div>
                 <div id="news" class="content-section"></div>
