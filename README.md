@@ -1,12 +1,12 @@
-# Lyrica - Interactive Music Encyclopedia
+# Lyrica
 
 ## Description
 
-Lyrica is an interactive music encyclopedia created by Arthur Viana. The platform functions as a space to explore and organize information about artists, albums, and releases, combining a music catalog with social networking features.
+Lyrica is an interactive platform for music lovers, created by Arthur Viana. The platform functions as a space to explore and organize information about artists, albums, and releases, combining a music catalog with social networking features.
 
 ## Project Goal
 
-To create a modern and functional music encyclopedia where users can discover, follow, and keep track of artists and albums in one place, uniting organization and community interaction.
+To create a modern and functional platform where users can discover, follow, and keep track of artists and albums in one place, uniting organization and community interaction.
 
 ## Main Features
 
