@@ -894,3 +894,25 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     text-align: center;
     color: var(--light-gray-text);
 }
+/* --- ESTILOS PARA ANÚNCIOS --- */
+#sidebar-ad-container {
+    /* Posiciona o anúncio entre a navegação e o rodapé da sidebar */
+    margin-top: auto;
+    padding: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Define uma altura mínima para evitar que o layout quebre antes do anúncio carregar */
+    min-height: 600px; 
+    /* Garante que o container se ajuste à largura do anúncio */
+    width: 160px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Oculta o container do anúncio em telas menores onde a sidebar não existe */
+@media (max-width: 950px) {
+    #sidebar-ad-container {
+        display: none;
+    }
+}
