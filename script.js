@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             postNews: 'Post News',
             title: 'Title',
             content: 'Content...',
+            titleEN: 'Title (EN)', contentEN: 'Content (EN)', titlePT: 'Title (PT)', contentPT: 'Content (PT)',
             post: 'Post',
             noNews: 'No news yet. Check back later!',
             delete: 'Delete',
@@ -114,6 +115,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             postNews: 'Postar Notícia',
             title: 'Título',
             content: 'Conteúdo...',
+            titleEN: 'Título (EN)', contentEN: 'Conteúdo (EN)', titlePT: 'Título (PT)', contentPT: 'Conteúdo (PT)',
             post: 'Postar',
             noNews: 'Nenhuma notícia ainda. Volte mais tarde!',
             delete: 'Excluir',
@@ -262,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         getArtistBio: (artistName) => api.manager._request(`artist-bio?artistName=${encodeURIComponent(artistName)}`),
         heartbeat: () => api.manager._request('heartbeat', 'POST'),
         getNews: () => api.manager._request('news', 'GET'),
-        postNews: (title, content) => api.manager._request('news', 'POST', { title, content }),
+        postNews: (data) => api.manager._request('news', 'POST', data),
         deleteNews: (id) => api.manager._request(`news?id=${id}`, 'DELETE'),
         searchSpotify: (q, t, l = 12) => api.manager._spotifyRequest(`search?q=${encodeURIComponent(q)}&type=${t}&limit=${l}`),
         getSpotifyArtist: (id) => api.manager._spotifyRequest(`artists/${id}`),
@@ -380,6 +382,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
                 this.renderNotifications();
+                
+                // Lógica de Notificação de Notícias
+                document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
+                    item.classList.toggle('new-content', u.hasNewNews);
+                });
+
             } else {
                  this.dom.notificationCounter.style.display = 'none';
             }
@@ -524,7 +532,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
                 topTracksHTML = topTracksData.tracks.map((track, index) => {
                     const isFavorite = state.currentUser?.favoriteTrackId === track.id;
-                    const heartIconClass = isFavorite ? 'fas' : 'far'; // <-- LÓGICA DO ÍCONE
+                    const heartIconClass = isFavorite ? 'fas' : 'far';
                     const favoriteBtnHTML = state.currentUser ? `
                         <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
                             <i class="${heartIconClass} fa-heart"></i>
@@ -586,7 +594,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             const tracksHTML = album.tracks.items.map((track, index) => {
                 const isFavorite = state.currentUser?.favoriteTrackId === track.id;
-                const heartIconClass = isFavorite ? 'fas' : 'far'; // <-- LÓGICA DO ÍCONE
+                const heartIconClass = isFavorite ? 'fas' : 'far';
                 const favoriteBtnHTML = state.currentUser ? `
                     <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
                         <i class="${heartIconClass} fa-heart"></i>
@@ -1059,6 +1067,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('news');
         const container = ui.manager.dom.newsContainer;
         container.innerHTML = ui.manager.renderLoader(t('loading'));
+
+        // Se o usuário tem uma notificação de notícia, limpa ela
+        if (state.currentUser && state.currentUser.hasNewNews) {
+            state.currentUser.hasNewNews = false;
+            document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
+                item.classList.remove('new-content');
+            });
+            api.manager.updateUser({ lastSeenNewsTimestamp: Date.now() }).catch(e => console.error("Failed to update last seen news timestamp:", e));
+        }
         
         let adminControlsHTML = '';
         if (state.currentUser && state.currentUser.badges.includes('admin')) {
@@ -1072,6 +1089,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             const newsItems = await api.manager.getNews();
             let newsHTML = `<div class="news-header"><h2 class="section-title-main">${t('news')}</h2>${adminControlsHTML}</div>`;
+            const lang = getLanguage();
+            const locale = lang === 'pt' ? 'pt-BR' : 'en-US';
 
             if (newsItems.length === 0) {
                 newsHTML += `<p class="search-message">${t('noNews')}</p>`;
@@ -1081,14 +1100,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const deleteBtn = (state.currentUser && state.currentUser.badges.includes('admin'))
                         ? `<button class="btn-danger delete-news-btn" data-id="${item.id}"><i class="fas fa-trash"></i> ${t('delete')}</button>`
                         : '';
+                    
+                    const title = item[`title_${lang}`] || item.title_en;
+                    const content = item[`content_${lang}`] || item.content_en;
+                    const postDate = new Date(item.createdAt).toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
+
                     newsHTML += `
                         <div class="news-card">
                             <div class="news-card-header">
-                                <h3>${item.title}</h3>
+                                <h3>${title}</h3>
                                 ${deleteBtn}
                             </div>
-                            <p class="news-card-meta">By ${item.author} on ${new Date(item.createdAt).toLocaleDateString()}</p>
-                            <div class="news-card-content">${item.content.replace(/\n/g, '<br>')}</div>
+                            <p class="news-card-meta">By ${item.author} on ${postDate}</p>
+                            <div class="news-card-content">${content.replace(/\n/g, '<br>')}</div>
                         </div>
                     `;
                 });
@@ -1104,10 +1128,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function handlePostNewsSubmit(e) {
         const btn = e.target;
         const modal = ui.manager.dom.postNewsModal;
-        const title = modal.querySelector('#newsTitleInput').value.trim();
-        const content = modal.querySelector('#newsContentInput').value.trim();
+        
+        const postData = {
+            title_en: modal.querySelector('#newsTitleInput_en').value.trim(),
+            content_en: modal.querySelector('#newsContentInput_en').value.trim(),
+            title_pt: modal.querySelector('#newsTitleInput_pt').value.trim(),
+            content_pt: modal.querySelector('#newsContentInput_pt').value.trim(),
+        };
 
-        if (!title || !content) {
+        if (!postData.title_en || !postData.content_en || !postData.title_pt || !postData.content_pt) {
             return ui.manager.showModalError(modal, t('allFieldsRequired'));
         }
 
@@ -1115,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         btn.textContent = t('saving');
 
         try {
-            await api.manager.postNews(title, content);
+            await api.manager.postNews(postData);
             ui.manager.closeAllModals();
             renderNewsPage();
         } catch (error) {

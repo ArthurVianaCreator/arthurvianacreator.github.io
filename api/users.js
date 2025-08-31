@@ -52,6 +52,15 @@ export default async function handler(req, res) {
     const currentUser = await authenticate(req, kv, JWT_SECRET);
     if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
     
+    // Lógica de Notificação de Notícias
+    const latestNews = await kv.zrange('news_articles', 0, 0, { rev: true, withScores: true });
+    if (latestNews.length > 0) {
+        const latestNewsTimestamp = latestNews[1];
+        if (!currentUser.lastSeenNewsTimestamp || latestNewsTimestamp > currentUser.lastSeenNewsTimestamp) {
+            currentUser.hasNewNews = true;
+        }
+    }
+    
     currentUser.lastSeen = Date.now();
     await kv.set(`user:${currentUser.email}`, currentUser);
     
@@ -86,13 +95,16 @@ export default async function handler(req, res) {
         }
         if (Array.isArray(updatedData.following)) user.following = updatedData.following;
         
-        // Lógica para a música favorita
         if (typeof updatedData.favoriteTrackId !== 'undefined') {
           if (updatedData.favoriteTrackId === null) {
             delete user.favoriteTrackId;
           } else {
             user.favoriteTrackId = updatedData.favoriteTrackId;
           }
+        }
+
+        if (typeof updatedData.lastSeenNewsTimestamp !== 'undefined') {
+            user.lastSeenNewsTimestamp = updatedData.lastSeenNewsTimestamp;
         }
 
         if (Array.isArray(updatedData.badges)) user.badges = updatedData.badges;

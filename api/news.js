@@ -25,7 +25,6 @@ export default async function handler(req, res) {
   // --- ROTA GET: Busca todas as notícias ---
   if (req.method === 'GET') {
     try {
-      // Busca as notícias do Sorted Set, ordenadas pela data (score)
       const articles = await kv.zrange('news_articles', 0, -1, { rev: true, withScores: true });
       const newsItems = [];
       for (let i = 0; i < articles.length; i += 2) {
@@ -47,18 +46,19 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Forbidden: Admin access required.' });
     }
     try {
-      const { title, content } = req.body;
-      if (!title || !content) {
-        return res.status(400).json({ error: 'Title and content are required.' });
+      const { title_en, content_en, title_pt, content_pt } = req.body;
+      if (!title_en || !content_en || !title_pt || !content_pt) {
+        return res.status(400).json({ error: 'All language fields are required.' });
       }
       const timestamp = Date.now();
       const article = {
-        title,
-        content,
+        title_en,
+        content_en,
+        title_pt,
+        content_pt,
         author: adminUser.name,
         createdAt: timestamp
       };
-      // Adiciona o artigo a um Sorted Set, usando o timestamp como score para ordenação
       await kv.zadd('news_articles', { score: timestamp, member: article });
       return res.status(201).json({ ...article, id: timestamp });
     } catch (error) {
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     }
   }
   
-    // --- ROTA DELETE: Deleta uma notícia (somente admin) ---
+  // --- ROTA DELETE: Deleta uma notícia (somente admin) ---
   if (req.method === 'DELETE') {
     const adminUser = await authenticateAdmin(req, kv, JWT_SECRET);
     if (!adminUser) {
@@ -79,7 +79,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Article ID is required.' });
         }
         
-        // Encontra o item exato no sorted set para remover
         const articles = await kv.zrangebyscore('news_articles', id, id);
         if (articles.length === 0) {
             return res.status(404).json({ error: 'Article not found.' });
