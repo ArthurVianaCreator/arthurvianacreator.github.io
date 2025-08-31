@@ -1068,7 +1068,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const container = ui.manager.dom.newsContainer;
         container.innerHTML = ui.manager.renderLoader(t('loading'));
 
-        // Se o usuário tem uma notificação de notícia, limpa ela
         if (state.currentUser && state.currentUser.hasNewNews) {
             state.currentUser.hasNewNews = false;
             document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
@@ -1092,17 +1091,32 @@ document.addEventListener('DOMContentLoaded', async function() {
             const lang = getLanguage();
             const locale = lang === 'pt' ? 'pt-BR' : 'en-US';
 
-            if (newsItems.length === 0) {
+            if (!newsItems || newsItems.length === 0) {
                 newsHTML += `<p class="search-message">${t('noNews')}</p>`;
             } else {
                 newsHTML += '<div class="news-list-container">';
                 newsItems.forEach(item => {
+                    if (typeof item !== 'object' || item === null) {
+                        console.warn('Skipping malformed news item:', item);
+                        return;
+                    }
+
                     const deleteBtn = (state.currentUser && state.currentUser.badges.includes('admin'))
                         ? `<button class="btn-danger delete-news-btn" data-id="${item.id}"><i class="fas fa-trash"></i> ${t('delete')}</button>`
                         : '';
                     
-                    const title = item[`title_${lang}`] || item.title_en;
-                    const content = item[`content_${lang}`] || item.content_en;
+                    let title, content;
+                    if (item[`title_${lang}`]) {
+                        title = item[`title_${lang}`];
+                        content = item[`content_${lang}`];
+                    } else if (item.title && item.content) {
+                        title = item.title;
+                        content = item.content;
+                    } else {
+                        console.warn('Skipping news item with unrecognized format:', item);
+                        return;
+                    }
+                    
                     const postDate = new Date(item.createdAt).toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
 
                     newsHTML += `
