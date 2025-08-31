@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.main-nav .nav-item, .main-nav-mobile .nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id));
         },
         renderMusicCard(item, index = 0, ranking = null) {
-            const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
+            const img = item.images?.?.url || 'https://via.placeholder.com/150';
             const sub = item.type === 'artist' ? (item.genres?. || t('artists')) : (item.artists?.map(a => a.name).join(', ') || t('albums'));
             const rankingHTML = ranking ? `<div class="ranking-badge">${ranking}</div>` : '';
             const isFollowed = item.type === 'artist' && auth.manager.isFollowing(item.id);
