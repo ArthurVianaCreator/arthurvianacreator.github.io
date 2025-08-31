@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             zoomInfo: 'Use a roda do mouse para dar zoom.', loading: 'Carregando...', takePhoto: 'Tirar Foto', capture: 'Capturar',
             searchResults: 'Resultados da Pesquisa', topArtists: 'Top 9 Artistas Populares no Lyrica', couldNotLoadSection: 'Não foi possível carregar esta seção.',
             loadingArtist: 'Carregando Artista...', loadingAlbum: 'Carregando Álbum...', following: 'Seguindo', follow: 'Seguir',
-            loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discography: 'Discografia',
+            loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discografia: 'Discografia',
             noAlbumsFound: 'Nenhum álbum encontrado para este artista.', noBioAvailable: 'Nenhuma biografia disponível para este artista.',
             couldNotLoadArtist: 'Não foi possível carregar as informações do artista. {0}', popularTracks: 'Faixas Populares', listenOnSpotify: 'Ouça no Spotify',
             couldNotLoadAlbum: 'Não foi possível carregar as informações do álbum. {0}', artistsYouFollow: 'Artistas que Você Segue',
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (savedLang && translations[savedLang]) {
             return savedLang;
         }
-        const browserLang = navigator.language.split('-')[0];
+        const browserLang = navigator.language.split('-');
         return translations[browserLang] ? browserLang : 'en';
     };
     const currentTranslations = translations[getLanguage()];
@@ -496,13 +496,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 api.manager.getSpotifyRelatedArtists(artistId)
             ]);
 
-            const albumsData = results[0].status === 'fulfilled' ? results[0].value : { items: [] };
-            const bioData = results[1].status === 'fulfilled' ? results[1].value : { bio: t('noBioAvailable'), origin: null };
-            const topTracksData = results[2].status === 'fulfilled' ? results[2].value : { tracks: [] };
-            const relatedArtistsData = results[3].status === 'fulfilled' ? results[3].value : { artists: [] };
+            const albumsData = results.status === 'fulfilled' ? results.value : { items: [] };
+            const bioData = results.status === 'fulfilled' ? results.value : { bio: t('noBioAvailable'), origin: null };
+            const topTracksData = results.status === 'fulfilled' ? results.value : { tracks: [] };
+            const relatedArtistsData = results.status === 'fulfilled' ? results.value : { artists: [] };
             
-            if (results[3].status === 'rejected') {
-                console.error("Failed to fetch related artists (but page will still load):", results[3].reason);
+            if (results.status === 'rejected') {
+                console.error("Failed to fetch related artists (but page will still load):", results.reason);
             }
 
             history.replaceState({ artistId: artistId }, '', `/${encodeURIComponent(artist.name)}`);
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingAlbum'));
         try {
             const album = await api.manager.getSpotifyAlbum(albumId);
-            if (album.artists && album.artists[0]) state.artistContextId = album.artists[0].id;
+            if (album.artists && album.artists) state.artistContextId = album.artists.id;
 
             const tracksHTML = album.tracks.items.map((track, index) => {
                 const isFavorite = state.currentUser?.favoriteTrackId === track.id;
@@ -923,7 +923,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function handleAvatarChange(event) {
-        const file = event.target.files[0], modal = ui.manager.dom.avatarChangeModal;
+        const file = event.target.files, modal = ui.manager.dom.avatarChangeModal;
         ui.manager.clearModalMessages(modal);
         if (!file) return;
         if (!file.type.startsWith('image/')) return ui.manager.showModalError(modal, t('errorFileInvalid'));
@@ -1036,7 +1036,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             try {
                 const spotifyResults = await api.manager.searchSpotify(pathName, 'artist', 1);
                 if (spotifyResults.artists?.items.length > 0) {
-                    renderArtistView(spotifyResults.artists.items[0].id);
+                    renderArtistView(spotifyResults.artists.items.id);
                 } else {
                     history.replaceState({}, '', '/');
                     renderHomePage();

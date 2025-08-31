@@ -1,8 +1,9 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap');
 /* DARK THEME (DEFAULT) */
 :root {
-    --primary-color: #FFC107;
-    --primary-glow: rgba(255, 193, 7, 0.25);
+    --primary-color: #FFD700; /* Alterado para um amarelo mais vibrante */
+    --primary-glow: rgba(255, 215, 0, 0.3); /* Brilho amarelo correspondente */
     --dark-bg: #181818;
     --darker-bg: #121212;
     --gray-text: #8c8c8c;
@@ -28,7 +29,6 @@ body.light-theme {
     --white-text: #121212;
     --card-bg: #ffffff;
     --card-hover-bg: #f0f0f0;
-    --border-color: #e0e0e0;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
