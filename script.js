@@ -1080,11 +1080,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         container.innerHTML = ui.manager.renderLoader(t('loading'));
 
         if (state.currentUser && state.currentUser.hasNewNews) {
-            state.currentUser.hasNewNews = false;
+            state.currentUser.hasNewNews = false; // Atualiza o estado local imediatamente
             document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
                 item.classList.remove('new-content');
             });
-            api.manager.updateUser({ lastSeenNewsTimestamp: Date.now() }).catch(e => console.error("Failed to update last seen news timestamp:", e));
+            try {
+                // Aguarda a resposta do servidor e atualiza o estado global
+                const updatedUser = await api.manager.updateUser({ lastSeenNewsTimestamp: Date.now() });
+                state.currentUser = updatedUser;
+            } catch (e) {
+                console.error("Failed to update last seen news timestamp:", e);
+            }
         }
         
         let adminControlsHTML = '';

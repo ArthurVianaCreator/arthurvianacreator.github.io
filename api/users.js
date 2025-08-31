@@ -52,13 +52,17 @@ export default async function handler(req, res) {
     const currentUser = await authenticate(req, kv, JWT_SECRET);
     if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
     
-    // Lógica de Notificação de Notícias
+    // Lógica de Notificação de Notícias CORRIGIDA
     const latestNews = await kv.zrange('news_articles', 0, 0, { rev: true, withScores: true });
     if (latestNews.length > 0) {
         const latestNewsTimestamp = latestNews[1];
         if (!currentUser.lastSeenNewsTimestamp || latestNewsTimestamp > currentUser.lastSeenNewsTimestamp) {
             currentUser.hasNewNews = true;
+        } else {
+            currentUser.hasNewNews = false; // CORREÇÃO: Garante que a flag seja desligada
         }
+    } else {
+        currentUser.hasNewNews = false; // CORREÇÃO: Garante que a flag seja desligada se não houver notícias
     }
     
     currentUser.lastSeen = Date.now();
