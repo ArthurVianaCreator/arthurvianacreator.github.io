@@ -32,7 +32,6 @@ To create a modern and functional platform where users can discover, follow, and
 
 ### Personalization
 
-*   **Visual Themes:** A light or dark theme selector to customize the site's appearance.
 *   **Advanced Badge System:** A personalized questionnaire to determine which of the three exclusive badges (Discoverer, Explorer, or Collector) best fits your music personality.
 *   **Language Selection:** Easily switch between Portuguese and English for a more comfortable browsing experience.
 

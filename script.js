@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
-            themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
+            badgeTooltip: document.getElementById('badgeTooltip'),
             profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'), newsContainer: document.getElementById('news'),
             autocompleteResults: document.getElementById('autocomplete-results'), genreFilter: document.getElementById('genreFilter'),
             notificationBellBtn: document.getElementById('notificationBellBtn'), notificationCounter: document.querySelector('.notification-counter'), notificationDropdown: document.getElementById('notificationDropdown'),
@@ -453,7 +453,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             container.innerHTML = items && items.length > 0 ? items.map((item, index) => renderFunc(item, index)).join('') : `<p class="search-message">${emptyMessage}</p>`;
         },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
-        applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); localStorage.setItem('lyricaTheme', theme); },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() {
             stopCamera();
@@ -1414,7 +1413,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
         
-        ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
@@ -1695,7 +1693,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             await auth.manager.init();
             statusManager.start();
             ui.manager.updateForAuthState();
-            ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || 'dark');
             
             updateUserPresence(); // Initial heartbeat
             setInterval(updateUserPresence, 60000); // Heartbeat every minute
