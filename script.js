@@ -62,8 +62,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             similarArtists: 'Similar Artists',
             notifications: 'Notifications',
             noNotifications: 'No new notifications.',
-            newFriendRequest: '<strong>{0}</strong> sent you a friend request.',
-            newNewsAvailable: '<strong>New articles</strong> are available on the News page.'
+            newFriendRequest: '<strong>{0}</strong> sent you a friend request.'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -74,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             zoomInfo: 'Use a roda do mouse para dar zoom.', loading: 'Carregando...', takePhoto: 'Tirar Foto', capture: 'Capturar',
             searchResults: 'Resultados da Pesquisa', topArtists: 'Top 9 Artistas Populares no Lyrica', couldNotLoadSection: 'Não foi possível carregar esta seção.',
             loadingArtist: 'Carregando Artista...', loadingAlbum: 'Carregando Álbum...', following: 'Seguindo', follow: 'Seguir',
-            loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discography: 'Discografia',
+            loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discografia: 'Discografia',
             noAlbumsFound: 'Nenhum álbum encontrado para este artista.', noBioAvailable: 'Nenhuma biografia disponível para este artista.',
             couldNotLoadArtist: 'Não foi possível carregar as informações do artista. {0}', popularTracks: 'Faixas Populares', listenOnSpotify: 'Ouça no Spotify',
             couldNotLoadAlbum: 'Não foi possível carregar as informações do álbum. {0}', artistsYouFollow: 'Artistas que Você Segue',
@@ -123,8 +122,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             similarArtists: 'Artistas Similares',
             notifications: 'Notificações',
             noNotifications: 'Nenhuma notificação nova.',
-            newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.',
-            newNewsAvailable: '<strong>Novos artigos</strong> estão disponíveis na página de Notícias.'
+            newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.'
         }
     };
     const getLanguage = () => {
@@ -329,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
-            badgeTooltip: document.getElementById('badgeTooltip'),
+            themeToggleBtn: document.getElementById('themeToggleBtn'), badgeTooltip: document.getElementById('badgeTooltip'),
             profileContainer: document.getElementById('profile'), socialContainer: document.getElementById('social'), newsContainer: document.getElementById('news'),
             autocompleteResults: document.getElementById('autocomplete-results'), genreFilter: document.getElementById('genreFilter'),
             notificationBellBtn: document.getElementById('notificationBellBtn'), notificationCounter: document.querySelector('.notification-counter'), notificationDropdown: document.getElementById('notificationDropdown'),
@@ -337,8 +335,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderNotifications() {
             if (!state.currentUser) return;
             const requests = state.currentUser.friendRequestsReceived || [];
-            const hasNewNews = state.currentUser.hasNewNews || false;
-            const count = requests.length + (hasNewNews ? 1 : 0);
+            const count = requests.length;
             const counterEl = this.dom.notificationCounter;
             const listEl = this.dom.notificationDropdown.querySelector('.notification-list');
 
@@ -349,26 +346,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 counterEl.style.display = 'none';
             }
             
-            let notificationsHTML = '';
-
-            if (hasNewNews) {
-                notificationsHTML += `
-                    <div class="notification-item" data-target="news">
-                        <i class="fas fa-newspaper"></i>
-                        <span>${t('newNewsAvailable')}</span>
-                    </div>
-                `;
-            }
-
-            notificationsHTML += requests.map(name => `
-                <div class="notification-item" data-target="social">
-                    <i class="fas fa-user-plus"></i>
-                    <span>${t('newFriendRequest', name)}</span>
-                </div>
-            `).join('');
-
             if (count > 0) {
-                listEl.innerHTML = notificationsHTML;
+                listEl.innerHTML = requests.map(name => `
+                    <div class="notification-item" data-target="social">
+                        <i class="fas fa-user-plus"></i>
+                        <span>${t('newFriendRequest', name)}</span>
+                    </div>
+                `).join('');
             } else {
                 listEl.innerHTML = `<div class="empty-notifications">${t('noNotifications')}</div>`;
             }
@@ -423,11 +407,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             const targetSection = document.getElementById(id);
             if(targetSection) targetSection.classList.add('active');
-            document.querySelectorAll('.main-nav .nav-item, .bottom-nav-mobile .nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id));
+            document.querySelectorAll('.main-nav .nav-item, .main-nav-mobile .nav-item').forEach(n => n.classList.toggle('active', n.dataset.target === id));
         },
         renderMusicCard(item, index = 0, ranking = null) {
-            const img = item.images?.?.url || 'https://via.placeholder.com/150';
-            const sub = item.type === 'artist' ? (item.genres?. || t('artists')) : (item.artists?.map(a => a.name).join(', ') || t('albums'));
+            const img = item.images?.[0]?.url || 'https://via.placeholder.com/150';
+            const sub = item.type === 'artist' ? (item.genres?.[0] || t('artists')) : (item.artists?.map(a => a.name).join(', ') || t('albums'));
             const rankingHTML = ranking ? `<div class="ranking-badge">${ranking}</div>` : '';
             const isFollowed = item.type === 'artist' && auth.manager.isFollowing(item.id);
             const followedIndicator = isFollowed ? `<div class="followed-indicator"><i class="fas fa-check"></i></div>` : '';
@@ -463,6 +447,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             container.innerHTML = items && items.length > 0 ? items.map((item, index) => renderFunc(item, index)).join('') : `<p class="search-message">${emptyMessage}</p>`;
         },
         renderLoader(message) { return `<div class="loading-container"><div class="spinner"></div><p>${message}</p></div>`; },
+        applyTheme(theme) { document.body.classList.toggle('light-theme', theme === 'light'); localStorage.setItem('lyricaTheme', theme); },
         openModal(modal) { this.clearModalMessages(modal); modal.classList.add('active'); },
         closeAllModals() {
             stopCamera();
@@ -700,7 +685,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 container.innerHTML = `
                     <h2 class="section-title-main">${t('favoriteTrack')}</h2>
                     <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
-                        width="100%" height="152" frameBorder="0" allowfullscreen="" 
+                        width="100%" height="80" frameBorder="0" allowfullscreen="" 
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
                     </iframe>
                     <button class="btn-secondary remove-favorite-btn">${t('removeFavoriteTrack')}</button>
@@ -825,7 +810,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     container.innerHTML = `
                         <h2 class="section-title-main">${t('favoriteTrack')}</h2>
                         <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
-                            width="100%" height="152" frameBorder="0" allowfullscreen="" 
+                            width="100%" height="80" frameBorder="0" allowfullscreen="" 
                             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
                         </iframe>`;
                 } catch(e) { console.error("Failed to load favorite track for public profile:", e); }
@@ -1085,7 +1070,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         if (state.currentUser && state.currentUser.hasNewNews) {
             state.currentUser.hasNewNews = false;
-            ui.manager.updateForAuthState(); // Update UI to remove dot and bell notification
+            document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
+                item.classList.remove('new-content');
+            });
             api.manager.updateUser({ lastSeenNewsTimestamp: Date.now() }).catch(e => console.error("Failed to update last seen news timestamp:", e));
         }
         
@@ -1323,17 +1310,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 ui.manager.openModal(ui.manager.dom.postNewsModal);
             }
             
-            const notificationItem = e.target.closest('.notification-item[data-target]');
+            const notificationItem = e.target.closest('.notification-item');
             if (notificationItem) {
-                const target = notificationItem.dataset.target;
-                if (target === 'social') {
-                    history.pushState({}, '', '/social');
-                    renderSocialPage();
-                } else if (target === 'news') {
-                    history.pushState({}, '', '/news');
-                    renderNewsPage();
-                }
-                ui.manager.dom.notificationDropdown.classList.remove('active');
+                history.pushState({}, '', '/social');
+                renderSocialPage();
             }
 
             const deleteNewsBtn = e.target.closest('.delete-news-btn');
@@ -1424,6 +1404,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
         
+        ui.manager.dom.themeToggleBtn.addEventListener('click', () => ui.manager.applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light'));
         document.getElementById('loginSubmitBtn').addEventListener('click', handleLoginSubmit);
         document.getElementById('registerSubmitBtn').addEventListener('click', handleRegisterSubmit);
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
@@ -1672,7 +1653,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ7: "Your streaming history is mostly made up of:", quizQ7O1: "Artists you discovered in the last week.", quizQ7O2: "A few artists, but with many different songs by them.", quizQ7O3: "A huge number of different artists.",
                 quizQ8: "What excites you the most?", quizQ8O1: "Finding a band with fewer than 1000 listeners.", quizQ8O2: "Understanding an artist's evolution through their albums.", quizQ8O3: "Seeing your library of followed artists pass a new milestone.",
                 quizQ9: "For you, an ideal music collection has:", quizQ9O1: "Many rarities and B-sides.", quizQ9O2: "Concept albums and complete discographies.", quizQ9O3: "The largest possible number of artists and genres.",
-                quizQ10: "Which phrase best describes you?", quizQ10O1: "I am a musical treasure hunter.", quizQ1O2: "I am a music historian.", quizQ1O3: "I am a music museum curator."
+                quizQ10: "Which phrase best describes you?", quizQ10O1: "I am a musical treasure hunter.", quizQ10O2: "I am a music historian.", quizQ10O3: "I am a music museum curator."
             });
             Object.assign(translations.pt, {
                 finish: 'Finalizar',
@@ -1694,6 +1675,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             await auth.manager.init();
             statusManager.start();
             ui.manager.updateForAuthState();
+            ui.manager.applyTheme(localStorage.getItem('lyricaTheme') || 'dark');
             
             updateUserPresence(); // Initial heartbeat
             setInterval(updateUserPresence, 60000); // Heartbeat every minute
