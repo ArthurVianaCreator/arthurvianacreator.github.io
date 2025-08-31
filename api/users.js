@@ -23,7 +23,6 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     const { name } = req.query;
 
-    // Se houver um 'name' na query, busca um perfil público
     if (name) {
       try {
         const normalizedName = name.toLowerCase();
@@ -41,7 +40,7 @@ export default async function handler(req, res) {
           friends: user.friends || [],
           description: user.description || null,
           lastSeen: user.lastSeen || null,
-          favoriteArtistId: user.favoriteArtistId || null // <-- LINHA CORRIGIDA
+          favoriteTrackId: user.favoriteTrackId || null
         };
         return res.status(200).json(publicData);
       } catch (error) {
@@ -50,7 +49,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Se não houver 'name', busca o perfil do usuário logado
     const currentUser = await authenticate(req, kv, JWT_SECRET);
     if (!currentUser) return res.status(401).json({ error: 'Unauthorized' });
     
@@ -75,26 +73,28 @@ export default async function handler(req, res) {
             const normalizedNewName = newName.toLowerCase();
             const normalizedOldName = (user.name || '').trim().toLowerCase();
             if (normalizedNewName !== normalizedOldName) {
-            const nameTaken = await kv.get(`name:${normalizedNewName}`);
-            if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
-            const multi = kv.multi();
-            if (normalizedOldName) multi.del(`name:${normalizedOldName}`);
-            multi.set(`name:${normalizedNewName}`, user.email);
-            user.name = newName;
-            await multi.exec();
+                const nameTaken = await kv.get(`name:${normalizedNewName}`);
+                if (nameTaken) { return res.status(409).json({ error: 'Name already taken (case-insensitive)' }); }
+                const multi = kv.multi();
+                if (normalizedOldName) multi.del(`name:${normalizedOldName}`);
+                multi.set(`name:${normalizedNewName}`, user.email);
+                user.name = newName;
+                await multi.exec();
             } else {
-            user.name = newName;
+                user.name = newName;
             }
         }
         if (Array.isArray(updatedData.following)) user.following = updatedData.following;
-        if (typeof updatedData.favoriteArtistId !== 'undefined') {
-          if (updatedData.favoriteArtistId === null) {
-            delete user.favoriteArtistId;
+        
+        // Lógica para a música favorita
+        if (typeof updatedData.favoriteTrackId !== 'undefined') {
+          if (updatedData.favoriteTrackId === null) {
+            delete user.favoriteTrackId;
           } else {
-            const isFollowing = user.following && user.following.some(a => a.id === updatedData.favoriteArtistId);
-            if (isFollowing) user.favoriteArtistId = updatedData.favoriteArtistId;
+            user.favoriteTrackId = updatedData.favoriteTrackId;
           }
         }
+
         if (Array.isArray(updatedData.badges)) user.badges = updatedData.badges;
         if (typeof updatedData.avatar !== 'undefined') user.avatar = updatedData.avatar;
         if (typeof updatedData.description === 'string') user.description = updatedData.description.trim();

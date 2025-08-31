@@ -48,9 +48,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             lastSeenMinutes: 'Last seen {0}m ago',
             lastSeenHours: 'Last seen {0}h ago',
             lastSeenDays: 'Last seen {0}d ago',
-            favoriteArtist: 'Favorite Artist',
-            setAsFavorite: 'Set as Favorite',
-            removeFavorite: 'Remove Favorite',
+            favoriteTrack: 'Favorite Track',
+            setAsFavoriteTrack: 'Set as Favorite',
+            removeFavoriteTrack: 'Remove Favorite',
             news: 'News',
             postNews: 'Post News',
             title: 'Title',
@@ -107,9 +107,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             lastSeenMinutes: 'Visto há {0}m',
             lastSeenHours: 'Visto há {0}h',
             lastSeenDays: 'Visto há {0}d',
-            favoriteArtist: 'Artista Favorito',
-            setAsFavorite: 'Definir como Favorito',
-            removeFavorite: 'Remover Favorito',
+            favoriteTrack: 'Música Favorita',
+            setAsFavoriteTrack: 'Definir como Favorita',
+            removeFavoriteTrack: 'Remover Favorita',
             news: 'Notícias',
             postNews: 'Postar Notícia',
             title: 'Título',
@@ -270,6 +270,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyArtistTopTracks: (id) => api.manager._spotifyRequest(`artists/${id}/top-tracks?market=BR`),
         getSpotifyRelatedArtists: (id) => api.manager._request(`related-artists?artistId=${id}`),
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
+        getSpotifyTrack: (id) => api.manager._spotifyRequest(`tracks/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
     };
 
@@ -302,10 +303,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             let updatedData = {};
             if (isCurrentlyFollowing) {
                 updatedFollowingList = followingList.filter(a => a.id !== artist.id);
-                if (state.currentUser.favoriteArtistId === artist.id) {
-                    updatedData.favoriteArtistId = null;
-                    delete state.currentUser.favoriteArtistId;
-                }
             } else {
                 const limit = getFollowLimit(state.currentUser);
                 if (followingList.length >= limit) throw new Error(t('errorFollowLimit', limit));
@@ -482,24 +479,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.switchContent('details-view');
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingArtist'));
         try {
-            // A chamada principal para os detalhes do artista permanece separada
             const artist = await api.manager.getSpotifyArtist(artistId);
 
-            // Usamos Promise.allSettled para as chamadas secundárias
             const results = await Promise.allSettled([
                 api.manager.getSpotifyArtistAlbums(artistId),
                 api.manager.getArtistBio(artist.name),
                 api.manager.getSpotifyArtistTopTracks(artistId),
-                api.manager.getSpotifyRelatedArtists(artistId) // Esta é a chamada que pode falhar
+                api.manager.getSpotifyRelatedArtists(artistId)
             ]);
 
-            // Processamos cada resultado verificando seu status
             const albumsData = results[0].status === 'fulfilled' ? results[0].value : { items: [] };
             const bioData = results[1].status === 'fulfilled' ? results[1].value : { bio: t('noBioAvailable'), origin: null };
             const topTracksData = results[2].status === 'fulfilled' ? results[2].value : { tracks: [] };
             const relatedArtistsData = results[3].status === 'fulfilled' ? results[3].value : { artists: [] };
             
-            // Se a chamada de artistas relacionados falhou, registramos o erro no console para depuração
             if (results[3].status === 'rejected') {
                 console.error("Failed to fetch related artists (but page will still load):", results[3].reason);
             }
@@ -510,17 +503,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const followBtnHTML = state.currentUser
                 ? `<button class="follow-btn ${isFollowing ? 'following' : ''}" data-artist-id="${artist.id}"><i class="fas ${isFollowing ? 'fa-check' : 'fa-plus'}"></i><span>${isFollowing ? t('following') : t('follow')}</span></button>`
                 : `<button class="follow-btn" disabled>${t('loginToFollow')}</button>`;
-
-            let favoriteBtnHTML = '';
-            if (isFollowing) {
-                const isFavorite = state.currentUser?.favoriteArtistId === artistId;
-                favoriteBtnHTML = `
-                    <button class="favorite-btn ${isFavorite ? 'is-favorite' : ''}" data-artist-id="${artist.id}">
-                        <i class="fas fa-star"></i>
-                        <span>${isFavorite ? t('removeFavorite') : t('setAsFavorite')}</span>
-                    </button>
-                `;
-            }
 
             let metaInfo = artist.genres.join(', ');
             if (bioData.origin) metaInfo += ` &bull; ${bioData.origin}`;
@@ -540,21 +522,27 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             let topTracksHTML = '';
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
-                const tracks = topTracksData.tracks.map((track, index) => `
-                    <li class="track-item">
-                        <span class="track-number">${index + 1}</span>
-                        <img src="${track.album.images[track.album.images.length - 1]?.url || 'https://via.placeholder.com/40'}" class="track-item-img" alt="${track.album.name}">
-                        <span class="track-name">${track.name}</span>
-                        <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
-                    </li>
-                `).join('');
-                topTracksHTML = `<ol class="top-tracks-list">${tracks}</ol>`;
+                topTracksHTML = topTracksData.tracks.map((track, index) => {
+                    const isFavorite = state.currentUser?.favoriteTrackId === track.id;
+                    const favoriteBtnHTML = state.currentUser ? `
+                        <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
+                            <i class="fas fa-heart"></i>
+                        </button>` : '';
+                    return `
+                        <li class="track-item">
+                            <span class="track-number">${index + 1}</span>
+                            <img src="${track.album.images[track.album.images.length - 1]?.url || 'https://via.placeholder.com/40'}" class="track-item-img" alt="${track.album.name}">
+                            <span class="track-name">${track.name}</span>
+                            <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
+                            ${favoriteBtnHTML}
+                        </li>`;
+                }).join('');
+                topTracksHTML = `<ol class="top-tracks-list">${topTracksHTML}</ol>`;
             }
 
             const discographyHTML = albumsData?.items?.length > 0 ? `<div class="music-grid horizontal-music-grid">${albumsData.items.map((album, index) => ui.manager.renderMusicCard({ ...album, type: 'album' }, index)).join('')}</div>` : `<p class="search-message">${t('noAlbumsFound')}</p>`;
             
             const similarArtistsHTML = relatedArtistsData?.artists?.length > 0 ? `<div class="music-grid horizontal-music-grid">${relatedArtistsData.artists.map((artist, index) => ui.manager.renderMusicCard(artist, index)).join('')}</div>` : '';
-
 
             ui.manager.dom.detailsView.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
@@ -563,10 +551,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="details-info">
                         <h2>${artist.name}</h2>
                         <p class="meta-info">${metaInfo}</p>
-                        <div class="details-actions">
-                           ${followBtnHTML}
-                           ${favoriteBtnHTML}
-                        </div>
+                        <div class="details-actions">${followBtnHTML}</div>
                     </div>
                 </div>
                 <div class="artist-content-columns">
@@ -587,11 +572,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 ${similarArtistsHTML ? `<h3 class="section-title-main">${t('similarArtists')}</h3>${similarArtistsHTML}` : ''}
                 `;
         } catch (e) {
-            // Este catch agora só será acionado se a busca principal do artista falhar
             ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadArtist', e.message)}</p>`;
         }
     }
-
 
     async function renderAlbumView(albumId) {
         ui.manager.switchContent('details-view');
@@ -600,12 +583,20 @@ document.addEventListener('DOMContentLoaded', async function() {
             const album = await api.manager.getSpotifyAlbum(albumId);
             if (album.artists && album.artists[0]) state.artistContextId = album.artists[0].id;
 
-            const tracksHTML = album.tracks.items.map((track, index) => `
-                <li class="track-item">
-                    <span class="track-number">${index + 1}</span>
-                    <span class="track-name">${track.name}</span>
-                    <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
-                </li>`).join('');
+            const tracksHTML = album.tracks.items.map((track, index) => {
+                const isFavorite = state.currentUser?.favoriteTrackId === track.id;
+                const favoriteBtnHTML = state.currentUser ? `
+                    <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
+                        <i class="fas fa-heart"></i>
+                    </button>` : '';
+                return `
+                    <li class="track-item">
+                        <span class="track-number">${index + 1}</span>
+                        <span class="track-name">${track.name}</span>
+                        <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
+                        ${favoriteBtnHTML}
+                    </li>`;
+            }).join('');
 
             ui.manager.dom.detailsView.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
@@ -630,7 +621,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    function renderProfilePage() {
+    async function renderProfilePage() {
         if (!state.currentUser) { ui.manager.switchContent('inicio'); ui.manager.openModal(ui.manager.dom.loginModal); return; }
         ui.manager.switchContent('profile');
         const u = state.currentUser;
@@ -647,31 +638,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
             </div>
         </div>`;
-
-        let favoriteArtistHTML = '';
-        let followedArtistsForGrid = u.following ? [...u.following] : [];
-        if (u.favoriteArtistId) {
-            const favoriteArtist = followedArtistsForGrid.find(a => a.id === u.favoriteArtistId);
-            if (favoriteArtist) {
-                followedArtistsForGrid = followedArtistsForGrid.filter(a => a.id !== u.favoriteArtistId);
-                const favImg = favoriteArtist.images?.[0]?.url || 'https://via.placeholder.com/150';
-                favoriteArtistHTML = `
-                    <h2 class="section-title-main">${t('favoriteArtist')}</h2>
-                    <div class="favorite-artist-card" data-id="${favoriteArtist.id}" data-name="${favoriteArtist.name}">
-                        <div class="favorite-artist-img">
-                            <img src="${favImg}" alt="${favoriteArtist.name}">
-                        </div>
-                        <div class="favorite-artist-info">
-                            <h3>${favoriteArtist.name}</h3>
-                            <p>${(favoriteArtist.genres || []).join(', ')}</p>
-                            <button class="btn-secondary remove-favorite-btn">
-                                <i class="fas fa-times"></i> ${t('removeFavorite')}
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-        }
 
         const followCount = u.following?.length || 0;
         const followLimit = getFollowLimit(u);
@@ -696,11 +662,31 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             </div>
             ${descriptionHTML}
-            ${favoriteArtistHTML}
+            <div id="favorite-track-container"></div>
             ${followTrackerHTML}
             <h2 class="section-title-main">${t('artistsYouFollow')}</h2>
             <div class="music-grid" id="followed-artists-grid"></div>`;
-        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), followedArtistsForGrid.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
+            
+        if (u.favoriteTrackId) {
+            const container = document.getElementById('favorite-track-container');
+            container.innerHTML = ui.manager.renderLoader('');
+            try {
+                const track = await api.manager.getSpotifyTrack(u.favoriteTrackId);
+                container.innerHTML = `
+                    <h2 class="section-title-main">${t('favoriteTrack')}</h2>
+                    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
+                        width="100%" height="80" frameBorder="0" allowfullscreen="" 
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
+                    </iframe>
+                    <button class="btn-secondary remove-favorite-btn">${t('removeFavoriteTrack')}</button>
+                `;
+            } catch(e) {
+                container.innerHTML = '';
+                console.error("Failed to load favorite track:", e);
+            }
+        }
+
+        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), u.following.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
     }
 
     async function renderSocialPage() {
@@ -787,26 +773,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             const descriptionHTML = u.description ? `<div class="profile-description-container"><div class="profile-description">${u.description}</div></div>` : '';
 
-            let favoriteArtistHTML = '';
-            let followedArtistsForGrid = u.following ? [...u.following] : [];
-            if (u.favoriteArtistId) {
-                const favoriteArtist = followedArtistsForGrid.find(a => a.id === u.favoriteArtistId);
-                if (favoriteArtist) {
-                    followedArtistsForGrid = followedArtistsForGrid.filter(a => a.id !== u.favoriteArtistId);
-                    const favImg = favoriteArtist.images?.[0]?.url || 'https://via.placeholder.com/150';
-                    favoriteArtistHTML = `
-                        <h2 class="section-title-main">${t('favoriteArtist')}</h2>
-                        <div class="favorite-artist-card" data-id="${favoriteArtist.id}" data-name="${favoriteArtist.name}">
-                            <div class="favorite-artist-img"><img src="${favImg}" alt="${favoriteArtist.name}"></div>
-                            <div class="favorite-artist-info">
-                                <h3>${favoriteArtist.name}</h3>
-                                <p>${(favoriteArtist.genres || []).join(', ')}</p>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-
             ui.manager.dom.profileContainer.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
                 <div class="profile-header-main">
@@ -819,14 +785,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                 </div>
                 ${descriptionHTML}
-                ${favoriteArtistHTML}
+                <div id="favorite-track-container"></div>
                 <div class="profile-tabs">
                     <button class="tab-link active" data-tab="artists">${t('followingCount', u.following?.length || 0)}</button>
                     <button class="tab-link" data-tab="friends">${t('friendsCount', u.friends?.length || 0)}</button>
                 </div>
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
                 <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
-            ui.manager.populateGrid(document.querySelector('#artists .music-grid'), followedArtistsForGrid.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
+
+            if (u.favoriteTrackId) {
+                const container = document.getElementById('favorite-track-container');
+                try {
+                    const track = await api.manager.getSpotifyTrack(u.favoriteTrackId);
+                    container.innerHTML = `
+                        <h2 class="section-title-main">${t('favoriteTrack')}</h2>
+                        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
+                            width="100%" height="80" frameBorder="0" allowfullscreen="" 
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
+                        </iframe>`;
+                } catch(e) { console.error("Failed to load favorite track for public profile:", e); }
+            }
+
+            ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
             
             const friendsGrid = document.querySelector('#friends .user-grid');
             const friendNames = u.friends || [];
@@ -1213,28 +1193,29 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return renderPublicProfileView(username);
             }
 
-            const favoriteArtistCard = e.target.closest('.favorite-artist-card');
-            if (favoriteArtistCard && !e.target.closest('.remove-favorite-btn')) {
-                const { id, name } = favoriteArtistCard.dataset;
-                history.pushState({ artistId: id }, '', `/${encodeURIComponent(name)}`);
-                return renderArtistView(id);
-            }
-
             const removeFavoriteBtn = e.target.closest('.remove-favorite-btn');
             if (removeFavoriteBtn) {
                 try {
-                    state.currentUser = await api.manager.updateUser({ favoriteArtistId: null });
+                    state.currentUser = await api.manager.updateUser({ favoriteTrackId: null });
                     renderProfilePage();
                 } catch (error) { alert(error.message); }
             }
 
-            const favoriteBtn = e.target.closest('.favorite-btn');
-            if (favoriteBtn) {
-                const artistId = favoriteBtn.dataset.artistId;
+            const favoriteTrackBtn = e.target.closest('.favorite-track-btn');
+            if (favoriteTrackBtn) {
+                const trackId = favoriteTrackBtn.dataset.trackId;
+                const isCurrentlyFavorite = state.currentUser.favoriteTrackId === trackId;
+                const newFavoriteId = isCurrentlyFavorite ? null : trackId;
                 try {
-                    const isCurrentlyFavorite = state.currentUser.favoriteArtistId === artistId;
-                    state.currentUser = await api.manager.updateUser({ favoriteArtistId: isCurrentlyFavorite ? null : artistId });
-                    renderArtistView(artistId);
+                    state.currentUser = await api.manager.updateUser({ favoriteTrackId: newFavoriteId });
+                    const detailsView = document.getElementById('details-view');
+                    if (detailsView.querySelector('.album-details-header')) {
+                        const albumId = new URL(detailsView.querySelector('iframe').src).pathname.split('/').pop();
+                        renderAlbumView(albumId);
+                    } else {
+                        const artistId = new URL(detailsView.querySelector('iframe').src).pathname.split('/').pop();
+                        renderArtistView(artistId);
+                    }
                 } catch (error) { alert(error.message); }
             }
 
