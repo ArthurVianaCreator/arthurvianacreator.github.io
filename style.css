@@ -902,10 +902,8 @@ body.light-theme .progress-bar-container { background-color: #e0e0e0; }
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Define uma altura mínima para evitar que o layout quebre antes do anúncio carregar */
-    min-height: 600px; 
-    /* Garante que o container se ajuste à largura do anúncio */
-    width: 160px;
+    /* Garante que o container se ajuste à largura do anúncio, que será no máximo a largura da sidebar */
+    max-width: 160px; 
     margin-left: auto;
     margin-right: auto;
 }
