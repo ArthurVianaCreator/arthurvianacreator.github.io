@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             let avatarHTML = user.avatar ? `<img src="${user.avatar}" alt="${user.name}" class="profile-picture">` : `<div class="user-card-placeholder" style="background-color:${this.getAvatarColor(user.name)}">${user.name.charAt(0).toUpperCase()}</div>`;
             const status = formatUserStatus(user.lastSeen);
             const isOnline = status?.class === 'online';
-            const statusDotHTML = `<div class="user-card-status-dot" style="display: ${isOnline ? 'block' : 'none'}"></div>`;
+            const statusDotHTML = `<div class="user-card-status-dot" style="display: ${isOnline ? 'block' : 'none'};"></div>`;
             
             return `<div class="user-card" style="animation-delay: ${index * 50}ms" data-username="${user.name}">
                         <div class="user-card-avatar">
@@ -524,9 +524,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (topTracksData.tracks && topTracksData.tracks.length > 0) {
                 topTracksHTML = topTracksData.tracks.map((track, index) => {
                     const isFavorite = state.currentUser?.favoriteTrackId === track.id;
+                    const heartIconClass = isFavorite ? 'fas' : 'far';
                     const favoriteBtnHTML = state.currentUser ? `
                         <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
-                            <i class="fas fa-heart"></i>
+                            <i class="${heartIconClass} fa-heart"></i>
                         </button>` : '';
                     return `
                         <li class="track-item">
@@ -585,9 +586,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             const tracksHTML = album.tracks.items.map((track, index) => {
                 const isFavorite = state.currentUser?.favoriteTrackId === track.id;
+                const heartIconClass = isFavorite ? 'fas' : 'far';
                 const favoriteBtnHTML = state.currentUser ? `
                     <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
-                        <i class="fas fa-heart"></i>
+                        <i class="${heartIconClass} fa-heart"></i>
                     </button>` : '';
                 return `
                     <li class="track-item">
