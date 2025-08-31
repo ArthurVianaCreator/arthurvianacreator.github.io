@@ -1,9 +1,8 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500;700&display=swap');
 /* DARK THEME (DEFAULT) */
 :root {
-    --primary-color: #FFD700; /* Alterado para um amarelo mais vibrante */
-    --primary-glow: rgba(255, 215, 0, 0.3); /* Brilho amarelo correspondente */
+    --primary-color: #FFC107;
+    --primary-glow: rgba(255, 193, 7, 0.25);
     --dark-bg: #181818;
     --darker-bg: #121212;
     --gray-text: #8c8c8c;
@@ -16,19 +15,6 @@
     --success-color: #43a047;
     --elegant-font: 'Montserrat', sans-serif;
     --body-font: 'Roboto', sans-serif;
-}
-
-/* LIGHT THEME */
-body.light-theme {
-    --primary-color: #E6A200;
-    --primary-glow: rgba(220, 160, 0, 0.25);
-    --dark-bg: #f5f5f5;
-    --darker-bg: #ffffff;
-    --gray-text: #5f5f5f;
-    --light-gray-text: #333333;
-    --white-text: #121212;
-    --card-bg: #ffffff;
-    --card-hover-bg: #f0f0f0;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
@@ -206,10 +192,6 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .btn-login:hover { filter: brightness(1.2); transform: scale(1.05); }
 .control-btn { background: none; border: none; color: var(--gray-text); cursor: pointer; padding: 5px; transition: color 0.2s, transform 0.2s; font-size: 1.5rem; }
 .control-btn:hover { color: var(--primary-color); transform: scale(1.1); }
-#themeToggleBtn .fa-sun { display: none; }
-#themeToggleBtn .fa-moon { display: block; }
-body.light-theme #themeToggleBtn .fa-sun { display: block; }
-body.light-theme #themeToggleBtn .fa-moon { display: none; }
 
 /* PROFILE PAGE & TABS */
 .profile-header-main { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 20px 0; margin-bottom: 30px; }
@@ -281,7 +263,6 @@ body.light-theme #themeToggleBtn .fa-moon { display: none; }
 .follow-limit-tracker h3 { font-family: var(--body-font); font-weight: 500; color: var(--light-gray-text); font-size: 0.9rem; margin-bottom: 10px; text-align: left; }
 .progress-info { display: flex; align-items: center; gap: 15px; }
 .progress-bar-container { flex-grow: 1; height: 10px; background-color: var(--dark-bg); border-radius: 5px; overflow: hidden; border: 1px solid var(--border-color); }
-body.light-theme .progress-bar-container { background-color: #e0e0e0; }
 .progress-bar-fill { height: 100%; background-color: var(--primary-color); border-radius: 5px; transition: width 0.5s ease-out; }
 .limit-text { font-weight: 700; color: var(--white-text); font-size: 0.9rem; flex-shrink: 0; }
 
