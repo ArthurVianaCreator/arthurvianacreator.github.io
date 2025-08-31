@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             zoomInfo: 'Use a roda do mouse para dar zoom.', loading: 'Carregando...', takePhoto: 'Tirar Foto', capture: 'Capturar',
             searchResults: 'Resultados da Pesquisa', topArtists: 'Top 9 Artistas Populares no Lyrica', couldNotLoadSection: 'Não foi possível carregar esta seção.',
             loadingArtist: 'Carregando Artista...', loadingAlbum: 'Carregando Álbum...', following: 'Seguindo', follow: 'Seguir',
-            loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discografia: 'Discografia',
+            loginToFollow: 'Faça login para Seguir', biography: 'Biografia', discography: 'Discografia',
             noAlbumsFound: 'Nenhum álbum encontrado para este artista.', noBioAvailable: 'Nenhuma biografia disponível para este artista.',
             couldNotLoadArtist: 'Não foi possível carregar as informações do artista. {0}', popularTracks: 'Faixas Populares', listenOnSpotify: 'Ouça no Spotify',
             couldNotLoadAlbum: 'Não foi possível carregar as informações do álbum. {0}', artistsYouFollow: 'Artistas que Você Segue',
@@ -130,17 +130,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (savedLang && translations[savedLang]) {
             return savedLang;
         }
-        const browserLang = navigator.language.split('-');
+        const browserLang = navigator.language.split('-')[0];
         return translations[browserLang] ? browserLang : 'en';
     };
-    const currentTranslations = translations[getLanguage()];
+    let currentTranslations = translations[getLanguage()];
     const t = (key, ...args) => {
-        let text = currentTranslations[key] || key;
+        let text = currentTranslations[key] || translations['en'][key] || key;
         args.forEach((arg, index) => { text = text.replace(`{${index}}`, arg); });
         return text;
     };
     const translateUI = () => {
-        document.querySelectorAll('[data-translate-key]').forEach(el => el.textContent = t(el.getAttribute('data-translate-key')));
+        currentTranslations = translations[getLanguage()];
+        document.querySelectorAll('[data-translate-key]').forEach(el => {
+            const key = el.getAttribute('data-translate-key');
+            if (el.tagName === 'SPAN' || el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'P' || el.tagName === 'A' || el.tagName === 'LABEL' || el.tagName === 'DIV' || el.tagName === 'OPTION') {
+                el.textContent = t(key);
+            }
+        });
         document.querySelectorAll('[data-translate-placeholder-key]').forEach(el => el.placeholder = t(el.getAttribute('data-translate-placeholder-key')));
     };
 
@@ -496,13 +502,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 api.manager.getSpotifyRelatedArtists(artistId)
             ]);
 
-            const albumsData = results.status === 'fulfilled' ? results.value : { items: [] };
-            const bioData = results.status === 'fulfilled' ? results.value : { bio: t('noBioAvailable'), origin: null };
-            const topTracksData = results.status === 'fulfilled' ? results.value : { tracks: [] };
-            const relatedArtistsData = results.status === 'fulfilled' ? results.value : { artists: [] };
+            const albumsData = results[0].status === 'fulfilled' ? results[0].value : { items: [] };
+            const bioData = results[1].status === 'fulfilled' ? results[1].value : { bio: t('noBioAvailable'), origin: null };
+            const topTracksData = results[2].status === 'fulfilled' ? results[2].value : { tracks: [] };
+            const relatedArtistsData = results[3].status === 'fulfilled' ? results[3].value : { artists: [] };
             
-            if (results.status === 'rejected') {
-                console.error("Failed to fetch related artists (but page will still load):", results.reason);
+            if (results[3].status === 'rejected') {
+                console.error("Failed to fetch related artists (but page will still load):", results[3].reason);
             }
 
             history.replaceState({ artistId: artistId }, '', `/${encodeURIComponent(artist.name)}`);
@@ -590,7 +596,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loadingAlbum'));
         try {
             const album = await api.manager.getSpotifyAlbum(albumId);
-            if (album.artists && album.artists) state.artistContextId = album.artists.id;
+            if (album.artists && album.artists[0]) state.artistContextId = album.artists[0].id;
 
             const tracksHTML = album.tracks.items.map((track, index) => {
                 const isFavorite = state.currentUser?.favoriteTrackId === track.id;
@@ -758,7 +764,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     async function renderPublicProfileView(userName) {
-        if (state.currentUser && userName === state.currentUser.name) return renderProfilePage();
+        if (state.currentUser && userName.toLowerCase() === state.currentUser.name.toLowerCase()) {
+            return renderProfilePage();
+        }
         ui.manager.switchContent('profile');
         ui.manager.dom.profileContainer.innerHTML = ui.manager.renderLoader(t('loadingProfile', userName));
         try {
@@ -923,7 +931,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function handleAvatarChange(event) {
-        const file = event.target.files, modal = ui.manager.dom.avatarChangeModal;
+        const file = event.target.files[0];
+        const modal = ui.manager.dom.avatarChangeModal;
         ui.manager.clearModalMessages(modal);
         if (!file) return;
         if (!file.type.startsWith('image/')) return ui.manager.showModalError(modal, t('errorFileInvalid'));
@@ -1002,7 +1011,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (document.getElementById('social').classList.contains('active')) renderSocialPage();
             else {
                 const profileHeader = document.querySelector('.profile-info-main h2');
-                if (profileHeader && profileHeader.textContent === targetName) renderPublicProfileView(targetName);
+                if (profileHeader && profileHeader.textContent.toLowerCase() === targetName.toLowerCase()) renderPublicProfileView(targetName);
             }
         } catch (error) { alert(`Error: ${error.message}`); btn.disabled = false; }
     }
@@ -1030,14 +1039,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         try {
+            // Check if it's a user profile first
             await api.manager.fetchPublicProfile(pathName);
             renderPublicProfileView(pathName);
         } catch (userError) {
+            // If not a user, search for an artist on Spotify
             try {
-                const spotifyResults = await api.manager.searchSpotify(pathName, 'artist', 1);
-                if (spotifyResults.artists?.items.length > 0) {
-                    renderArtistView(spotifyResults.artists.items.id);
+                const spotifyResults = await api.manager.searchSpotify(`artist:"${pathName}"`, 'artist', 1);
+                if (spotifyResults.artists?.items.length > 0 && spotifyResults.artists.items[0].name.toLowerCase() === pathName.toLowerCase()) {
+                    renderArtistView(spotifyResults.artists.items[0].id);
                 } else {
+                    // Fallback if no exact match is found
                     history.replaceState({}, '', '/');
                     renderHomePage();
                 }
@@ -1105,15 +1117,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                         ? `<button class="btn-danger delete-news-btn" data-id="${item.id}"><i class="fas fa-trash"></i> ${t('delete')}</button>`
                         : '';
                     
-                    let title, content;
-                    if (item[`title_${lang}`]) {
-                        title = item[`title_${lang}`];
-                        content = item[`content_${lang}`];
-                    } else if (item.title && item.content) {
-                        title = item.title;
-                        content = item.content;
-                    } else {
-                        console.warn('Skipping news item with unrecognized format:', item);
+                    const title = item[`title_${lang}`] || item.title_en;
+                    const content = item[`content_${lang}`] || item.content_en;
+                    
+                    if (!title || !content) {
+                        console.warn('Skipping news item with missing content for current language:', item);
                         return;
                     }
                     
@@ -1220,7 +1228,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
             const artistLink = e.target.closest('.artist-link');
             if(artistLink) {
-                history.pushState({ artistId: artistLink.dataset.id }, '', `/${encodeURIComponent(artistLink.textContent)}`);
+                const artistName = artistLink.textContent;
+                history.pushState({ artistId: artistLink.dataset.id }, '', `/${encodeURIComponent(artistName)}`);
                 return renderArtistView(artistLink.dataset.id);
             }
             
@@ -1314,6 +1323,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (notificationItem) {
                 history.pushState({}, '', '/social');
                 renderSocialPage();
+                ui.manager.dom.notificationDropdown.classList.remove('active');
             }
 
             const deleteNewsBtn = e.target.closest('.delete-news-btn');
@@ -1438,7 +1448,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         }));
         
-        window.addEventListener('popstate', handleRouting);
+        window.addEventListener('popstate', (event) => {
+            if (event.state) {
+                if (event.state.artistId) {
+                    renderArtistView(event.state.artistId);
+                } else if (event.state.username) {
+                    renderPublicProfileView(event.state.username);
+                }
+            } else {
+                handleRouting();
+            }
+        });
 
         document.getElementById('logoutBtn').addEventListener('click', () => { 
             auth.manager.logout(); 
@@ -1666,7 +1686,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 quizQ7: "Seu histórico de streaming é majoritariamente composto por:", quizQ7O1: "Artistas que você descobriu na última semana.", quizQ7O2: "Alguns artistas, mas com muitas músicas diferentes deles.", quizQ7O3: "Uma quantidade enorme de artistas diferentes.",
                 quizQ8: "O que te deixa mais animado?", quizQ8O1: "Encontrar uma banda com menos de 1000 ouvintes.", quizQ8O2: "Entender a evolução de um artista através de seus álbuns.", quizQ8O3: "Ver sua biblioteca de artistas seguidos ultrapassar um novo marco.",
                 quizQ9: "Para você, uma coleção de música ideal tem:", quizQ9O1: "Muitas raridades e lados B.", quizQ9O2: "Álbuns conceituais e discografias completas.", quizQ9O3: "O maior número possível de artistas e gêneros.",
-                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ1O2: "Eu sou um historiador musical.", quizQ1O3: "Eu sou um curador de museu musical."
+                quizQ10: "Qual frase te descreve melhor?", quizQ10O1: "Eu sou um caçador de tesouros musicais.", quizQ10O2: "Eu sou um historiador musical.", quizQ10O3: "Eu sou um curador de museu musical."
             });
             
             setupEventListeners();
