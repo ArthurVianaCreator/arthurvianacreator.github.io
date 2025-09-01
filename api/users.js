@@ -1,6 +1,5 @@
 import { kv } from '@vercel/kv';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
 const SECRET = process.env.JWT_SECRET;
@@ -28,7 +27,6 @@ async function getSpotifyToken() {
     }
 }
 
-
 export default async function handler(req, res) {
     const token = req.headers.authorization?.split(' ')[1];
     let decoded;
@@ -47,17 +45,24 @@ export default async function handler(req, res) {
 
         // GET: Fetch a single public user profile by name
         if (name) {
-            const user = await kv.get(name.toLowerCase());
-            if (!user) return res.status(404).json({ error: 'User not found' });
-            // Return only public data
+            const userEmail = await kv.get(`name:${name.toLowerCase()}`);
+            if (!userEmail) return res.status(404).json({ error: 'User not found' });
+            
+            const user = await kv.get(`user:${userEmail}`);
+            if (!user) return res.status(404).json({ error: 'User data not found' });
+
             const { password, email, ...publicData } = user;
             return res.status(200).json(publicData);
         }
         
         // GET: Fetch public playlists for a user
         if (playlistsFor) {
-            const user = await kv.get(playlistsFor.toLowerCase());
-            if (!user) return res.status(404).json({ error: 'User not found' });
+            const userEmail = await kv.get(`name:${playlistsFor.toLowerCase()}`);
+            if (!userEmail) return res.status(404).json({ error: 'User not found' });
+
+            const user = await kv.get(`user:${userEmail}`);
+            if (!user) return res.status(404).json({ error: 'User data not found' });
+
             const publicPlaylists = user.playlists?.filter(p => p.isPublic).map(p => ({
                 id: p.id,
                 name: p.name,
@@ -72,15 +77,22 @@ export default async function handler(req, res) {
         if (playlistId) {
             const ownerName = await kv.get(`playlist:${playlistId}`);
             if (!ownerName) return res.status(404).json({ error: 'Playlist not found' });
+
+            const ownerEmail = await kv.get(`name:${ownerName.toLowerCase()}`);
+            if (!ownerEmail) return res.status(404).json({ error: 'Playlist owner not found' });
             
-            const owner = await kv.get(ownerName.toLowerCase());
-            if (!owner) return res.status(404).json({ error: 'Playlist owner not found' });
+            const owner = await kv.get(`user:${ownerEmail}`);
+            if (!owner) return res.status(404).json({ error: 'Playlist owner data not found' });
 
             const playlist = owner.playlists.find(p => p.id === playlistId);
             if (!playlist) return res.status(404).json({ error: 'Playlist not found in owner data' });
+            
+            let currentUser = null;
+            if (decoded) {
+                 currentUser = await kv.get(`user:${decoded.email}`);
+            }
 
-            // Check for privacy
-            if (!playlist.isPublic && (!decoded || decoded.name.toLowerCase() !== owner.name.toLowerCase())) {
+            if (!playlist.isPublic && (!currentUser || currentUser.name.toLowerCase() !== owner.name.toLowerCase())) {
                 return res.status(403).json({ error: 'This playlist is private' });
             }
             return res.status(200).json(playlist);
@@ -88,7 +100,7 @@ export default async function handler(req, res) {
 
         // GET: Default - fetch the logged-in user's full profile
         if (!decoded) return res.status(401).json({ error: 'Authentication required' });
-        const user = await kv.get(decoded.name.toLowerCase());
+        const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
         
         const { password, ...userData } = user;
@@ -99,7 +111,7 @@ export default async function handler(req, res) {
     if (req.method === 'PUT') {
         if (!decoded) return res.status(401).json({ error: 'Authentication required' });
         
-        const user = await kv.get(decoded.name.toLowerCase());
+        const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         const { name, ...updateData } = req.body;
@@ -109,7 +121,7 @@ export default async function handler(req, res) {
         }
         
         const updatedUser = { ...user, ...updateData };
-        await kv.set(user.name.toLowerCase(), updatedUser);
+        await kv.set(`user:${user.email}`, updatedUser);
         
         const { password, ...returnData } = updatedUser;
         return res.status(200).json(returnData);
@@ -124,21 +136,26 @@ export default async function handler(req, res) {
             if (!userNames || !Array.isArray(userNames)) return res.status(400).json({ error: 'Usernames array is required' });
             const statuses = {};
             for (const name of userNames) {
-                const user = await kv.get(name.toLowerCase());
-                statuses[name] = user?.lastSeen || null;
+                const userEmail = await kv.get(`name:${name.toLowerCase()}`);
+                if (userEmail) {
+                    const user = await kv.get(`user:${userEmail}`);
+                    statuses[name] = user?.lastSeen || null;
+                } else {
+                    statuses[name] = null;
+                }
             }
             return res.status(200).json(statuses);
         }
         
         if (!decoded) return res.status(401).json({ error: 'Authentication required for this action' });
-        const user = await kv.get(decoded.name.toLowerCase());
+        const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
         // POST: Update user's personality badge
         if (action === 'updateBadge') {
             user.badges = user.badges.filter(b => !['discoverer', 'collector', 'explorer'].includes(b));
             user.badges.push(badge);
-            await kv.set(user.name.toLowerCase(), user);
+            await kv.set(`user:${user.email}`, user);
             const { password, ...returnData } = user;
             return res.status(200).json(returnData);
         }
@@ -158,7 +175,7 @@ export default async function handler(req, res) {
             };
             user.playlists = user.playlists || [];
             user.playlists.unshift(newPlaylist);
-            await kv.set(user.name.toLowerCase(), user);
+            await kv.set(`user:${user.email}`, user);
             await kv.set(`playlist:${newPlaylist.id}`, user.name);
             return res.status(201).json(newPlaylist);
         }
@@ -171,7 +188,7 @@ export default async function handler(req, res) {
             user.playlists[playlistIndex].name = payload.name;
             user.playlists[playlistIndex].description = payload.description;
             user.playlists[playlistIndex].isPublic = payload.isPublic;
-            await kv.set(user.name.toLowerCase(), user);
+            await kv.set(`user:${user.email}`, user);
             return res.status(200).json(user.playlists[playlistIndex]);
         }
         
@@ -206,7 +223,7 @@ export default async function handler(req, res) {
             };
 
             user.playlists[playlistIndex].tracks.push(formattedTrack);
-            await kv.set(user.name.toLowerCase(), user);
+            await kv.set(`user:${user.email}`, user);
             return res.status(200).json(user.playlists[playlistIndex]);
         }
 
@@ -218,7 +235,7 @@ export default async function handler(req, res) {
             if (playlistIndex === -1) return res.status(404).json({ error: "Playlist not found." });
 
             user.playlists[playlistIndex].tracks = user.playlists[playlistIndex].tracks.filter(t => t.id !== trackId);
-            await kv.set(user.name.toLowerCase(), user);
+            await kv.set(`user:${user.email}`, user);
             return res.status(200).json({ success: true });
         }
         
@@ -226,7 +243,7 @@ export default async function handler(req, res) {
              if (!payload.id) return res.status(400).json({ error: "Playlist ID is required." });
              user.playlists = user.playlists.filter(p => p.id !== payload.id);
              await kv.del(`playlist:${payload.id}`);
-             await kv.set(user.name.toLowerCase(), user);
+             await kv.set(`user:${user.email}`, user);
              return res.status(200).json({ success: true });
         }
 
