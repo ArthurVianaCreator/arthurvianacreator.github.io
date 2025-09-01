@@ -47,8 +47,6 @@
                 </a>
             </div>
         </div>
-
-        <!-- O restante do seu HTML continua o mesmo... -->
         
         <div class="content-wrapper">
             <div class="top-bar">
@@ -214,6 +212,37 @@
             <textarea id="newsContentInput_pt" placeholder="Conteúdo em Português..." aria-label="Conteúdo em Português"></textarea>
             <div class="modal-actions">
                 <button class="btn-primary" id="postNewsSubmitBtn" data-translate-key="post">Post</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVOS MODAIS PARA PLAYLIST -->
+    <div id="playlistModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h2 id="playlistModalTitle" data-translate-key="createPlaylist">Create Playlist</h2>
+            <p class="modal-error"></p>
+            <input type="hidden" id="playlistIdInput">
+            <label for="playlistNameInput" data-translate-key="playlistName" class="visually-hidden">Playlist Name</label>
+            <input type="text" id="playlistNameInput" data-translate-placeholder-key="playlistNamePlaceholder" placeholder="My Awesome Playlist...">
+            <label for="playlistDescriptionInput" data-translate-key="playlistDescription" class="visually-hidden">Description (optional)</label>
+            <textarea id="playlistDescriptionInput" data-translate-placeholder-key="playlistDescriptionPlaceholder" placeholder="A short description..."></textarea>
+            <div class="playlist-public-toggle">
+                <label for="playlistIsPublic" data-translate-key="publicPlaylist">Public Playlist</label>
+                <input type="checkbox" id="playlistIsPublic" checked>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="savePlaylistBtn" data-translate-key="save">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addToPlaylistModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h2 data-translate-key="addToPlaylist">Add to Playlist</h2>
+            <div id="userPlaylistsContainer" class="playlists-selection-list">
+                <!-- As playlists do usuário serão injetadas aqui -->
             </div>
         </div>
     </div>

@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const state = { currentUser: null, spotifyAppToken: null, lastView: 'inicio', artistContextId: null, cameraStream: null };
+    const state = { currentUser: null, spotifyAppToken: null, lastView: 'inicio', artistContextId: null, cameraStream: null, trackToAdd: null };
     const api = {}, auth = {}, ui = {};
     let lastHeartbeatTimestamp = 0;
 
@@ -62,7 +62,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             similarArtists: 'Similar Artists',
             notifications: 'Notifications',
             noNotifications: 'No new notifications.',
-            newFriendRequest: '<strong>{0}</strong> sent you a friend request.'
+            newFriendRequest: '<strong>{0}</strong> sent you a friend request.',
+            // Playlist translations
+            playlists: 'Playlists', createPlaylist: 'Create Playlist', editPlaylist: 'Edit Playlist',
+            playlistName: 'Playlist Name', playlistNamePlaceholder: 'My Awesome Playlist...',
+            playlistDescription: 'Description (optional)', playlistDescriptionPlaceholder: 'A short description for your playlist...',
+            publicPlaylist: 'Public Playlist', addToPlaylist: 'Add to Playlist', trackCount: '{0} tracks',
+            byUser: 'by {0}', isNotPublic: 'This playlist is private.', noPlaylists: "{0} hasn't created any public playlists yet.",
+            emptyPlaylists: "You haven't created any playlists yet.", newPlaylist: 'New Playlist'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -122,7 +129,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             similarArtists: 'Artistas Similares',
             notifications: 'Notificações',
             noNotifications: 'Nenhuma notificação nova.',
-            newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.'
+            newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.',
+            // Traduções de Playlist
+            playlists: 'Playlists', createPlaylist: 'Criar Playlist', editPlaylist: 'Editar Playlist',
+            playlistName: 'Nome da Playlist', playlistNamePlaceholder: 'Minha Playlist Incrível...',
+            playlistDescription: 'Descrição (opcional)', playlistDescriptionPlaceholder: 'Uma breve descrição para sua playlist...',
+            publicPlaylist: 'Playlist Pública', addToPlaylist: 'Adicionar à Playlist', trackCount: '{0} faixas',
+            byUser: 'por {0}', isNotPublic: 'Esta playlist é privada.', noPlaylists: '{0} ainda não criou nenhuma playlist pública.',
+            emptyPlaylists: 'Você ainda não criou nenhuma playlist.', newPlaylist: 'Nova Playlist'
         }
     };
     const getLanguage = () => {
@@ -280,6 +294,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getSpotifyTrack: (id) => api.manager._spotifyRequest(`tracks/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
+        // --- CONSOLIDATED PLAYLIST LOGIC ---
+        managePlaylist: (action, payload) => api.manager._request('users', 'POST', { action: `playlist_${action}`, payload }),
+        getUserPlaylists: (username) => api.manager._request(`users?playlistsFor=${encodeURIComponent(username)}`),
+        getPlaylistDetails: (playlistId) => api.manager._request(`users?playlistId=${playlistId}`),
     };
 
     auth.manager = {
@@ -331,6 +349,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
             badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
+            playlistModal: document.getElementById('playlistModal'), addToPlaylistModal: document.getElementById('addToPlaylistModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
             badgeTooltip: document.getElementById('badgeTooltip'),
@@ -389,7 +408,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 this.dom.userInfo.innerHTML = `<span id="userName">${u.name}</span>${badgesHTML}`;
                 this.renderNotifications();
                 
-                // Lógica de Notificação de Notícias
                 document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
                     item.classList.toggle('new-content', u.hasNewNews);
                 });
@@ -542,6 +560,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
                             <i class="${heartIconClass} fa-heart"></i>
                         </button>` : '';
+                    const addToPlaylistBtnHTML = state.currentUser ? `
+                        <button class="add-to-playlist-btn" data-track-id="${track.id}" title="${t('addToPlaylist')}">
+                            <i class="fas fa-plus"></i>
+                        </button>` : '';
                     return `
                         <li class="track-item">
                             <span class="track-number">${index + 1}</span>
@@ -549,6 +571,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <span class="track-name">${track.name}</span>
                             <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
                             ${favoriteBtnHTML}
+                            ${addToPlaylistBtnHTML}
                         </li>`;
                 }).join('');
                 topTracksHTML = `<ol class="top-tracks-list">${topTracksHTML}</ol>`;
@@ -604,12 +627,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
                         <i class="${heartIconClass} fa-heart"></i>
                     </button>` : '';
+                const addToPlaylistBtnHTML = state.currentUser ? `
+                    <button class="add-to-playlist-btn" data-track-id="${track.id}" title="${t('addToPlaylist')}">
+                        <i class="fas fa-plus"></i>
+                    </button>` : '';
                 return `
                     <li class="track-item">
                         <span class="track-number">${index + 1}</span>
                         <span class="track-name">${track.name}</span>
                         <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
                         ${favoriteBtnHTML}
+                        ${addToPlaylistBtnHTML}
                     </li>`;
             }).join('');
 
@@ -639,73 +667,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     async function renderProfilePage() {
         if (!state.currentUser) { ui.manager.switchContent('inicio'); ui.manager.openModal(ui.manager.dom.loginModal); return; }
         ui.manager.switchContent('profile');
-        const u = state.currentUser;
-        let avatarHTML = u.avatar ? `<img src="${u.avatar}" alt="User Avatar" class="profile-picture">` : `<div class="profile-avatar-large-placeholder" style="background-color:${ui.manager.getAvatarColor(u.name)}">${u.name.charAt(0).toUpperCase()}</div>`;
-        let badgesHTML = '';
-        if (u.badges && u.badges.length > 0) {
-            [...new Set(u.badges)].forEach(badgeKey => {
-                if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${t(badgeMap[badgeKey].titleKey)}" class="badge-icon" data-badge-key="${badgeKey}">`;
-            });
-        }
-        
-        const primaryBadge = u.badges && u.badges.length > 0 ? u.badges.find(b => ['admin', 'supporter', 'veteran', 'artist', 'discoverer', 'collector', 'explorer'].includes(b)) : null;
-        const badgeClass = primaryBadge ? primaryBadge : '';
-
-        const descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
-            <div class="profile-description ${badgeClass}">
-                ${u.description || t('noDescription')}
-                <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
-            </div>
-        </div>`;
-
-        const followCount = u.following?.length || 0;
-        const followLimit = getFollowLimit(u);
-        const percentage = (followCount / followLimit) * 100;
-        const followTrackerHTML = `
-            <div class="follow-limit-tracker">
-                <h3>${t('followLimitTitle')}</h3>
-                <div class="progress-info">
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: ${percentage}%;"></div>
-                    </div>
-                    <span class="limit-text">${followCount} / ${followLimit}</span>
-                </div>
-            </div>`;
-
-        ui.manager.dom.profileContainer.innerHTML = `
-            <div class="profile-header-main">
-                <div class="profile-avatar-large">${avatarHTML}</div>
-                <div class="profile-info-main">
-                    <h2>${u.name}</h2>
-                    <div class="user-badges">${badgesHTML}</div>
-                </div>
-            </div>
-            ${descriptionHTML}
-            <div id="favorite-track-container"></div>
-            ${followTrackerHTML}
-            <h2 class="section-title-main">${t('artistsYouFollow')}</h2>
-            <div class="music-grid" id="followed-artists-grid"></div>`;
-            
-        if (u.favoriteTrackId) {
-            const container = document.getElementById('favorite-track-container');
-            container.innerHTML = ui.manager.renderLoader('');
-            try {
-                const track = await api.manager.getSpotifyTrack(u.favoriteTrackId);
-                container.innerHTML = `
-                    <h2 class="section-title-main">${t('favoriteTrack')}</h2>
-                    <iframe class="favorite-track-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
-                        width="100%" height="80" frameBorder="0" allowfullscreen="" 
-                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
-                    </iframe>
-                    <button class="btn-secondary remove-favorite-btn">${t('removeFavoriteTrack')}</button>
-                `;
-            } catch(e) {
-                container.innerHTML = '';
-                console.error("Failed to load favorite track:", e);
-            }
-        }
-
-        ui.manager.populateGrid(document.getElementById('followed-artists-grid'), u.following.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('emptyFollowedArtists'));
+        renderPublicProfileView(state.currentUser.name);
     }
 
     async function renderSocialPage() {
@@ -767,9 +729,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     async function renderPublicProfileView(userName) {
-        if (state.currentUser && userName.toLowerCase() === state.currentUser.name.toLowerCase()) {
-            return renderProfilePage();
-        }
         ui.manager.switchContent('profile');
         ui.manager.dom.profileContainer.innerHTML = ui.manager.renderLoader(t('loadingProfile', userName));
         try {
@@ -786,7 +745,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const statusHTML = status ? `<div class="online-status" data-username-status="${u.name}"><div class="status-dot ${status.class}"></div><span>${status.text}</span></div>` : '';
             
             let friendStatusHTML = '';
-            if (state.currentUser) {
+            if (state.currentUser && state.currentUser.name.toLowerCase() !== userName.toLowerCase()) {
                 if (state.currentUser.friends?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action remove" data-action="remove" data-target-name="${u.name}"><i class="fas fa-user-minus"></i> ${t('removeFriend')}</button>`;
                 else if (state.currentUser.friendRequestsSent?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action" disabled><i class="fas fa-paper-plane"></i> ${t('requestSent')}</button>`;
                 else if (state.currentUser.friendRequestsReceived?.includes(u.name)) friendStatusHTML = `<div class="friend-request-actions public-profile"><span>${t('sentYouRequest')}</span><button class="btn-friend-action accept" data-action="accept" data-target-name="${u.name}"><i class="fas fa-check"></i></button><button class="btn-friend-action reject" data-action="reject" data-target-name="${u.name}"><i class="fas fa-times"></i></button></div>`;
@@ -795,10 +754,34 @@ document.addEventListener('DOMContentLoaded', async function() {
             
             const primaryBadge = u.badges && u.badges.length > 0 ? u.badges.find(b => ['admin', 'supporter', 'veteran', 'artist', 'discoverer', 'collector', 'explorer'].includes(b)) : null;
             const badgeClass = primaryBadge ? primaryBadge : '';
-            const descriptionHTML = u.description ? `<div class="profile-description-container"><div class="profile-description ${badgeClass}">${u.description}</div></div>` : '';
+            
+            let descriptionHTML = '';
+            const isOwnProfile = state.currentUser && state.currentUser.name.toLowerCase() === userName.toLowerCase();
+            if (isOwnProfile) {
+                descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
+                    <div class="profile-description ${badgeClass}">
+                        ${u.description || t('noDescription')}
+                        <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
+                    </div>
+                </div>`;
+            } else if (u.description) {
+                descriptionHTML = `<div class="profile-description-container"><div class="profile-description ${badgeClass}">${u.description}</div></div>`;
+            }
+
+            const followTrackerHTML = isOwnProfile ? `
+                <div class="follow-limit-tracker">
+                    <h3>${t('followLimitTitle')}</h3>
+                    <div class="progress-info">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: ${((u.following?.length || 0) / getFollowLimit(u)) * 100}%;"></div>
+                        </div>
+                        <span class="limit-text">${u.following?.length || 0} / ${getFollowLimit(u)}</span>
+                    </div>
+                </div>` : '';
+
 
             ui.manager.dom.profileContainer.innerHTML = `
-                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                ${!isOwnProfile ? '<button class="back-btn"><i class="fas fa-arrow-left"></i></button>' : ''}
                 <div class="profile-header-main">
                     <div class="profile-avatar-large">${avatarHTML}</div>
                     <div class="profile-info-main">
@@ -810,24 +793,29 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
                 ${descriptionHTML}
                 <div id="favorite-track-container"></div>
+                ${followTrackerHTML}
                 <div class="profile-tabs">
                     <button class="tab-link active" data-tab="artists">${t('followingCount', u.following?.length || 0)}</button>
                     <button class="tab-link" data-tab="friends">${t('friendsCount', u.friends?.length || 0)}</button>
+                    <button class="tab-link" data-tab="playlists">${t('playlists')}</button>
                 </div>
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
-                <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
+                <div id="friends" class="tab-content"><div class="user-grid"></div></div>
+                <div id="playlists" class="tab-content"><div class="music-grid"></div></div>`;
 
             if (u.favoriteTrackId) {
                 const container = document.getElementById('favorite-track-container');
                 try {
                     const track = await api.manager.getSpotifyTrack(u.favoriteTrackId);
+                    const removeBtn = isOwnProfile ? `<button class="btn-secondary remove-favorite-btn">${t('removeFavoriteTrack')}</button>` : '';
                     container.innerHTML = `
                         <h2 class="section-title-main">${t('favoriteTrack')}</h2>
                         <iframe class="favorite-track-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
                             width="100%" height="80" frameBorder="0" allowfullscreen="" 
                             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
-                        </iframe>`;
-                } catch(e) { console.error("Failed to load favorite track for public profile:", e); }
+                        </iframe>
+                        ${removeBtn}`;
+                } catch(e) { console.error("Failed to load favorite track:", e); }
             }
 
             ui.manager.populateGrid(document.querySelector('#artists .music-grid'), u.following.map(a => ({...a, type: 'artist'})), (item, index) => ui.manager.renderMusicCard(item, index), t('isNotFollowing', u.name));
@@ -846,6 +834,25 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 ui.manager.populateGrid(friendsGrid, [], (item, index) => ui.manager.renderUserCard(item, index), t('hasNoFriends', u.name));
             }
+
+            const playlistsGrid = document.querySelector('#playlists .music-grid');
+            try {
+                const playlists = await api.manager.getUserPlaylists(userName);
+                if (isOwnProfile) {
+                    playlistsGrid.innerHTML = `
+                        <div class="music-card" id="create-playlist-card">
+                            <i class="fas fa-plus"></i>
+                            <span>${t('createPlaylist')}</span>
+                        </div>
+                        ${playlists.map(p => renderPlaylistCard(p)).join('')}
+                    `;
+                } else {
+                    ui.manager.populateGrid(playlistsGrid, playlists, (p) => renderPlaylistCard(p), t('noPlaylists', u.name));
+                }
+            } catch (error) {
+                playlistsGrid.innerHTML = `<p class="search-message">${t('couldNotLoadSection')}</p>`;
+            }
+
         } catch(e) {
             ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadProfile', e.message)}</p>`;
         }
@@ -1043,19 +1050,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (pathName.toLowerCase() === 'news') {
             return renderNewsPage();
         }
+        
+        // Adicionar roteamento de playlist (opcional)
+        if (pathName.toLowerCase().startsWith('playlist/')) {
+            const playlistId = pathName.split('/')[1];
+            return renderPlaylistView(playlistId);
+        }
 
         try {
-            // Check if it's a user profile first
             await api.manager.fetchPublicProfile(pathName);
             renderPublicProfileView(pathName);
         } catch (userError) {
-            // If not a user, search for an artist on Spotify
             try {
                 const spotifyResults = await api.manager.searchSpotify(`artist:"${pathName}"`, 'artist', 1);
                 if (spotifyResults.artists?.items.length > 0 && spotifyResults.artists.items[0].name.toLowerCase() === pathName.toLowerCase()) {
                     renderArtistView(spotifyResults.artists.items[0].id);
                 } else {
-                    // Fallback if no exact match is found
                     history.replaceState({}, '', '/');
                     renderHomePage();
                 }
@@ -1069,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function updateUserPresence() {
         const now = Date.now();
-        if (now - lastHeartbeatTimestamp < 60000) return; // Throttle to 1 minute
+        if (now - lastHeartbeatTimestamp < 60000) return; 
         
         lastHeartbeatTimestamp = now;
         if (localStorage.getItem('authToken')) {
@@ -1087,12 +1097,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         container.innerHTML = ui.manager.renderLoader(t('loading'));
 
         if (state.currentUser && state.currentUser.hasNewNews) {
-            state.currentUser.hasNewNews = false; // Atualiza o estado local imediatamente
+            state.currentUser.hasNewNews = false; 
             document.querySelectorAll('.nav-item[data-target="news"]').forEach(item => {
                 item.classList.remove('new-content');
             });
             try {
-                // Aguarda a resposta do servidor e atualiza o estado global
                 const updatedUser = await api.manager.updateUser({ lastSeenNewsTimestamp: Date.now() });
                 state.currentUser = updatedUser;
             } catch (e) {
@@ -1189,6 +1198,102 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
+    // --- FUNÇÕES DE PLAYLIST ---
+    function renderPlaylistCard(playlist) {
+        const trackCountText = t('trackCount', playlist.trackCount || 0);
+        const coverHTML = playlist.coverImage
+            ? `<img src="${playlist.coverImage}" alt="${playlist.name}">`
+            : '<i class="fas fa-music"></i>';
+
+        return `
+            <div class="music-card playlist-card" data-playlist-id="${playlist.id}">
+                <div class="playlist-card-cover">${coverHTML}</div>
+                <div class="playlist-card-name">${playlist.name}</div>
+                <div class="playlist-card-info">${trackCountText}</div>
+            </div>
+        `;
+    }
+
+    async function renderPlaylistView(playlistId) {
+        ui.manager.switchContent('details-view');
+        ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loading'));
+        try {
+            const playlist = await api.manager.getPlaylistDetails(playlistId);
+            state.artistContextId = null;
+
+            const coverHTML = playlist.coverImage
+                ? `<div class="details-img album-img"><img src="${playlist.coverImage}" alt="${playlist.name}"></div>`
+                : `<div class="details-img album-img" style="display:flex; align-items:center; justify-content:center; background-color: var(--card-hover-bg);"><i class="fas fa-music" style="font-size: 6rem; color: var(--gray-text);"></i></div>`;
+            
+            const isOwner = state.currentUser && state.currentUser.name === playlist.owner;
+
+            const tracksHTML = playlist.tracks.map((track, index) => {
+                const removeBtnHTML = isOwner ? `<button class="btn-danger remove-track-btn" data-track-id="${track.id}" data-playlist-id="${playlist.id}"><i class="fas fa-trash"></i></button>` : '';
+                return `
+                    <li class="track-item">
+                        <span class="track-number">${index + 1}</span>
+                        <img src="${track.albumImageUrl}" class="track-item-img" alt="Album Art">
+                        <span class="track-name">${track.name} &nbsp;&middot;&nbsp; <span class="artist-link" data-id="${track.artistId}">${track.artistName}</span></span>
+                        <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
+                        ${removeBtnHTML}
+                    </li>`;
+            }).join('');
+
+            const editBtnHTML = isOwner ? `<button class="btn-secondary edit-playlist-btn" data-playlist-id="${playlist.id}"><i class="fas fa-pencil-alt"></i> ${t('editPlaylist')}</button>` : '';
+
+            ui.manager.dom.detailsView.innerHTML = `
+                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
+                <div class="details-header playlist-details-header">
+                    ${coverHTML}
+                    <div class="details-info">
+                        <h2>${playlist.name}</h2>
+                        <p class="meta-info">${t('byUser', playlist.owner)} &bull; ${t('trackCount', playlist.tracks.length)}</p>
+                        ${playlist.description ? `<p>${playlist.description}</p>` : ''}
+                        <div class="details-actions">${editBtnHTML}</div>
+                    </div>
+                </div>
+                <div class="track-list-container">
+                    <ol class="top-tracks-list">${tracksHTML.length > 0 ? tracksHTML : `<p class="search-message">${t('emptyPlaylists')}</p>`}</ol>
+                </div>`;
+        } catch (e) {
+            ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadAlbum', e.message)}</p>`;
+        }
+    }
+
+    async function handleSavePlaylist(e) {
+        const btn = e.target;
+        const modal = ui.manager.dom.playlistModal;
+        const playlistId = modal.querySelector('#playlistIdInput').value;
+        const name = modal.querySelector('#playlistNameInput').value.trim();
+        const description = modal.querySelector('#playlistDescriptionInput').value.trim();
+        const isPublic = modal.querySelector('#playlistIsPublic').checked;
+
+        if (!name) {
+            return ui.manager.showModalError(modal, t('allFieldsRequired'));
+        }
+
+        btn.disabled = true;
+        btn.textContent = t('saving');
+
+        try {
+            const action = playlistId ? 'edit' : 'create';
+            const payload = { name, description, isPublic };
+            if (playlistId) payload.id = playlistId;
+
+            await api.manager.managePlaylist(action, payload);
+            ui.manager.closeAllModals();
+            // Re-render the profile page to show the new/updated playlist
+            if (document.getElementById('profile').classList.contains('active')) {
+                renderProfilePage();
+            }
+        } catch (error) {
+            ui.manager.showModalError(modal, error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = t('save');
+        }
+    }
+
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
@@ -1350,6 +1455,69 @@ document.addEventListener('DOMContentLoaded', async function() {
                     }
                 }
             }
+            
+            // --- EVENTOS DE PLAYLIST ---
+            const playlistCard = e.target.closest('.playlist-card');
+            if (playlistCard && !e.target.closest('#create-playlist-card')) {
+                const playlistId = playlistCard.dataset.playlistId;
+                if (playlistId) {
+                    // history.pushState({ playlistId }, '', `/playlist/${playlistId}`);
+                    renderPlaylistView(playlistId);
+                }
+            }
+            if (e.target.closest('#create-playlist-card')) {
+                const modal = ui.manager.dom.playlistModal;
+                modal.querySelector('#playlistModalTitle').textContent = t('createPlaylist');
+                modal.querySelector('#playlistIdInput').value = '';
+                modal.querySelector('#playlistNameInput').value = '';
+                modal.querySelector('#playlistDescriptionInput').value = '';
+                modal.querySelector('#playlistIsPublic').checked = true;
+                ui.manager.openModal(modal);
+            }
+            const editPlaylistBtn = e.target.closest('.edit-playlist-btn');
+            if (editPlaylistBtn) {
+                const playlistId = editPlaylistBtn.dataset.playlistId;
+                const playlist = await api.manager.getPlaylistDetails(playlistId);
+                const modal = ui.manager.dom.playlistModal;
+                modal.querySelector('#playlistModalTitle').textContent = t('editPlaylist');
+                modal.querySelector('#playlistIdInput').value = playlist.id;
+                modal.querySelector('#playlistNameInput').value = playlist.name;
+                modal.querySelector('#playlistDescriptionInput').value = playlist.description || '';
+                modal.querySelector('#playlistIsPublic').checked = playlist.isPublic;
+                ui.manager.openModal(modal);
+            }
+            const addToPlaylistBtn = e.target.closest('.add-to-playlist-btn');
+            if (addToPlaylistBtn) {
+                state.trackToAdd = addToPlaylistBtn.dataset.trackId;
+                const modal = ui.manager.dom.addToPlaylistModal;
+                const container = modal.querySelector('#userPlaylistsContainer');
+                container.innerHTML = ui.manager.renderLoader('');
+                ui.manager.openModal(modal);
+                try {
+                    const playlists = await api.manager.getUserPlaylists(state.currentUser.name);
+                    container.innerHTML = playlists.map(p => `<div class="playlist-item" data-playlist-id="${p.id}">${p.name}</div>`).join('');
+                } catch (error) {
+                    container.innerHTML = `<p class="search-message">${error.message}</p>`;
+                }
+            }
+            const playlistSelectItem = e.target.closest('.playlist-item');
+            if (playlistSelectItem && state.trackToAdd) {
+                const playlistId = playlistSelectItem.dataset.playlistId;
+                try {
+                    await api.manager.managePlaylist('addTrack', { playlistId, trackId: state.trackToAdd });
+                    state.trackToAdd = null;
+                    ui.manager.closeAllModals();
+                } catch (error) { alert(error.message); }
+            }
+            const removeTrackBtn = e.target.closest('.remove-track-btn');
+            if(removeTrackBtn){
+                const { trackId, playlistId } = removeTrackBtn.dataset;
+                try {
+                    await api.manager.managePlaylist('removeTrack', { playlistId, trackId });
+                    renderPlaylistView(playlistId); // Refresh
+                } catch(error) { alert(error.message); }
+            }
+
 
             handleFriendAction(e);
 
@@ -1431,6 +1599,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
         document.getElementById('postNewsSubmitBtn').addEventListener('click', handlePostNewsSubmit);
+        document.getElementById('savePlaylistBtn').addEventListener('click', handleSavePlaylist);
         
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
@@ -1460,15 +1629,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }));
         
         window.addEventListener('popstate', (event) => {
-            if (event.state) {
-                if (event.state.artistId) {
-                    renderArtistView(event.state.artistId);
-                } else if (event.state.username) {
-                    renderPublicProfileView(event.state.username);
-                }
-            } else {
-                handleRouting();
-            }
+            handleRouting();
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => { 
