@@ -82,24 +82,31 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
     filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.7));
 }
 
+/* Administrador: Amarelo */
 .badge-icon[data-badge-key="admin"] { box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.75); }
 .badge-icon[data-badge-key="admin"]:hover { box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.85); }
 
-.badge-icon[data-badge-key="supporter"] { box-shadow: 0 0 10px 2px rgba(255, 165, 0, 0.7); }
-.badge-icon[data-badge-key="supporter"]:hover { box-shadow: 0 0 20px 5px rgba(255, 165, 0, 0.8); }
+/* Supporter: Rosa */
+.badge-icon[data-badge-key="supporter"] { box-shadow: 0 0 10px 2px rgba(255, 105, 180, 0.7); }
+.badge-icon[data-badge-key="supporter"]:hover { box-shadow: 0 0 20px 5px rgba(255, 105, 180, 0.8); }
 
-.badge-icon[data-badge-key="veteran"] { box-shadow: 0 0 10px 2px rgba(200, 200, 200, 0.7); }
-.badge-icon[data-badge-key="veteran"]:hover { box-shadow: 0 0 20px 5px rgba(220, 220, 220, 0.8); }
+/* Veteran: Azul */
+.badge-icon[data-badge-key="veteran"] { box-shadow: 0 0 10px 2px rgba(0, 191, 255, 0.7); }
+.badge-icon[data-badge-key="veteran"]:hover { box-shadow: 0 0 20px 5px rgba(0, 191, 255, 0.8); }
 
+/* Artist: Roxo */
 .badge-icon[data-badge-key="artist"] { box-shadow: 0 0 10px 2px rgba(180, 50, 255, 0.7); }
 .badge-icon[data-badge-key="artist"]:hover { box-shadow: 0 0 20px 5px rgba(180, 50, 255, 0.8); }
 
-.badge-icon[data-badge-key="discoverer"] { box-shadow: 0 0 10px 2px rgba(0, 191, 255, 0.7); }
-.badge-icon[data-badge-key="discoverer"]:hover { box-shadow: 0 0 20px 5px rgba(0, 191, 255, 0.8); }
+/* Discoverer: Vermelho */
+.badge-icon[data-badge-key="discoverer"] { box-shadow: 0 0 10px 2px rgba(229, 57, 53, 0.7); }
+.badge-icon[data-badge-key="discoverer"]:hover { box-shadow: 0 0 20px 5px rgba(229, 57, 53, 0.8); }
 
-.badge-icon[data-badge-key="collector"] { box-shadow: 0 0 10px 2px rgba(255, 69, 0, 0.7); }
-.badge-icon[data-badge-key="collector"]:hover { box-shadow: 0 0 20px 5px rgba(255, 69, 0, 0.8); }
+/* Collector: Laranja */
+.badge-icon[data-badge-key="collector"] { box-shadow: 0 0 10px 2px rgba(255, 108, 0, 0.7); }
+.badge-icon[data-badge-key="collector"]:hover { box-shadow: 0 0 20px 5px rgba(255, 108, 0, 0.8); }
 
+/* Explorer: Verde */
 .badge-icon[data-badge-key="explorer"] { box-shadow: 0 0 10px 2px rgba(50, 205, 50, 0.7); }
 .badge-icon[data-badge-key="explorer"]:hover { box-shadow: 0 0 20px 5px rgba(50, 205, 50, 0.8); }
 
