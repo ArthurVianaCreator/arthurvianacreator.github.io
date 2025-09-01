@@ -27,6 +27,7 @@ async function getSpotifyToken() {
     }
 }
 
+
 export default async function handler(req, res) {
     const token = req.headers.authorization?.split(' ')[1];
     let decoded;
@@ -39,48 +40,42 @@ export default async function handler(req, res) {
         }
     }
 
-    // --- GET Requests ---
     if (req.method === 'GET') {
         const { name, playlistsFor, playlistId } = req.query;
 
-        // GET: Fetch a single public user profile by name
         if (name) {
             const userEmail = await kv.get(`name:${name.toLowerCase()}`);
             if (!userEmail) return res.status(404).json({ error: 'User not found' });
-            
             const user = await kv.get(`user:${userEmail}`);
             if (!user) return res.status(404).json({ error: 'User data not found' });
-
             const { password, email, ...publicData } = user;
             return res.status(200).json(publicData);
         }
         
-        // GET: Fetch public playlists for a user
         if (playlistsFor) {
             const userEmail = await kv.get(`name:${playlistsFor.toLowerCase()}`);
             if (!userEmail) return res.status(404).json({ error: 'User not found' });
-
             const user = await kv.get(`user:${userEmail}`);
             if (!user) return res.status(404).json({ error: 'User data not found' });
-
-            const publicPlaylists = user.playlists?.filter(p => p.isPublic).map(p => ({
-                id: p.id,
-                name: p.name,
-                owner: p.owner,
-                trackCount: p.tracks?.length || 0,
-                coverImage: p.tracks?.[0]?.albumImageUrl || null
-            })) || [];
+            
+            const publicPlaylists = user.playlists?.filter(p => p.isPublic).map(p => {
+                const uniqueCoverImages = [...new Set(p.tracks.map(t => t.albumImageUrl).filter(Boolean))].slice(0, 4);
+                return {
+                    id: p.id,
+                    name: p.name,
+                    owner: p.owner,
+                    trackCount: p.tracks?.length || 0,
+                    coverImages: uniqueCoverImages
+                };
+            }) || [];
             return res.status(200).json(publicPlaylists);
         }
         
-        // GET: Fetch details of a single playlist by its ID
         if (playlistId) {
             const ownerName = await kv.get(`playlist:${playlistId}`);
             if (!ownerName) return res.status(404).json({ error: 'Playlist not found' });
-
             const ownerEmail = await kv.get(`name:${ownerName.toLowerCase()}`);
             if (!ownerEmail) return res.status(404).json({ error: 'Playlist owner not found' });
-            
             const owner = await kv.get(`user:${ownerEmail}`);
             if (!owner) return res.status(404).json({ error: 'Playlist owner data not found' });
 
@@ -88,56 +83,48 @@ export default async function handler(req, res) {
             if (!playlist) return res.status(404).json({ error: 'Playlist not found in owner data' });
             
             let currentUser = null;
-            if (decoded) {
-                 currentUser = await kv.get(`user:${decoded.email}`);
-            }
+            if (decoded) currentUser = await kv.get(`user:${decoded.email}`);
 
             if (!playlist.isPublic && (!currentUser || currentUser.name.toLowerCase() !== owner.name.toLowerCase())) {
                 return res.status(403).json({ error: 'This playlist is private' });
             }
-            return res.status(200).json(playlist);
+            
+            const uniqueCoverImages = [...new Set(playlist.tracks.map(t => t.albumImageUrl).filter(Boolean))].slice(0, 4);
+            const playlistWithCover = { ...playlist, coverImages: uniqueCoverImages };
+            
+            return res.status(200).json(playlistWithCover);
         }
 
-        // GET: Default - fetch the logged-in user's full profile
         if (!decoded) return res.status(401).json({ error: 'Authentication required' });
         const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
-        
         const { password, ...userData } = user;
         return res.status(200).json(userData);
     }
     
-    // --- PUT Request (Update User) ---
     if (req.method === 'PUT') {
         if (!decoded) return res.status(401).json({ error: 'Authentication required' });
-        
         const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
-
         const { name, ...updateData } = req.body;
-
         if (name && name.toLowerCase() !== user.name.toLowerCase()) {
             return res.status(400).json({ error: 'Username change is not allowed via this method.' });
         }
-        
         const updatedUser = { ...user, ...updateData };
         await kv.set(`user:${user.email}`, updatedUser);
-        
         const { password, ...returnData } = updatedUser;
         return res.status(200).json(returnData);
     }
 
-    // --- POST Requests (Actions) ---
     if (req.method === 'POST') {
         const { action, userNames, badge, payload } = req.body;
 
-        // POST: Get online statuses for multiple users
         if (action === 'getStatuses') {
             if (!userNames || !Array.isArray(userNames)) return res.status(400).json({ error: 'Usernames array is required' });
             const statuses = {};
             for (const name of userNames) {
                 const userEmail = await kv.get(`name:${name.toLowerCase()}`);
-                if (userEmail) {
+                if(userEmail) {
                     const user = await kv.get(`user:${userEmail}`);
                     statuses[name] = user?.lastSeen || null;
                 } else {
@@ -151,7 +138,6 @@ export default async function handler(req, res) {
         const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
 
-        // POST: Update user's personality badge
         if (action === 'updateBadge') {
             user.badges = user.badges.filter(b => !['discoverer', 'collector', 'explorer'].includes(b));
             user.badges.push(badge);
@@ -159,8 +145,6 @@ export default async function handler(req, res) {
             const { password, ...returnData } = user;
             return res.status(200).json(returnData);
         }
-
-        // --- PLAYLIST ACTIONS ---
 
         if (action === 'playlist_create') {
             if (!payload.name) return res.status(400).json({ error: "Playlist name is required." });
@@ -195,10 +179,8 @@ export default async function handler(req, res) {
         if (action === 'playlist_addTrack') {
             const { playlistId, trackId } = payload;
             if (!playlistId || !trackId) return res.status(400).json({ error: "Playlist ID and Track ID are required." });
-            
             const playlistIndex = user.playlists.findIndex(p => p.id === playlistId);
             if (playlistIndex === -1) return res.status(404).json({ error: "Playlist not found." });
-
             if (user.playlists[playlistIndex].tracks.some(t => t.id === trackId)) {
                 return res.status(409).json({ error: "Track already in playlist." });
             }
@@ -230,10 +212,8 @@ export default async function handler(req, res) {
         if (action === 'playlist_removeTrack') {
             const { playlistId, trackId } = payload;
             if (!playlistId || !trackId) return res.status(400).json({ error: "Playlist ID and Track ID are required." });
-            
             const playlistIndex = user.playlists.findIndex(p => p.id === playlistId);
             if (playlistIndex === -1) return res.status(404).json({ error: "Playlist not found." });
-
             user.playlists[playlistIndex].tracks = user.playlists[playlistIndex].tracks.filter(t => t.id !== trackId);
             await kv.set(`user:${user.email}`, user);
             return res.status(200).json({ success: true });

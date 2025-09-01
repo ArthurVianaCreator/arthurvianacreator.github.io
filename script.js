@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             playlistDescription: 'Description (optional)', playlistDescriptionPlaceholder: 'A short description for your playlist...',
             publicPlaylist: 'Public Playlist', addToPlaylist: 'Add to Playlist', trackCount: '{0} tracks',
             byUser: 'by {0}', isNotPublic: 'This playlist is private.', noPlaylists: "{0} hasn't created any public playlists yet.",
-            emptyPlaylists: "You haven't created any playlists yet.", newPlaylist: 'New Playlist'
+            emptyPlaylists: "This playlist is empty.", newPlaylist: 'New Playlist'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             playlistDescription: 'Descrição (opcional)', playlistDescriptionPlaceholder: 'Uma breve descrição para sua playlist...',
             publicPlaylist: 'Playlist Pública', addToPlaylist: 'Adicionar à Playlist', trackCount: '{0} faixas',
             byUser: 'por {0}', isNotPublic: 'Esta playlist é privada.', noPlaylists: '{0} ainda não criou nenhuma playlist pública.',
-            emptyPlaylists: 'Você ainda não criou nenhuma playlist.', newPlaylist: 'Nova Playlist'
+            emptyPlaylists: 'Esta playlist está vazia.', newPlaylist: 'Nova Playlist'
         }
     };
     const getLanguage = () => {
@@ -745,7 +745,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             const statusHTML = status ? `<div class="online-status" data-username-status="${u.name}"><div class="status-dot ${status.class}"></div><span>${status.text}</span></div>` : '';
             
             let friendStatusHTML = '';
-            if (state.currentUser && state.currentUser.name.toLowerCase() !== userName.toLowerCase()) {
+            const isOwnProfile = state.currentUser && state.currentUser.name.toLowerCase() === userName.toLowerCase();
+            if (state.currentUser && !isOwnProfile) {
                 if (state.currentUser.friends?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action remove" data-action="remove" data-target-name="${u.name}"><i class="fas fa-user-minus"></i> ${t('removeFriend')}</button>`;
                 else if (state.currentUser.friendRequestsSent?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action" disabled><i class="fas fa-paper-plane"></i> ${t('requestSent')}</button>`;
                 else if (state.currentUser.friendRequestsReceived?.includes(u.name)) friendStatusHTML = `<div class="friend-request-actions public-profile"><span>${t('sentYouRequest')}</span><button class="btn-friend-action accept" data-action="accept" data-target-name="${u.name}"><i class="fas fa-check"></i></button><button class="btn-friend-action reject" data-action="reject" data-target-name="${u.name}"><i class="fas fa-times"></i></button></div>`;
@@ -756,7 +757,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const badgeClass = primaryBadge ? primaryBadge : '';
             
             let descriptionHTML = '';
-            const isOwnProfile = state.currentUser && state.currentUser.name.toLowerCase() === userName.toLowerCase();
             if (isOwnProfile) {
                 descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
                     <div class="profile-description ${badgeClass}">
@@ -1051,7 +1051,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             return renderNewsPage();
         }
         
-        // Adicionar roteamento de playlist (opcional)
         if (pathName.toLowerCase().startsWith('playlist/')) {
             const playlistId = pathName.split('/')[1];
             return renderPlaylistView(playlistId);
@@ -1199,15 +1198,27 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // --- FUNÇÕES DE PLAYLIST ---
+    function renderPlaylistCover(playlist) {
+        if (playlist.coverImages && playlist.coverImages.length > 0) {
+            if (playlist.coverImages.length < 4) {
+                // Se tiver menos de 4, mostre apenas a primeira imagem em tela cheia
+                return `<img src="${playlist.coverImages[0]}" alt="${playlist.name}">`;
+            }
+            // Senão, crie a grade 2x2
+            return `
+                <div class="playlist-cover-grid">
+                    ${playlist.coverImages.map(imgUrl => `<img src="${imgUrl}" alt="">`).join('')}
+                </div>
+            `;
+        }
+        return '<i class="fas fa-music"></i>'; // Fallback
+    }
+
     function renderPlaylistCard(playlist) {
         const trackCountText = t('trackCount', playlist.trackCount || 0);
-        const coverHTML = playlist.coverImage
-            ? `<img src="${playlist.coverImage}" alt="${playlist.name}">`
-            : '<i class="fas fa-music"></i>';
-
         return `
             <div class="music-card playlist-card" data-playlist-id="${playlist.id}">
-                <div class="playlist-card-cover">${coverHTML}</div>
+                <div class="playlist-card-cover">${renderPlaylistCover(playlist)}</div>
                 <div class="playlist-card-name">${playlist.name}</div>
                 <div class="playlist-card-info">${trackCountText}</div>
             </div>
@@ -1221,10 +1232,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const playlist = await api.manager.getPlaylistDetails(playlistId);
             state.artistContextId = null;
 
-            const coverHTML = playlist.coverImage
-                ? `<div class="details-img album-img"><img src="${playlist.coverImage}" alt="${playlist.name}"></div>`
-                : `<div class="details-img album-img" style="display:flex; align-items:center; justify-content:center; background-color: var(--card-hover-bg);"><i class="fas fa-music" style="font-size: 6rem; color: var(--gray-text);"></i></div>`;
-            
+            const coverHTML = `<div class="details-img album-img">${renderPlaylistCover(playlist)}</div>`;
             const isOwner = state.currentUser && state.currentUser.name === playlist.owner;
 
             const tracksHTML = playlist.tracks.map((track, index) => {
@@ -1238,6 +1246,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                         ${removeBtnHTML}
                     </li>`;
             }).join('');
+            
+            let spotifyEmbedHTML = '';
+            if (playlist.tracks.length > 0) {
+                const trackUris = playlist.tracks.map(t => `spotify:track:${t.id}`).join(',');
+                spotifyEmbedHTML = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed?uri=${trackUris}" width="100%" height="380" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+            }
 
             const editBtnHTML = isOwner ? `<button class="btn-secondary edit-playlist-btn" data-playlist-id="${playlist.id}"><i class="fas fa-pencil-alt"></i> ${t('editPlaylist')}</button>` : '';
 
@@ -1252,8 +1266,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="details-actions">${editBtnHTML}</div>
                     </div>
                 </div>
-                <div class="track-list-container">
-                    <ol class="top-tracks-list">${tracksHTML.length > 0 ? tracksHTML : `<p class="search-message">${t('emptyPlaylists')}</p>`}</ol>
+                <div class="playlist-content-layout">
+                    <div class="track-list-container">
+                        <ol class="top-tracks-list">${tracksHTML.length > 0 ? tracksHTML : `<p class="search-message">${t('emptyPlaylists')}</p>`}</ol>
+                    </div>
+                    <div class="spotify-embed-container">
+                        ${spotifyEmbedHTML}
+                    </div>
                 </div>`;
         } catch (e) {
             ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadAlbum', e.message)}</p>`;
@@ -1282,7 +1301,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             await api.manager.managePlaylist(action, payload);
             ui.manager.closeAllModals();
-            // Re-render the profile page to show the new/updated playlist
             if (document.getElementById('profile').classList.contains('active')) {
                 renderProfilePage();
             }
@@ -1461,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (playlistCard && !e.target.closest('#create-playlist-card')) {
                 const playlistId = playlistCard.dataset.playlistId;
                 if (playlistId) {
-                    // history.pushState({ playlistId }, '', `/playlist/${playlistId}`);
+                    history.pushState({ playlistId }, '', `/playlist/${playlistId}`);
                     renderPlaylistView(playlistId);
                 }
             }
