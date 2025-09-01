@@ -67,8 +67,17 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .user-info span#userName { font-weight: 500; font-size: 0.9rem; color: var(--white-text); }
 .user-badges { display: flex; align-items: center; gap: 5px; height: 22px; margin-top: 2px; }
 
-.badge-icon { width: 22px; height: 22px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, filter 0.2s; border-radius: 50%;}
-.badge-icon:hover { transform: scale(1.25);}
+/* BADGE STYLES - CORRECTED */
+.badge-icon {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 50%;
+}
+.badge-icon:hover {
+    transform: scale(1.25);
+}
 .badge-icon[data-badge-key="admin"] { box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.75); }
 .badge-icon[data-badge-key="admin"]:hover { box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.85); }
 .badge-icon[data-badge-key="supporter"] { box-shadow: 0 0 10px 2px rgba(255, 105, 180, 0.7); }
@@ -377,7 +386,7 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .squad-description { font-size: 1.1rem; color: var(--light-gray-text); line-height: 1.7; margin: 15px 0 40px; }
 .squad-badges-preview { display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; }
 .badge-preview-item { text-align: center; }
-.badge-preview-item img { width: 80px; height: 80px; margin-bottom: 10px; transition: transform 0.3s, box-shadow 0.3s, filter 0.3s; border-radius: 50%;}
+.badge-preview-item img { width: 80px; height: 80px; margin-bottom: 10px; transition: transform 0.3s, box-shadow 0.3s; border-radius: 50%; }
 .badge-preview-item:hover img { transform: scale(1.1); }
 .badge-preview-item h3 { font-family: var(--elegant-font); color: var(--white-text); }
 .btn-squad-start { font-size: 1.1rem; padding: 15px 30px; }
