@@ -1,32 +1,7 @@
 import { kv } from '@vercel/kv';
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
 
 const SECRET = process.env.JWT_SECRET;
-const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-
-async function getSpotifyToken() {
-    try {
-        const response = await fetch("https://accounts.spotify.com/api/token", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET)
-            },
-            body: 'grant_type=client_credentials'
-        });
-        if (!response.ok) {
-            throw new Error(`Spotify token error: ${response.statusText}`);
-        }
-        const data = await response.json();
-        return data.access_token;
-    } catch (error) {
-        console.error("Failed to get Spotify token:", error);
-        return null;
-    }
-}
-
 
 export default async function handler(req, res) {
     const token = req.headers.authorization?.split(' ')[1];
@@ -40,91 +15,61 @@ export default async function handler(req, res) {
         }
     }
 
+    // --- GET Requests ---
     if (req.method === 'GET') {
-        const { name, playlistsFor, playlistId } = req.query;
+        const { name } = req.query;
 
+        // GET: Fetch a single public user profile by name
         if (name) {
             const userEmail = await kv.get(`name:${name.toLowerCase()}`);
             if (!userEmail) return res.status(404).json({ error: 'User not found' });
+            
             const user = await kv.get(`user:${userEmail}`);
             if (!user) return res.status(404).json({ error: 'User data not found' });
+
             const { password, email, ...publicData } = user;
             return res.status(200).json(publicData);
         }
         
-        if (playlistsFor) {
-            const userEmail = await kv.get(`name:${playlistsFor.toLowerCase()}`);
-            if (!userEmail) return res.status(404).json({ error: 'User not found' });
-            const user = await kv.get(`user:${userEmail}`);
-            if (!user) return res.status(404).json({ error: 'User data not found' });
-            
-            const publicPlaylists = user.playlists?.filter(p => p.isPublic).map(p => {
-                const uniqueCoverImages = [...new Set(p.tracks.map(t => t.albumImageUrl).filter(Boolean))].slice(0, 4);
-                return {
-                    id: p.id,
-                    name: p.name,
-                    owner: p.owner,
-                    trackCount: p.tracks?.length || 0,
-                    coverImages: uniqueCoverImages
-                };
-            }) || [];
-            return res.status(200).json(publicPlaylists);
-        }
-        
-        if (playlistId) {
-            const ownerName = await kv.get(`playlist:${playlistId}`);
-            if (!ownerName) return res.status(404).json({ error: 'Playlist not found' });
-            const ownerEmail = await kv.get(`name:${ownerName.toLowerCase()}`);
-            if (!ownerEmail) return res.status(404).json({ error: 'Playlist owner not found' });
-            const owner = await kv.get(`user:${ownerEmail}`);
-            if (!owner) return res.status(404).json({ error: 'Playlist owner data not found' });
-
-            const playlist = owner.playlists.find(p => p.id === playlistId);
-            if (!playlist) return res.status(404).json({ error: 'Playlist not found in owner data' });
-            
-            let currentUser = null;
-            if (decoded) currentUser = await kv.get(`user:${decoded.email}`);
-
-            if (!playlist.isPublic && (!currentUser || currentUser.name.toLowerCase() !== owner.name.toLowerCase())) {
-                return res.status(403).json({ error: 'This playlist is private' });
-            }
-            
-            const uniqueCoverImages = [...new Set(playlist.tracks.map(t => t.albumImageUrl).filter(Boolean))].slice(0, 4);
-            const playlistWithCover = { ...playlist, coverImages: uniqueCoverImages };
-            
-            return res.status(200).json(playlistWithCover);
-        }
-
+        // GET: Default - fetch the logged-in user's full profile
         if (!decoded) return res.status(401).json({ error: 'Authentication required' });
         const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
+        
         const { password, ...userData } = user;
         return res.status(200).json(userData);
     }
     
+    // --- PUT Request (Update User) ---
     if (req.method === 'PUT') {
         if (!decoded) return res.status(401).json({ error: 'Authentication required' });
+        
         const user = await kv.get(`user:${decoded.email}`);
         if (!user) return res.status(404).json({ error: 'User not found' });
+
         const { name, ...updateData } = req.body;
+
         if (name && name.toLowerCase() !== user.name.toLowerCase()) {
             return res.status(400).json({ error: 'Username change is not allowed via this method.' });
         }
+        
         const updatedUser = { ...user, ...updateData };
         await kv.set(`user:${user.email}`, updatedUser);
+        
         const { password, ...returnData } = updatedUser;
         return res.status(200).json(returnData);
     }
 
+    // --- POST Requests (Actions) ---
     if (req.method === 'POST') {
-        const { action, userNames, badge, payload } = req.body;
+        const { action, userNames, badge } = req.body;
 
         if (action === 'getStatuses') {
             if (!userNames || !Array.isArray(userNames)) return res.status(400).json({ error: 'Usernames array is required' });
             const statuses = {};
             for (const name of userNames) {
                 const userEmail = await kv.get(`name:${name.toLowerCase()}`);
-                if(userEmail) {
+                 if(userEmail) {
                     const user = await kv.get(`user:${userEmail}`);
                     statuses[name] = user?.lastSeen || null;
                 } else {
@@ -146,86 +91,26 @@ export default async function handler(req, res) {
             return res.status(200).json(returnData);
         }
 
-        if (action === 'playlist_create') {
-            if (!payload.name) return res.status(400).json({ error: "Playlist name is required." });
-            const newPlaylist = {
-                id: randomUUID(),
-                name: payload.name,
-                description: payload.description || '',
-                owner: user.name,
-                isPublic: payload.isPublic,
-                tracks: [],
-                createdAt: new Date().toISOString()
-            };
-            user.playlists = user.playlists || [];
-            user.playlists.unshift(newPlaylist);
-            await kv.set(`user:${user.email}`, user);
-            await kv.set(`playlist:${newPlaylist.id}`, user.name);
-            return res.status(201).json(newPlaylist);
+        // --- PREMIUM PLAN ACTIONS ---
+
+        if (action === 'create_checkout_session') {
+            // In a real application, you would create a Stripe/PayPal session here
+            // and return the checkout URL.
+            // For this simulation, we just return the URL to our success page.
+            const checkoutUrl = '/success.html';
+            return res.status(200).json({ url: checkoutUrl });
         }
 
-        if (action === 'playlist_edit') {
-            if (!payload.id || !payload.name) return res.status(400).json({ error: "Playlist ID and name are required." });
-            const playlistIndex = user.playlists.findIndex(p => p.id === payload.id);
-            if (playlistIndex === -1) return res.status(404).json({ error: "Playlist not found." });
-
-            user.playlists[playlistIndex].name = payload.name;
-            user.playlists[playlistIndex].description = payload.description;
-            user.playlists[playlistIndex].isPublic = payload.isPublic;
-            await kv.set(`user:${user.email}`, user);
-            return res.status(200).json(user.playlists[playlistIndex]);
-        }
-        
-        if (action === 'playlist_addTrack') {
-            const { playlistId, trackId } = payload;
-            if (!playlistId || !trackId) return res.status(400).json({ error: "Playlist ID and Track ID are required." });
-            const playlistIndex = user.playlists.findIndex(p => p.id === playlistId);
-            if (playlistIndex === -1) return res.status(404).json({ error: "Playlist not found." });
-            if (user.playlists[playlistIndex].tracks.some(t => t.id === trackId)) {
-                return res.status(409).json({ error: "Track already in playlist." });
+        if (action === 'confirm_premium_status') {
+            if (!user.badges.includes('supporter')) {
+                user.badges.push('supporter');
             }
-
-            const spotifyToken = await getSpotifyToken();
-            if (!spotifyToken) return res.status(503).json({ error: "Could not connect to Spotify service." });
-
-            const trackResponse = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
-                headers: { 'Authorization': `Bearer ${spotifyToken}` }
-            });
-            if (!trackResponse.ok) return res.status(404).json({ error: "Track not found on Spotify." });
-            
-            const trackData = await trackResponse.json();
-            const formattedTrack = {
-                id: trackData.id,
-                name: trackData.name,
-                artistName: trackData.artists[0].name,
-                artistId: trackData.artists[0].id,
-                duration_ms: trackData.duration_ms,
-                albumImageUrl: trackData.album.images[0]?.url || null,
-                addedAt: new Date().toISOString()
-            };
-
-            user.playlists[playlistIndex].tracks.push(formattedTrack);
+            user.plan = 'premium'; // Add a plan field for future reference
             await kv.set(`user:${user.email}`, user);
-            return res.status(200).json(user.playlists[playlistIndex]);
+            const { password, ...returnData } = user;
+            return res.status(200).json(returnData);
         }
 
-        if (action === 'playlist_removeTrack') {
-            const { playlistId, trackId } = payload;
-            if (!playlistId || !trackId) return res.status(400).json({ error: "Playlist ID and Track ID are required." });
-            const playlistIndex = user.playlists.findIndex(p => p.id === playlistId);
-            if (playlistIndex === -1) return res.status(404).json({ error: "Playlist not found." });
-            user.playlists[playlistIndex].tracks = user.playlists[playlistIndex].tracks.filter(t => t.id !== trackId);
-            await kv.set(`user:${user.email}`, user);
-            return res.status(200).json({ success: true });
-        }
-        
-        if (action === 'playlist_delete') {
-             if (!payload.id) return res.status(400).json({ error: "Playlist ID is required." });
-             user.playlists = user.playlists.filter(p => p.id !== payload.id);
-             await kv.del(`playlist:${payload.id}`);
-             await kv.set(`user:${user.email}`, user);
-             return res.status(200).json({ success: true });
-        }
 
         return res.status(400).json({ error: 'Invalid action' });
     }

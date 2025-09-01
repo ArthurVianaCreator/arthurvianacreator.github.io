@@ -29,7 +29,6 @@ To create a modern and functional platform where users can discover, follow, and
 *   **Profile Management:** Options to change username, profile picture, and manage the account.
 *   **Friends System:** Add other users, send and receive friend requests, and view your friends' profiles.
 *   **Public Profiles:** Explore other users' profiles, see the artists they follow, and their friends.
-*   **Playlist System:** Create public or private playlists, add tracks from anywhere on the platform, and share your musical taste.
 
 ### Personalization
 

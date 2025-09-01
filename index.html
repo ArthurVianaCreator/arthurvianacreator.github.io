@@ -27,7 +27,6 @@
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
             
-            <!-- ÁREA DO ANÚNCIO ATUALIZADA COM SEU CÓDIGO -->
             <div id="sidebar-ad-container">
                 <ins class="adsbygoogle"
                      style="display:block"
@@ -100,6 +99,7 @@
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span data-translate-key="changeName">Change Name</span></div>
                         <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span data-translate-key="changePicture">Change Picture</span></div>
+                        <div class="dropdown-item" id="upgradePremiumBtn"><i class="fas fa-star"></i><span data-translate-key="upgradePremium">Upgrade to Premium</span></div>
                         <div class="dropdown-item language-switcher-container">
                             <i class="fas fa-globe"></i>
                             <div id="languageSwitcher" class="language-switcher">
@@ -216,33 +216,22 @@
         </div>
     </div>
 
-    <!-- NOVOS MODAIS PARA PLAYLIST -->
-    <div id="playlistModal" class="modal-overlay">
+    <!-- NOVO MODAL PARA PLANO PREMIUM -->
+    <div id="premiumModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal-btn" aria-label="Close">&times;</button>
-            <h2 id="playlistModalTitle" data-translate-key="createPlaylist">Create Playlist</h2>
+            <h2 data-translate-key="upgradePremium">Upgrade to Premium</h2>
             <p class="modal-error"></p>
-            <input type="hidden" id="playlistIdInput">
-            <label for="playlistNameInput" data-translate-key="playlistName" class="visually-hidden">Playlist Name</label>
-            <input type="text" id="playlistNameInput" data-translate-placeholder-key="playlistNamePlaceholder" placeholder="My Awesome Playlist...">
-            <label for="playlistDescriptionInput" data-translate-key="playlistDescription" class="visually-hidden">Description (optional)</label>
-            <textarea id="playlistDescriptionInput" data-translate-placeholder-key="playlistDescriptionPlaceholder" placeholder="A short description..."></textarea>
-            <div class="playlist-public-toggle">
-                <label for="playlistIsPublic" data-translate-key="publicPlaylist">Public Playlist</label>
-                <input type="checkbox" id="playlistIsPublic" checked>
+            <div class="premium-features">
+                <h3 data-translate-key="premiumFeaturesTitle">Premium Features</h3>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> <span data-translate-key="premiumAdFree">Ad-free experience</span></li>
+                    <li><i class="fas fa-check-circle"></i> <span data-translate-key="premiumBadge">Exclusive "Supporter" badge on your profile</span></li>
+                    <li><i class="fas fa-check-circle"></i> <span data-translate-key="premiumSupport">Directly support the Lyrica platform</span></li>
+                </ul>
             </div>
             <div class="modal-actions">
-                <button class="btn-primary" id="savePlaylistBtn" data-translate-key="save">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="addToPlaylistModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal-btn" aria-label="Close">&times;</button>
-            <h2 data-translate-key="addToPlaylist">Add to Playlist</h2>
-            <div id="userPlaylistsContainer" class="playlists-selection-list">
-                <!-- As playlists do usuário serão injetadas aqui -->
+                <button class="btn-primary" id="proceedToPaymentBtn" data-translate-key="proceedToPayment">Proceed to Payment</button>
             </div>
         </div>
     </div>

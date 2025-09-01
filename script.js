@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const state = { currentUser: null, spotifyAppToken: null, lastView: 'inicio', artistContextId: null, cameraStream: null, trackToAdd: null };
+    const state = { currentUser: null, spotifyAppToken: null, lastView: 'inicio', artistContextId: null, cameraStream: null };
     const api = {}, auth = {}, ui = {};
     let lastHeartbeatTimestamp = 0;
 
@@ -63,13 +63,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             notifications: 'Notifications',
             noNotifications: 'No new notifications.',
             newFriendRequest: '<strong>{0}</strong> sent you a friend request.',
-            // Playlist translations
-            playlists: 'Playlists', createPlaylist: 'Create Playlist', editPlaylist: 'Edit Playlist',
-            playlistName: 'Playlist Name', playlistNamePlaceholder: 'My Awesome Playlist...',
-            playlistDescription: 'Description (optional)', playlistDescriptionPlaceholder: 'A short description for your playlist...',
-            publicPlaylist: 'Public Playlist', addToPlaylist: 'Add to Playlist', trackCount: '{0} tracks',
-            byUser: 'by {0}', isNotPublic: 'This playlist is private.', noPlaylists: "{0} hasn't created any public playlists yet.",
-            emptyPlaylists: "This playlist is empty.", newPlaylist: 'New Playlist'
+            // Premium Plan
+            upgradePremium: 'Upgrade to Premium',
+            premiumFeaturesTitle: 'Premium Features',
+            premiumAdFree: 'Ad-free experience',
+            premiumBadge: 'Exclusive "Supporter" badge',
+            premiumSupport: 'Directly support the platform',
+            proceedToPayment: 'Proceed to Payment'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -130,13 +130,13 @@ document.addEventListener('DOMContentLoaded', async function() {
             notifications: 'Notificações',
             noNotifications: 'Nenhuma notificação nova.',
             newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.',
-            // Traduções de Playlist
-            playlists: 'Playlists', createPlaylist: 'Criar Playlist', editPlaylist: 'Editar Playlist',
-            playlistName: 'Nome da Playlist', playlistNamePlaceholder: 'Minha Playlist Incrível...',
-            playlistDescription: 'Descrição (opcional)', playlistDescriptionPlaceholder: 'Uma breve descrição para sua playlist...',
-            publicPlaylist: 'Playlist Pública', addToPlaylist: 'Adicionar à Playlist', trackCount: '{0} faixas',
-            byUser: 'por {0}', isNotPublic: 'Esta playlist é privada.', noPlaylists: '{0} ainda não criou nenhuma playlist pública.',
-            emptyPlaylists: 'Esta playlist está vazia.', newPlaylist: 'Nova Playlist'
+            // Plano Premium
+            upgradePremium: 'Virar Premium',
+            premiumFeaturesTitle: 'Vantagens Premium',
+            premiumAdFree: 'Experiência sem anúncios',
+            premiumBadge: 'Insignia exclusiva de "Apoiador"',
+            premiumSupport: 'Apoie diretamente a plataforma',
+            proceedToPayment: 'Ir para o Pagamento'
         }
     };
     const getLanguage = () => {
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         currentTranslations = translations[getLanguage()];
         document.querySelectorAll('[data-translate-key]').forEach(el => {
             const key = el.getAttribute('data-translate-key');
-            if (el.tagName === 'SPAN' || el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'P' || el.tagName === 'A' || el.tagName === 'LABEL' || el.tagName === 'DIV' || el.tagName === 'OPTION') {
+            if (el.tagName === 'SPAN' || el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'H3' || el.tagName === 'P' || el.tagName === 'A' || el.tagName === 'LABEL' || el.tagName === 'DIV' || el.tagName === 'OPTION' || el.tagName === 'LI') {
                 el.textContent = t(key);
             }
         });
@@ -294,10 +294,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getSpotifyTrack: (id) => api.manager._spotifyRequest(`tracks/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
-        // --- CONSOLIDATED PLAYLIST LOGIC ---
-        managePlaylist: (action, payload) => api.manager._request('users', 'POST', { action: `playlist_${action}`, payload }),
-        getUserPlaylists: (username) => api.manager._request(`users?playlistsFor=${encodeURIComponent(username)}`),
-        getPlaylistDetails: (playlistId) => api.manager._request(`users?playlistId=${playlistId}`),
+        createCheckoutSession: () => api.manager._request('users', 'POST', { action: 'create_checkout_session' }),
     };
 
     auth.manager = {
@@ -348,8 +345,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
-            badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
-            playlistModal: document.getElementById('playlistModal'), addToPlaylistModal: document.getElementById('addToPlaylistModal'),
+            badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'), premiumModal: document.getElementById('premiumModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
             badgeTooltip: document.getElementById('badgeTooltip'),
@@ -387,6 +383,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.dom.loginPromptBtn.style.display = u ? 'none' : 'block';
             this.dom.userProfile.style.display = u ? 'flex' : 'none';
             this.dom.notificationBellBtn.style.display = u ? 'block' : 'none';
+            
+            const upgradeBtn = document.getElementById('upgradePremiumBtn');
+            if(upgradeBtn) {
+                upgradeBtn.style.display = u && !u.badges.includes('supporter') ? 'flex' : 'none';
+            }
+
 
             if (u) {
                 this.dom.userAvatar.innerHTML = '';
@@ -560,10 +562,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
                             <i class="${heartIconClass} fa-heart"></i>
                         </button>` : '';
-                    const addToPlaylistBtnHTML = state.currentUser ? `
-                        <button class="add-to-playlist-btn" data-track-id="${track.id}" title="${t('addToPlaylist')}">
-                            <i class="fas fa-plus"></i>
-                        </button>` : '';
                     return `
                         <li class="track-item">
                             <span class="track-number">${index + 1}</span>
@@ -571,7 +569,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <span class="track-name">${track.name}</span>
                             <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
                             ${favoriteBtnHTML}
-                            ${addToPlaylistBtnHTML}
                         </li>`;
                 }).join('');
                 topTracksHTML = `<ol class="top-tracks-list">${topTracksHTML}</ol>`;
@@ -627,17 +624,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <button class="favorite-track-btn ${isFavorite ? 'is-favorite' : ''}" data-track-id="${track.id}" title="${t('setAsFavoriteTrack')}">
                         <i class="${heartIconClass} fa-heart"></i>
                     </button>` : '';
-                const addToPlaylistBtnHTML = state.currentUser ? `
-                    <button class="add-to-playlist-btn" data-track-id="${track.id}" title="${t('addToPlaylist')}">
-                        <i class="fas fa-plus"></i>
-                    </button>` : '';
                 return `
                     <li class="track-item">
                         <span class="track-number">${index + 1}</span>
                         <span class="track-name">${track.name}</span>
                         <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
                         ${favoriteBtnHTML}
-                        ${addToPlaylistBtnHTML}
                     </li>`;
             }).join('');
 
@@ -744,8 +736,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             const status = formatUserStatus(u.lastSeen);
             const statusHTML = status ? `<div class="online-status" data-username-status="${u.name}"><div class="status-dot ${status.class}"></div><span>${status.text}</span></div>` : '';
             
-            let friendStatusHTML = '';
             const isOwnProfile = state.currentUser && state.currentUser.name.toLowerCase() === userName.toLowerCase();
+            let friendStatusHTML = '';
             if (state.currentUser && !isOwnProfile) {
                 if (state.currentUser.friends?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action remove" data-action="remove" data-target-name="${u.name}"><i class="fas fa-user-minus"></i> ${t('removeFriend')}</button>`;
                 else if (state.currentUser.friendRequestsSent?.includes(u.name)) friendStatusHTML = `<button class="btn-friend-action" disabled><i class="fas fa-paper-plane"></i> ${t('requestSent')}</button>`;
@@ -797,11 +789,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="profile-tabs">
                     <button class="tab-link active" data-tab="artists">${t('followingCount', u.following?.length || 0)}</button>
                     <button class="tab-link" data-tab="friends">${t('friendsCount', u.friends?.length || 0)}</button>
-                    <button class="tab-link" data-tab="playlists">${t('playlists')}</button>
                 </div>
                 <div id="artists" class="tab-content active"><div class="music-grid"></div></div>
-                <div id="friends" class="tab-content"><div class="user-grid"></div></div>
-                <div id="playlists" class="tab-content"><div class="music-grid"></div></div>`;
+                <div id="friends" class="tab-content"><div class="user-grid"></div></div>`;
 
             if (u.favoriteTrackId) {
                 const container = document.getElementById('favorite-track-container');
@@ -834,25 +824,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else {
                 ui.manager.populateGrid(friendsGrid, [], (item, index) => ui.manager.renderUserCard(item, index), t('hasNoFriends', u.name));
             }
-
-            const playlistsGrid = document.querySelector('#playlists .music-grid');
-            try {
-                const playlists = await api.manager.getUserPlaylists(userName);
-                if (isOwnProfile) {
-                    playlistsGrid.innerHTML = `
-                        <div class="music-card" id="create-playlist-card">
-                            <i class="fas fa-plus"></i>
-                            <span>${t('createPlaylist')}</span>
-                        </div>
-                        ${playlists.map(p => renderPlaylistCard(p)).join('')}
-                    `;
-                } else {
-                    ui.manager.populateGrid(playlistsGrid, playlists, (p) => renderPlaylistCard(p), t('noPlaylists', u.name));
-                }
-            } catch (error) {
-                playlistsGrid.innerHTML = `<p class="search-message">${t('couldNotLoadSection')}</p>`;
-            }
-
         } catch(e) {
             ui.manager.dom.profileContainer.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadProfile', e.message)}</p>`;
         }
@@ -1050,11 +1021,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (pathName.toLowerCase() === 'news') {
             return renderNewsPage();
         }
-        
-        if (pathName.toLowerCase().startsWith('playlist/')) {
-            const playlistId = pathName.split('/')[1];
-            return renderPlaylistView(playlistId);
-        }
 
         try {
             await api.manager.fetchPublicProfile(pathName);
@@ -1197,121 +1163,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // --- FUNÇÕES DE PLAYLIST ---
-    function renderPlaylistCover(playlist) {
-        if (playlist.coverImages && playlist.coverImages.length > 0) {
-            if (playlist.coverImages.length < 4) {
-                // Se tiver menos de 4, mostre apenas a primeira imagem em tela cheia
-                return `<img src="${playlist.coverImages[0]}" alt="${playlist.name}">`;
-            }
-            // Senão, crie a grade 2x2
-            return `
-                <div class="playlist-cover-grid">
-                    ${playlist.coverImages.map(imgUrl => `<img src="${imgUrl}" alt="">`).join('')}
-                </div>
-            `;
-        }
-        return '<i class="fas fa-music"></i>'; // Fallback
-    }
-
-    function renderPlaylistCard(playlist) {
-        const trackCountText = t('trackCount', playlist.trackCount || 0);
-        return `
-            <div class="music-card playlist-card" data-playlist-id="${playlist.id}">
-                <div class="playlist-card-cover">${renderPlaylistCover(playlist)}</div>
-                <div class="playlist-card-name">${playlist.name}</div>
-                <div class="playlist-card-info">${trackCountText}</div>
-            </div>
-        `;
-    }
-
-    async function renderPlaylistView(playlistId) {
-        ui.manager.switchContent('details-view');
-        ui.manager.dom.detailsView.innerHTML = ui.manager.renderLoader(t('loading'));
-        try {
-            const playlist = await api.manager.getPlaylistDetails(playlistId);
-            state.artistContextId = null;
-
-            const coverHTML = `<div class="details-img album-img">${renderPlaylistCover(playlist)}</div>`;
-            const isOwner = state.currentUser && state.currentUser.name === playlist.owner;
-
-            const tracksHTML = playlist.tracks.map((track, index) => {
-                const removeBtnHTML = isOwner ? `<button class="btn-danger remove-track-btn" data-track-id="${track.id}" data-playlist-id="${playlist.id}"><i class="fas fa-trash"></i></button>` : '';
-                return `
-                    <li class="track-item">
-                        <span class="track-number">${index + 1}</span>
-                        <img src="${track.albumImageUrl}" class="track-item-img" alt="Album Art">
-                        <span class="track-name">${track.name} &nbsp;&middot;&nbsp; <span class="artist-link" data-id="${track.artistId}">${track.artistName}</span></span>
-                        <span class="track-duration">${new Date(track.duration_ms).toISOString().substr(14, 5)}</span>
-                        ${removeBtnHTML}
-                    </li>`;
-            }).join('');
-            
-            let spotifyEmbedHTML = '';
-            if (playlist.tracks.length > 0) {
-                const trackUris = playlist.tracks.map(t => `spotify:track:${t.id}`).join(',');
-                spotifyEmbedHTML = `<iframe style="border-radius:12px" src="https://open.spotify.com/embed?uri=${trackUris}" width="100%" height="380" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
-            }
-
-            const editBtnHTML = isOwner ? `<button class="btn-secondary edit-playlist-btn" data-playlist-id="${playlist.id}"><i class="fas fa-pencil-alt"></i> ${t('editPlaylist')}</button>` : '';
-
-            ui.manager.dom.detailsView.innerHTML = `
-                <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
-                <div class="details-header playlist-details-header">
-                    ${coverHTML}
-                    <div class="details-info">
-                        <h2>${playlist.name}</h2>
-                        <p class="meta-info">${t('byUser', playlist.owner)} &bull; ${t('trackCount', playlist.tracks.length)}</p>
-                        ${playlist.description ? `<p>${playlist.description}</p>` : ''}
-                        <div class="details-actions">${editBtnHTML}</div>
-                    </div>
-                </div>
-                <div class="playlist-content-layout">
-                    <div class="track-list-container">
-                        <ol class="top-tracks-list">${tracksHTML.length > 0 ? tracksHTML : `<p class="search-message">${t('emptyPlaylists')}</p>`}</ol>
-                    </div>
-                    <div class="spotify-embed-container">
-                        ${spotifyEmbedHTML}
-                    </div>
-                </div>`;
-        } catch (e) {
-            ui.manager.dom.detailsView.innerHTML = `<button class="back-btn"><i class="fas fa-arrow-left"></i></button><p class="search-message">${t('couldNotLoadAlbum', e.message)}</p>`;
-        }
-    }
-
-    async function handleSavePlaylist(e) {
-        const btn = e.target;
-        const modal = ui.manager.dom.playlistModal;
-        const playlistId = modal.querySelector('#playlistIdInput').value;
-        const name = modal.querySelector('#playlistNameInput').value.trim();
-        const description = modal.querySelector('#playlistDescriptionInput').value.trim();
-        const isPublic = modal.querySelector('#playlistIsPublic').checked;
-
-        if (!name) {
-            return ui.manager.showModalError(modal, t('allFieldsRequired'));
-        }
-
-        btn.disabled = true;
-        btn.textContent = t('saving');
-
-        try {
-            const action = playlistId ? 'edit' : 'create';
-            const payload = { name, description, isPublic };
-            if (playlistId) payload.id = playlistId;
-
-            await api.manager.managePlaylist(action, payload);
-            ui.manager.closeAllModals();
-            if (document.getElementById('profile').classList.contains('active')) {
-                renderProfilePage();
-            }
-        } catch (error) {
-            ui.manager.showModalError(modal, error.message);
-        } finally {
-            btn.disabled = false;
-            btn.textContent = t('save');
-        }
-    }
-
     function setupEventListeners() {
         document.body.addEventListener('click', async e => {
             const badgeIcon = e.target.closest('.badge-icon');
@@ -1474,69 +1325,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             }
             
-            // --- EVENTOS DE PLAYLIST ---
-            const playlistCard = e.target.closest('.playlist-card');
-            if (playlistCard && !e.target.closest('#create-playlist-card')) {
-                const playlistId = playlistCard.dataset.playlistId;
-                if (playlistId) {
-                    history.pushState({ playlistId }, '', `/playlist/${playlistId}`);
-                    renderPlaylistView(playlistId);
-                }
-            }
-            if (e.target.closest('#create-playlist-card')) {
-                const modal = ui.manager.dom.playlistModal;
-                modal.querySelector('#playlistModalTitle').textContent = t('createPlaylist');
-                modal.querySelector('#playlistIdInput').value = '';
-                modal.querySelector('#playlistNameInput').value = '';
-                modal.querySelector('#playlistDescriptionInput').value = '';
-                modal.querySelector('#playlistIsPublic').checked = true;
-                ui.manager.openModal(modal);
-            }
-            const editPlaylistBtn = e.target.closest('.edit-playlist-btn');
-            if (editPlaylistBtn) {
-                const playlistId = editPlaylistBtn.dataset.playlistId;
-                const playlist = await api.manager.getPlaylistDetails(playlistId);
-                const modal = ui.manager.dom.playlistModal;
-                modal.querySelector('#playlistModalTitle').textContent = t('editPlaylist');
-                modal.querySelector('#playlistIdInput').value = playlist.id;
-                modal.querySelector('#playlistNameInput').value = playlist.name;
-                modal.querySelector('#playlistDescriptionInput').value = playlist.description || '';
-                modal.querySelector('#playlistIsPublic').checked = playlist.isPublic;
-                ui.manager.openModal(modal);
-            }
-            const addToPlaylistBtn = e.target.closest('.add-to-playlist-btn');
-            if (addToPlaylistBtn) {
-                state.trackToAdd = addToPlaylistBtn.dataset.trackId;
-                const modal = ui.manager.dom.addToPlaylistModal;
-                const container = modal.querySelector('#userPlaylistsContainer');
-                container.innerHTML = ui.manager.renderLoader('');
-                ui.manager.openModal(modal);
-                try {
-                    const playlists = await api.manager.getUserPlaylists(state.currentUser.name);
-                    container.innerHTML = playlists.map(p => `<div class="playlist-item" data-playlist-id="${p.id}">${p.name}</div>`).join('');
-                } catch (error) {
-                    container.innerHTML = `<p class="search-message">${error.message}</p>`;
-                }
-            }
-            const playlistSelectItem = e.target.closest('.playlist-item');
-            if (playlistSelectItem && state.trackToAdd) {
-                const playlistId = playlistSelectItem.dataset.playlistId;
-                try {
-                    await api.manager.managePlaylist('addTrack', { playlistId, trackId: state.trackToAdd });
-                    state.trackToAdd = null;
-                    ui.manager.closeAllModals();
-                } catch (error) { alert(error.message); }
-            }
-            const removeTrackBtn = e.target.closest('.remove-track-btn');
-            if(removeTrackBtn){
-                const { trackId, playlistId } = removeTrackBtn.dataset;
-                try {
-                    await api.manager.managePlaylist('removeTrack', { playlistId, trackId });
-                    renderPlaylistView(playlistId); // Refresh
-                } catch(error) { alert(error.message); }
-            }
-
-
             handleFriendAction(e);
 
             const tabLink = e.target.closest('.tab-link');
@@ -1588,6 +1376,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                     ui.manager.openModal(ui.manager.dom.loginModal);
                 }
             }
+            
+            if (e.target.closest('#upgradePremiumBtn')) {
+                ui.manager.openModal(ui.manager.dom.premiumModal);
+            }
+
+            if (e.target.closest('#proceedToPaymentBtn')) {
+                const btn = e.target.closest('#proceedToPaymentBtn');
+                btn.disabled = true;
+                btn.textContent = t('loading');
+                try {
+                    const { url } = await api.manager.createCheckoutSession();
+                    window.location.href = url; // Redirect to simulated success page
+                } catch (error) {
+                    ui.manager.showModalError(ui.manager.dom.premiumModal, error.message);
+                    btn.disabled = false;
+                    btn.textContent = t('proceedToPayment');
+                }
+            }
+
             if (e.target.closest('#uploadAvatarBtn')) document.getElementById('avatarFileInput').click();
             if (e.target.closest('#takePhotoBtn')) startCamera();
             if (e.target.closest('#captureBtn')) capturePhoto();
@@ -1617,7 +1424,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('saveNameBtn').addEventListener('click', handleNameChangeSubmit);
         document.getElementById('avatarFileInput').addEventListener('change', handleAvatarChange);
         document.getElementById('postNewsSubmitBtn').addEventListener('click', handlePostNewsSubmit);
-        document.getElementById('savePlaylistBtn').addEventListener('click', handleSavePlaylist);
         
         document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', (e) => {
             const target = e.currentTarget.dataset.target;
