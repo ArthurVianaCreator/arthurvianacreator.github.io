@@ -647,8 +647,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                 if (badgeMap[badgeKey]) badgesHTML += `<img src="${badgeMap[badgeKey].src}" alt="${t(badgeMap[badgeKey].titleKey)}" class="badge-icon" data-badge-key="${badgeKey}">`;
             });
         }
+        
+        const primaryBadge = u.badges && u.badges.length > 0 ? u.badges.find(b => ['admin', 'supporter', 'veteran', 'artist', 'discoverer', 'collector', 'explorer'].includes(b)) : null;
+        const badgeClass = primaryBadge ? primaryBadge : '';
+
         const descriptionHTML = `<div class="profile-description-container" id="profile-description-container">
-            <div class="profile-description">
+            <div class="profile-description ${badgeClass}">
                 ${u.description || t('noDescription')}
                 <button class="edit-description-btn" title="${t('editDescription')}"><i class="fas fa-pencil-alt"></i></button>
             </div>
@@ -689,7 +693,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const track = await api.manager.getSpotifyTrack(u.favoriteTrackId);
                 container.innerHTML = `
                     <h2 class="section-title-main">${t('favoriteTrack')}</h2>
-                    <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
+                    <iframe class="favorite-track-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
                         width="100%" height="80" frameBorder="0" allowfullscreen="" 
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
                     </iframe>
@@ -788,7 +792,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 else if (state.currentUser.friendRequestsReceived?.includes(u.name)) friendStatusHTML = `<div class="friend-request-actions public-profile"><span>${t('sentYouRequest')}</span><button class="btn-friend-action accept" data-action="accept" data-target-name="${u.name}"><i class="fas fa-check"></i></button><button class="btn-friend-action reject" data-action="reject" data-target-name="${u.name}"><i class="fas fa-times"></i></button></div>`;
                 else friendStatusHTML = `<button class="btn-friend-action" data-action="request" data-target-name="${u.name}"><i class="fas fa-user-plus"></i> ${t('addFriend')}</button>`;
             }
-            const descriptionHTML = u.description ? `<div class="profile-description-container"><div class="profile-description">${u.description}</div></div>` : '';
+            
+            const primaryBadge = u.badges && u.badges.length > 0 ? u.badges.find(b => ['admin', 'supporter', 'veteran', 'artist', 'discoverer', 'collector', 'explorer'].includes(b)) : null;
+            const badgeClass = primaryBadge ? primaryBadge : '';
+            const descriptionHTML = u.description ? `<div class="profile-description-container"><div class="profile-description ${badgeClass}">${u.description}</div></div>` : '';
 
             ui.manager.dom.profileContainer.innerHTML = `
                 <button class="back-btn"><i class="fas fa-arrow-left"></i></button>
@@ -816,7 +823,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const track = await api.manager.getSpotifyTrack(u.favoriteTrackId);
                     container.innerHTML = `
                         <h2 class="section-title-main">${t('favoriteTrack')}</h2>
-                        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
+                        <iframe class="favorite-track-iframe" style="border-radius:12px" src="https://open.spotify.com/embed/track/${track.id}?utm_source=generator" 
                             width="100%" height="80" frameBorder="0" allowfullscreen="" 
                             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy">
                         </iframe>`;
