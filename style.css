@@ -110,8 +110,19 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .search-bar i { margin-right: 12px; color: var(--gray-text); }
 .search-bar input { background: none; border: none; color: var(--white-text); outline: none; width: 100%; font-family: var(--body-font); font-size: 0.95rem; }
 
-.btn-login { background-color: var(--primary-color); color: #121212; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
-.btn-login:hover { filter: brightness(1.2); transform: scale(1.05); }
+/* --- BUTTON STYLES (REVISED) --- */
+.btn-login, .btn-primary, .btn-secondary, .btn-danger { padding: 10px 24px; border-radius: 50px; cursor: pointer; font-weight: bold; transition: all 0.2s ease-in-out; border: none; font-size: 0.9rem; }
+.btn-login:hover, .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+.btn-primary, .btn-login { background: linear-gradient(45deg, var(--primary-color), #FFC300); color: #121212; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2); }
+.btn-primary:disabled { filter: brightness(0.6); cursor: not-allowed; background: var(--gray-text); box-shadow: none; }
+.btn-secondary { background-color: var(--card-hover-bg); color: var(--light-gray-text); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background-color: var(--card-bg); color: var(--white-text); border-color: var(--gray-text); }
+.btn-danger { background-color: var(--danger-color); color: white; }
+
+.modal-actions { margin-top: 20px; }
+.modal-actions .btn-primary, .modal-actions .btn-secondary { font-size: 1rem; }
+
 .control-btn { background: none; border: none; color: var(--gray-text); cursor: pointer; padding: 5px; transition: color 0.2s, transform 0.2s; font-size: 1.5rem; }
 .control-btn:hover { color: var(--primary-color); transform: scale(1.1); }
 
@@ -278,20 +289,11 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .close-modal-btn:hover { color: var(--white-text); }
 .modal-content h2 { color: var(--white-text); margin-bottom: 15px; font-family: var(--elegant-font); }
 .modal-content input, .modal-content textarea { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid var(--gray-text); background: var(--card-bg); color: var(--white-text); font-size: 1rem; margin-bottom: 15px; font-family: var(--body-font); }
-#postNewsModal label, #playlistModal label:not(.visually-hidden) { text-align: left; display: block; font-weight: 500; margin-bottom: 5px; }
+#postNewsModal label { text-align: left; display: block; font-weight: 500; margin-bottom: 5px; }
 #postNewsModal hr { border: none; border-top: 1px solid var(--border-color); margin: 20px 0; }
 .password-wrapper { position: relative; margin-bottom: 15px; }
 .password-wrapper input { margin-bottom: 0; padding-right: 45px; }
 .password-toggle { position: absolute; top: 50%; right: 5px; transform: translateY(-50%); color: var(--gray-text); cursor: pointer; background: none; border: none; padding: 8px; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; width: 100%;}
-.modal-actions button, .modal-actions-grid button, .editor-actions button, .quiz-navigation button { padding: 8px 16px; border-radius: 0; cursor: pointer; font-weight: 500; transition: all 0.2s; border: 1px solid #000; text-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
-.btn-primary { background-color: var(--primary-color); color: #121212; }
-.btn-primary:hover { filter: brightness(1.1); }
-.btn-primary:disabled { filter: brightness(0.6); cursor: not-allowed; background-color: var(--gray-text); }
-.btn-secondary { background-color: #616161; color: #f0f0f0; }
-.btn-secondary:hover { background-color: #757575; }
-.btn-danger { background-color: var(--danger-color); color: white; }
-.btn-danger:hover { filter: brightness(1.2); }
 .modal-switch { margin-top: 20px; font-size: 0.9rem; }
 .modal-switch a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
 .modal-error { min-height: 20px; font-size: 0.9em; font-weight: 500; text-align: left; margin-bottom: 10px; color: #ff4757; }
@@ -330,8 +332,8 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
     .user-profile-area { order: 2; }
     .back-btn { top: 10px; left: 10px; }
     .main-content { padding: 16px; }
-    .artist-content-columns, .album-content-layout, .playlist-content-layout { grid-template-columns: 1fr; }
-    .album-content-layout .spotify-embed-container, .playlist-content-layout .spotify-embed-container { position: static; margin-top: 30px; }
+    .artist-content-columns, .album-content-layout { grid-template-columns: 1fr; }
+    .album-content-layout .spotify-embed-container { position: static; margin-top: 30px; }
     .favorite-track-iframe { height: 352px; }
 }
 @media (max-width: 600px) {
@@ -375,11 +377,19 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .squad-description { font-size: 1.1rem; color: var(--light-gray-text); line-height: 1.7; margin: 15px 0 40px; }
 .squad-badges-preview { display: flex; justify-content: center; gap: 40px; margin-bottom: 40px; }
 .badge-preview-item { text-align: center; }
-.badge-preview-item img { width: 80px; height: 80px; margin-bottom: 10px; transition: transform 0.3s; }
+.badge-preview-item img { width: 80px; height: 80px; margin-bottom: 10px; transition: transform 0.3s, box-shadow 0.3s, filter 0.3s; border-radius: 50%; filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.5));}
 .badge-preview-item:hover img { transform: scale(1.1); }
 .badge-preview-item h3 { font-family: var(--elegant-font); color: var(--white-text); }
-.btn-squad-start { font-size: 1.2rem; padding: 15px 30px; border-radius: 50px; border: none; font-weight: bold; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 20px var(--primary-glow); position: relative; z-index: 2; cursor: pointer; }
-.btn-squad-start:hover { transform: scale(1.05); filter: brightness(1.1); }
+.btn-squad-start { font-size: 1.1rem; padding: 15px 30px; }
+
+/* Glowing Badges on Homepage */
+.badge-preview-item img[src*="Discoverer"] { box-shadow: 0 0 15px 3px rgba(229, 57, 53, 0.7); }
+.badge-preview-item img[src*="Discoverer"]:hover { box-shadow: 0 0 25px 6px rgba(229, 57, 53, 0.8); }
+.badge-preview-item img[src*="Explorer"] { box-shadow: 0 0 15px 3px rgba(50, 205, 50, 0.7); }
+.badge-preview-item img[src*="Explorer"]:hover { box-shadow: 0 0 25px 6px rgba(50, 205, 50, 0.8); }
+.badge-preview-item img[src*="Collector"] { box-shadow: 0 0 15px 3px rgba(255, 108, 0, 0.7); }
+.badge-preview-item img[src*="Collector"]:hover { box-shadow: 0 0 25px 6px rgba(255, 108, 0, 0.8); }
+
 
 /* BADGE QUIZ MODAL */
 #badgeQuizModal .modal-content { max-width: 500px; padding: 25px; }
@@ -419,34 +429,11 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
     #sidebar-ad-container { display: none; }
 }
 
-/* --- ESTILOS PARA PLAYLISTS --- */
-.playlist-card { cursor: pointer; text-align: left; }
-.playlist-card-cover { width: 100%; padding-bottom: 100%; position: relative; background-color: var(--card-hover-bg); border-radius: 8px; overflow: hidden; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color); }
-.playlist-card-cover i { font-size: 4rem; color: var(--gray-text); }
-.playlist-cover-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-.playlist-cover-grid img { width: 100%; height: 100%; object-fit: cover; }
-.playlist-card-name { font-weight: 700; color: var(--white-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.playlist-card-info { font-size: 0.85rem; color: var(--gray-text); }
-#create-playlist-card { border: 2px dashed var(--gray-text); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 220px; background-color: transparent; padding: 16px; }
-#create-playlist-card:hover { border-color: var(--primary-color); color: var(--primary-color); }
-#create-playlist-card i { font-size: 3rem; margin-bottom: 10px; }
-#create-playlist-card span { font-weight: bold; }
-
-/* MODAL ADD TO PLAYLIST */
-.playlists-selection-list { max-height: 300px; overflow-y: auto; }
-.playlists-selection-list .playlist-item { padding: 15px 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; text-align: left; transition: background-color 0.2s; }
-.playlists-selection-list .playlist-item:hover { background-color: var(--card-bg); }
-.playlists-selection-list .playlist-item:last-child { border-bottom: none; }
-#playlistModal textarea { min-height: 80px; resize: vertical; }
-.playlist-public-toggle { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin-bottom: 20px; text-align: left; }
-.playlist-public-toggle label { margin-bottom: 0; }
-.playlist-public-toggle input { width: auto; margin-bottom: 0; }
-
-/* PLAYLIST DETAIL VIEW & TRACK ACTIONS */
-.playlist-details-header { text-align: left; align-items: flex-start; flex-direction: row; gap: 30px; }
-.playlist-details-header .details-img { border-radius: 8px; flex-shrink: 0; }
-.playlist-content-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: flex-start; }
-.playlist-content-layout .spotify-embed-container { position: sticky; top: 20px; }
-.track-item .add-to-playlist-btn { background: none; border: none; color: var(--gray-text); font-size: 1rem; cursor: pointer; margin-left: 15px; padding: 5px; transition: all 0.2s; }
-.track-item .add-to-playlist-btn:hover { color: var(--primary-color); transform: scale(1.2); }
-.track-item .remove-track-btn { margin-left: auto; padding: 5px 10px; font-size: 0.9rem; }
+/* PREMIUM MODAL */
+.premium-features { text-align: left; margin: 20px 0; background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
+.premium-features h3 { text-align: center; margin-bottom: 15px; color: var(--white-text); }
+.premium-features ul { list-style: none; padding: 0; }
+.premium-features li { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.95rem; }
+.premium-features li i { color: var(--success-color); }
+#upgradePremiumBtn { color: var(--primary-color); }
+#upgradePremiumBtn i { color: var(--primary-color); }
