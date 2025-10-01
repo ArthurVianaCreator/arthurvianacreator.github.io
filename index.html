@@ -23,11 +23,9 @@
                 <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span data-translate-key="friends">Friends</span></div>
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
+            
             <div class="sidebar-footer">
-                <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link" aria-label="Instagram">
-                    <i class="fab fa-instagram"></i>
-                    <span>Instagram</span>
-                </a>
+                <!-- Seção do Instagram removida -->
             </div>
         </div>
         
@@ -40,9 +38,7 @@
                         <div class="nav-item" data-target="news"><span data-translate-key="news">News</span><span class="notification-dot"></span></div>
                         <div class="nav-item" data-target="social" data-translate-key="friends">Friends</div>
                         <div class="nav-item" data-target="profile" id="profileNavItemMobile" data-translate-key="profile">Profile</div>
-                        <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link-mobile" aria-label="Instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
+                        <!-- Link do Instagram para mobile removido -->
                     </nav>
                 </div>
                 <div class="search-container">
@@ -182,8 +178,23 @@
     <div id="postNewsModal" class="modal-overlay">
         <div class="modal-content">
             <button class="close-modal-btn" aria-label="Close">&times;</button>
-            <h2 data-translate-key="postNews">Post News</h2>
+            <h2 id="newsModalTitle" data-translate-key="postNews">Post News</h2>
+            <input type="hidden" id="newsPostId" value="">
             <p class="modal-error"></p>
+            
+            <div class="news-image-preview-container">
+                <img id="newsImagePreview" src="" alt="News Image Preview" style="display:none;">
+                <div id="newsImagePlaceholder" class="news-image-placeholder">
+                    <i class="fas fa-image"></i>
+                    <span data-translate-key="imagePreview">Image Preview</span>
+                </div>
+            </div>
+            <input type="file" id="newsImageInput" accept="image/*" style="display: none;">
+            <div class="modal-actions-grid news-img-actions">
+                <button class="btn-secondary" id="uploadNewsImageBtn"><i class="fas fa-upload"></i> <span data-translate-key="uploadImage">Upload Image</span></button>
+                <button class="btn-danger" id="removeNewsImageBtn"><i class="fas fa-trash"></i> <span data-translate-key="remove">Remove</span></button>
+            </div>
+            
             <label for="newsTitleInput_en" data-translate-key="titleEN">Title (EN)</label>
             <input type="text" id="newsTitleInput_en" placeholder="Title in English..." aria-label="Title in English">
             <label for="newsContentInput_en" data-translate-key="contentEN">Content (EN)</label>
@@ -198,6 +209,7 @@
             </div>
         </div>
     </div>
+
     <div id="badgeTooltip" class="badge-tooltip">
         <h3 id="badgeTooltipTitle"></h3>
         <p id="badgeTooltipDesc"></p>
