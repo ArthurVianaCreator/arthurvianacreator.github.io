@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- SEU SCRIPT DO ADSENSE -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6889311971921323"
-     crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lyrica</title>
@@ -26,19 +23,6 @@
                 <div class="nav-item" data-target="social"><i class="fas fa-users"></i><span data-translate-key="friends">Friends</span></div>
                 <div class="nav-item" data-target="profile" id="profileNavItem"><i class="fas fa-user"></i><span data-translate-key="profile">Profile</span></div>
             </nav>
-            
-            <div id="sidebar-ad-container">
-                <ins class="adsbygoogle"
-                     style="display:block"
-                     data-ad-client="ca-pub-6889311971921323"
-                     data-ad-slot="3574804881"
-                     data-ad-format="auto"
-                     data-full-width-responsive="true"></ins>
-                <script>
-                     (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-
             <div class="sidebar-footer">
                 <a href="https://www.instagram.com/lyrica.app/" target="_blank" class="nav-item social-link" aria-label="Instagram">
                     <i class="fab fa-instagram"></i>
@@ -99,7 +83,6 @@
                     <div class="user-dropdown" id="userDropdown">
                         <div class="dropdown-item" id="changeNameBtn"><i class="fas fa-pencil-alt"></i><span data-translate-key="changeName">Change Name</span></div>
                         <div class="dropdown-item" id="changeAvatarBtn"><i class="fas fa-camera"></i><span data-translate-key="changePicture">Change Picture</span></div>
-                        <div class="dropdown-item" id="upgradePremiumBtn"><i class="fas fa-star"></i><span data-translate-key="upgradePremium">Upgrade to Premium</span></div>
                         <div class="dropdown-item language-switcher-container">
                             <i class="fas fa-globe"></i>
                             <div id="languageSwitcher" class="language-switcher">
@@ -215,27 +198,6 @@
             </div>
         </div>
     </div>
-
-    <!-- NOVO MODAL PARA PLANO PREMIUM -->
-    <div id="premiumModal" class="modal-overlay">
-        <div class="modal-content">
-            <button class="close-modal-btn" aria-label="Close">&times;</button>
-            <h2 data-translate-key="upgradePremium">Upgrade to Premium</h2>
-            <p class="modal-error"></p>
-            <div class="premium-features">
-                <h3 data-translate-key="premiumFeaturesTitle">Premium Features</h3>
-                <ul>
-                    <li><i class="fas fa-check-circle"></i> <span data-translate-key="premiumAdFree">Ad-free experience</span></li>
-                    <li><i class="fas fa-check-circle"></i> <span data-translate-key="premiumBadge">Exclusive "Supporter" badge on your profile</span></li>
-                    <li><i class="fas fa-check-circle"></i> <span data-translate-key="premiumSupport">Directly support the Lyrica platform</span></li>
-                </ul>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-primary" id="proceedToPaymentBtn" data-translate-key="proceedToPayment">Proceed to Payment</button>
-            </div>
-        </div>
-    </div>
-
     <div id="badgeTooltip" class="badge-tooltip">
         <h3 id="badgeTooltipTitle"></h3>
         <p id="badgeTooltipDesc"></p>

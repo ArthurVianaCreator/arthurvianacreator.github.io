@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             errorFileTooLarge: 'File is too large (max 2MB).', searchFailed: 'Search failed. Please try again.', noResultsFound: 'No results found for your search.',
             users: 'Users', artists: 'Artists', albums: 'Albums', readMore: 'Read More', readLess: 'Read Less',
             badgeAdminTitle: 'Administrator', badgeAdminDesc: "One of Lyrica's architects. They build, maintain, and care for our musical universe.",
-            badgeSupporterTitle: 'Supporter', badgeSupporterDesc: "A vital supporter of the community! Their contribution helps keep Lyrica available for everyone. Thank you!",
             badgeVeteranTitle: 'Veteran', badgeVeteranDesc: "A true pioneer! This user was part of Lyrica's journey from the very beginning, helping to shape its history.",
             badgeArtistTitle: 'Artist', badgeArtistDesc: "This is an official artist profile verified by Lyrica.",
             badgeDiscovererTitle: 'Discoverer', badgeDiscovererDesc: "A true trendsetter with an ear for the future. They unearth hidden gems and master artists.",
@@ -63,13 +62,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             notifications: 'Notifications',
             noNotifications: 'No new notifications.',
             newFriendRequest: '<strong>{0}</strong> sent you a friend request.',
-            // Premium Plan
-            upgradePremium: 'Upgrade to Premium',
-            premiumFeaturesTitle: 'Premium Features',
-            premiumAdFree: 'Ad-free experience',
-            premiumBadge: 'Exclusive "Supporter" badge',
-            premiumSupport: 'Directly support the platform',
-            proceedToPayment: 'Proceed to Payment'
         },
         pt: {
             home: 'Início', friends: 'Amigos', profile: 'Perfil', searchInputPlaceholder: 'Pesquise por artistas, álbuns ou usuários...',
@@ -98,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             errorFileTooLarge: 'O arquivo é muito grande (máx 2MB).', searchFailed: 'A busca falhou. Por favor, tente novamente.',
             noResultsFound: 'Nenhum resultado encontrado para sua busca.', users: 'Usuários', artists: 'Artistas', albums: 'Álbuns', readMore: 'Ler mais', readLess: 'Ler menos',
             badgeAdminTitle: 'Administrador', badgeAdminDesc: 'Um dos arquitetos da Lyrica. Eles constroem, mantêm e cuidam do nosso universo musical.',
-            badgeSupporterTitle: 'Apoiador', badgeSupporterDesc: 'Um apoiador vital da comunidade! Sua contribuição ajuda a manter a Lyrica para todos. Obrigado!',
             badgeVeteranTitle: 'Veterano', badgeVeteranDesc: 'Um verdadeiro pioneiro! Este usuário fez parte da jornada da Lyrica desde o início, ajudando a moldar sua história.',
             badgeArtistTitle: 'Artista', badgeArtistDesc: 'Este é um perfil oficial de artista verificado pela Lyrica.',
             badgeDiscovererTitle: 'Descobridor', badgeDiscovererDesc: 'Um verdadeiro criador de tendências com um ouvido para o futuro. Eles descobrem joias escondidas e mestres artistas.',
@@ -130,13 +121,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             notifications: 'Notificações',
             noNotifications: 'Nenhuma notificação nova.',
             newFriendRequest: '<strong>{0}</strong> enviou um pedido de amizade.',
-            // Plano Premium
-            upgradePremium: 'Virar Premium',
-            premiumFeaturesTitle: 'Vantagens Premium',
-            premiumAdFree: 'Experiência sem anúncios',
-            premiumBadge: 'Insignia exclusiva de "Apoiador"',
-            premiumSupport: 'Apoie diretamente a plataforma',
-            proceedToPayment: 'Ir para o Pagamento'
         }
     };
     const getLanguage = () => {
@@ -180,7 +164,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const badgeMap = {
         admin: { src: 'img/Admin.png', titleKey: 'badgeAdminTitle', descriptionKey: 'badgeAdminDesc' },
-        supporter: { src: 'img/Supporter.png', titleKey: 'badgeSupporterTitle', descriptionKey: 'badgeSupporterDesc' },
         veteran: { src: 'img/BetaMember.png', titleKey: 'badgeVeteranTitle', descriptionKey: 'badgeVeteranDesc' },
         artist: { src: 'img/Artist.png', titleKey: 'badgeArtistTitle', descriptionKey: 'badgeArtistDesc' },
         discoverer: { src: 'img/Discoverer.png', titleKey: 'badgeDiscovererTitle', descriptionKey: 'badgeDiscovererDesc' },
@@ -294,7 +277,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         getSpotifyAlbum: (id) => api.manager._spotifyRequest(`albums/${id}`),
         getSpotifyTrack: (id) => api.manager._spotifyRequest(`tracks/${id}`),
         getPopularArtists: () => api.manager._request('popular-artists', 'GET'),
-        createCheckoutSession: () => api.manager._request('users', 'POST', { action: 'create_checkout_session' }),
     };
 
     auth.manager = {
@@ -345,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             appLoader: document.getElementById('app-loader'), mainContainer: document.querySelector('.main-container'), searchInput: document.getElementById('searchInput'),
             loginPromptBtn: document.getElementById('loginPromptBtn'), userProfile: document.getElementById('userProfile'), userInfo: document.getElementById('userInfo'), userAvatar: document.getElementById('userAvatar'), userDropdown: document.getElementById('userDropdown'), detailsView: document.getElementById('details-view'),
             loginModal: document.getElementById('loginModal'), registerModal: document.getElementById('registerModal'), nameChangeModal: document.getElementById('nameChangeModal'), avatarChangeModal: document.getElementById('avatarChangeModal'),
-            badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'), premiumModal: document.getElementById('premiumModal'),
+            badgeQuizModal: document.getElementById('badgeQuizModal'), postNewsModal: document.getElementById('postNewsModal'),
             searchResultsContainer: document.getElementById('searchResultsContainer'),
             popularArtistsContainer: document.getElementById('popular-artists-container'),
             badgeTooltip: document.getElementById('badgeTooltip'),

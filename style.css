@@ -80,8 +80,6 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 }
 .badge-icon[data-badge-key="admin"] { box-shadow: 0 0 10px 2px rgba(255, 215, 0, 0.75); }
 .badge-icon[data-badge-key="admin"]:hover { box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.85); }
-.badge-icon[data-badge-key="supporter"] { box-shadow: 0 0 10px 2px rgba(255, 105, 180, 0.7); }
-.badge-icon[data-badge-key="supporter"]:hover { box-shadow: 0 0 20px 5px rgba(255, 105, 180, 0.8); }
 .badge-icon[data-badge-key="veteran"] { box-shadow: 0 0 10px 2px rgba(0, 191, 255, 0.7); }
 .badge-icon[data-badge-key="veteran"]:hover { box-shadow: 0 0 20px 5px rgba(0, 191, 255, 0.8); }
 .badge-icon[data-badge-key="artist"] { box-shadow: 0 0 10px 2px rgba(180, 50, 255, 0.7); }
@@ -167,7 +165,6 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 /* Badge-based Description Colors */
 .profile-description.admin { border-left-color: #FFD700; }
 .profile-description.veteran { border-left-color: #00BFFF; }
-.profile-description.supporter { border-left-color: #FF69B4; }
 .profile-description.explorer { border-left-color: #32CD32; }
 .profile-description.artist { border-left-color: #B432FF; }
 .profile-description.discoverer { border-left-color: #FF4500; }
@@ -431,18 +428,3 @@ body { font-family: var(--body-font); background: var(--darker-bg); color: var(-
 .lang-btn:hover { color: var(--white-text); background-color: var(--card-hover-bg); }
 .lang-btn.active { background-color: var(--primary-color); color: #121212; }
 .dropdown-item i.fa-globe { width: 16px; text-align: center; color: var(--light-gray-text); }
-/* --- ESTILOS PARA ANÚNCIOS --- */
-#sidebar-ad-container { margin-top: auto; padding: 20px 0; display: flex; justify-content: center; align-items: center; max-width: 160px; margin-left: auto; margin-right: auto; }
-
-@media (max-width: 950px) {
-    #sidebar-ad-container { display: none; }
-}
-
-/* PREMIUM MODAL */
-.premium-features { text-align: left; margin: 20px 0; background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-.premium-features h3 { text-align: center; margin-bottom: 15px; color: var(--white-text); }
-.premium-features ul { list-style: none; padding: 0; }
-.premium-features li { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.95rem; }
-.premium-features li i { color: var(--success-color); }
-#upgradePremiumBtn { color: var(--primary-color); }
-#upgradePremiumBtn i { color: var(--primary-color); }

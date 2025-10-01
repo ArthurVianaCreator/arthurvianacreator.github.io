@@ -35,29 +35,11 @@ To create a modern and functional platform where users can discover, follow, and
 *   **Advanced Badge System:** A personalized questionnaire to determine which of the three exclusive badges (Discoverer, Explorer, or Collector) best fits your music personality.
 *   **Language Selection:** Easily switch between Portuguese and English for a more comfortable browsing experience.
 
-## Monetization Model
-
-Lyrica uses a "Freemium" model, with essential features available for free and advanced features in the Premium version.
-
-### Free Plan
-
-*   Access to basic exploration and interaction functions.
-*   Limit of 100 artists to follow.
-*   Display of ads in the interface.
-
-### Premium Plan
-
-*   "Lyrica Supporter" title and badge on the profile.
-*   Ad-free user experience.
-
-*Note: The artist follow limit is currently 100 for all users to ensure platform stability.*
-
 ## Badges
 
 Badges are visual identifiers that appear on the user's profile to highlight their status and engagement on the platform.
 
 *   **Lyrica Administrator:** Reserved for the creators and managers of the project. (img/Admin.png)
-*   **Lyrica Supporter:** Granted to users of the Premium plan. (img/Supporter.png)
 *   **Veteran:** For members who participated in the beta version. (img/BetaMember.png)
 *   **Artist:** Indicates an official artist profile verified by Lyrica. (img/Artist.png)
 *   **Discoverer:** For users who love to discover new and emerging artists. (img/Discoverer.png)

@@ -90,28 +90,6 @@ export default async function handler(req, res) {
             const { password, ...returnData } = user;
             return res.status(200).json(returnData);
         }
-
-        // --- PREMIUM PLAN ACTIONS ---
-
-        if (action === 'create_checkout_session') {
-            // In a real application, you would create a Stripe/PayPal session here
-            // and return the checkout URL.
-            // For this simulation, we just return the URL to our success page.
-            const checkoutUrl = '/success.html';
-            return res.status(200).json({ url: checkoutUrl });
-        }
-
-        if (action === 'confirm_premium_status') {
-            if (!user.badges.includes('supporter')) {
-                user.badges.push('supporter');
-            }
-            user.plan = 'premium'; // Add a plan field for future reference
-            await kv.set(`user:${user.email}`, user);
-            const { password, ...returnData } = user;
-            return res.status(200).json(returnData);
-        }
-
-
         return res.status(400).json({ error: 'Invalid action' });
     }
 
